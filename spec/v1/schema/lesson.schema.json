@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/lesson.schema.json",
+  "title": "Gradus Lesson Record",
+  "type": "object",
+  "required": ["schema", "id", "created", "kind", "statement", "occurrences", "status"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "const": "gradus/v1" },
+    "id": { "type": "string" },
+    "created": { "type": "string", "format": "date-time" },
+    "kind": {
+      "type": "string",
+      "enum": ["correction", "repeated-mistake", "preference", "frustration"]
+    },
+    "statement": { "type": "string" },
+    "evidence": { "type": "array" },
+    "occurrences": { "type": "integer", "minimum": 1 },
+    "suggested_level": { "type": "string" },
+    "suggested_enforcement": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["open", "proposed", "promoted", "dismissed"]
+    }
+  }
+}

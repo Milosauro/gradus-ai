@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/evidence.schema.json",
+  "title": "Gradus Evidence Record",
+  "type": "object",
+  "required": ["schema", "id", "kind", "timestamp", "lock_hash", "view_hash", "producer", "findings", "verdict"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "const": "gradus/v1" },
+    "id": { "type": "string" },
+    "kind": {
+      "type": "string",
+      "enum": ["verify", "check", "review", "semantic-conflicts", "exception-use"]
+    },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "commit": { "type": "string" },
+    "base": { "type": "string" },
+    "lock_hash": { "type": "string" },
+    "view_hash": { "type": "string" },
+    "producer": {
+      "type": "object",
+      "required": ["tool", "version"],
+      "properties": {
+        "tool": { "type": "string" },
+        "version": { "type": "string" },
+        "skill": { "type": ["string", "null"] },
+        "model_tier": { "type": ["string", "null"] }
+      }
+    },
+    "findings": { "type": "array" },
+    "verdict": { "type": "string", "enum": ["pass", "fail", "error"] }
+  }
+}

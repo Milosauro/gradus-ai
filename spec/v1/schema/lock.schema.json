@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/lock.schema.json",
+  "title": "Gradus Lockfile (gradus.lock)",
+  "type": "object",
+  "required": ["schema", "definition_hash", "entries", "view_hash"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "const": "gradus/v1" },
+    "definition_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "view_hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["kind", "id", "source", "hash"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["level", "overlay"] },
+          "id": { "type": "string" },
+          "source": { "type": "string" },
+          "ref": { "type": "string" },
+          "commit": { "type": "string" },
+          "hash": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" },
+          "signature": { "type": "string", "enum": ["none", "verified"] }
+        }
+      }
+    }
+  }
+}

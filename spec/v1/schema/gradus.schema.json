@@ -1,0 +1,113 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/gradus.schema.json",
+  "title": "Gradus Pyramid Configuration (gradus.yaml)",
+  "type": "object",
+  "required": ["schema", "levels"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "gradus/v1"
+    },
+    "extends": {
+      "type": ["string", "null"]
+    },
+    "levels": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "source"],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*$"
+          },
+          "source": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "path": { "type": "string" },
+              "git": { "type": "string" },
+              "ref": { "type": "string" }
+            }
+          },
+          "locked": { "type": "boolean" },
+          "offline": {
+            "type": "object",
+            "properties": {
+              "mode": { "type": "string", "enum": ["cache", "fail-closed"] },
+              "max_age": { "type": "string" }
+            }
+          },
+          "approvers": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "editable_rules": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "scope": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "overlays": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "source", "strength"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "source": { "type": "object" },
+          "strength": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "activation": { "type": "string", "enum": ["always", "profile"] }
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "data": { "type": "string", "enum": ["none", "internal", "personal", "sensitive"] },
+        "exposure": { "type": "string", "enum": ["internal", "public"] },
+        "domain": { "type": "array", "items": { "type": "string" } },
+        "client": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "targets": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "hooks": {
+      "type": "object",
+      "properties": {
+        "manager": {
+          "type": "string",
+          "enum": ["auto", "pre-commit", "lefthook", "husky", "native", "none"]
+        }
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "properties": {
+        "sinks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "properties": {
+              "type": { "type": "string", "enum": ["none", "local", "ci-artifact", "repo", "command"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

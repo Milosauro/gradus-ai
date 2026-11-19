@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/exception.schema.json",
+  "title": "Gradus Exception Record",
+  "type": "object",
+  "required": ["schema", "id", "rule_id", "scope", "reason", "approved_by", "created", "expires", "kind"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "const": "gradus/v1" },
+    "id": { "type": "string" },
+    "rule_id": { "type": "string" },
+    "scope": { "type": "array", "items": { "type": "string" } },
+    "reason": { "type": "string" },
+    "approved_by": { "type": "array", "items": { "type": "string" } },
+    "created": { "type": "string" },
+    "expires": { "type": "string" },
+    "kind": { "type": "string", "enum": ["exception", "break-glass"] },
+    "post_review_due": { "type": ["string", "null"] }
+  }
+}

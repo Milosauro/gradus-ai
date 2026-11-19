@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/overlay.schema.json",
+  "title": "Gradus Overlay Definition (overlay.yaml)",
+  "type": "object",
+  "required": ["schema", "id", "strength"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "const": "gradus/v1" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "version": { "type": "string" },
+    "strength": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "owners": { "type": "array", "items": { "type": "string" } },
+    "approvers": { "type": "array", "items": { "type": "string" } },
+    "activation": { "type": "string", "enum": ["always", "profile"] }
+  }
+}
