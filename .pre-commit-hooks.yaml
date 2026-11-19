@@ -1,0 +1,14 @@
+- id: gradus-verify
+  name: gradus verify
+  description: Verify Gradus pyramid definition, lock integrity, constraints, and generated files
+  entry: gradusctl verify
+  language: system
+  files: ^(gradus\.(yaml|lock)|\.gradus/|AGENTS\.md|CLAUDE\.md|\.claude/|\.agents/)
+  pass_filenames: false
+
+- id: gradus-check
+  name: gradus check
+  description: Run deterministic Gradus code checks on staged files
+  entry: gradusctl check --staged
+  language: system
+  pass_filenames: false
