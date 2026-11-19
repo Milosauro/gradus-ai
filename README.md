@@ -1,51 +1,249 @@
+<div align="center">
+
 # Gradus
 
-**Layered, governed rules for AI coding agents — from a single developer to the whole organization.**
+### Every agent climbs the same steps.
 
-> **Status: early design (pre-alpha).** Nothing is ready to install yet. The design is being worked out in the open; formats and commands will change.
+**Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-## The problem
+[![Status: design phase](https://img.shields.io/badge/status-design%20phase-orange?style=flat-square)](docs/design/gradus-design.md)
+[![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
+[![Agents: Claude Code · Antigravity · AGENTS.md](https://img.shields.io/badge/first%20targets-Claude%20Code%20·%20Antigravity%20·%20AGENTS.md-555?style=flat-square)](#which-agents)
 
-Teams adopting AI coding agents (Claude Code, Antigravity, Codex, GitHub Copilot, OpenCode, Cursor and others) quickly end up with every developer running their own setup: personal instruction files, ad-hoc rules, skills installed at will. The same repository gets changed by agents following different, often contradictory rules, and company policies on data, security and compliance are easy to miss.
+[The problem](#the-monday-morning-problem) · [The idea](#the-idea-a-pyramid-of-rules) · [Before / after](#before--after) · [What we believe](#what-we-believe) · [How it works](#how-it-works) · [Status](#status-and-roadmap) · [FAQ](#faq) · [Design](docs/design/gradus-design.md)
 
-## The idea
+</div>
 
-Gradus organizes the rules agents must follow into a **pyramid of levels** (*gradus* is Latin for "step"), from the most general to the most specific — for example organization → team → project → developer. Every organization defines its own levels.
+> [!IMPORTANT]
+> **Gradus is in its design phase. Nothing is installable yet.** This README describes what we are building and why. Commands and outputs below are marked as *planned* or *illustrative*. The complete design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
 
-What Gradus focuses on is not just layering rules, but **governing** them:
+---
 
-- **Configurable levels**: each level can be local or fetched from a versioned remote source, locked or editable, with its own owners and approvers.
-- **Restriction invariant**: lower levels can restrict or specialize the levels above, never relax them, unless a rule explicitly allows it.
-- **Level charters**: each level states what belongs there and what does not.
-- **Conditional overlays**: cross-cutting rule sets (e.g. data protection, payments, a specific client, a tech stack) that apply only where they are relevant.
-- **Obligations and bindings**: a level can require an outcome (e.g. "an approved spec before code") and let teams choose the tool that satisfies it.
-- **Deterministic where possible**: rules that can be checked mechanically are enforced through hooks, git hooks and CI, reusing existing checkers instead of reinventing them.
-- **Learning loop**: repeated corrections become lessons, and lessons can be promoted to rules at the right level — always with human approval.
-- **Tool-agnostic**: built on open formats (Agent Skills, AGENTS.md, MCP) to work with as many coding agents as possible.
+## The Monday morning problem
 
-Gradus is meant to be useful for **a single developer with personal projects** and to grow, without changing tools, to teams, business units and the whole company.
+Five developers open the same repository. Five AI coding agents start working.
 
-## Planned components
+- Anna's agent reads her personal `CLAUDE.md`: *"commit when the task is done."*
+- Marco's agent reads his: *"never commit, I'll do it."*
+- Luca uses a different agent altogether, with its own rules file, written six months ago.
+- The company's data policy — *no real personal data in test fixtures* — lives in a PDF. No agent has ever read it.
+- The team agreed on naming conventions in a meeting. Nobody wrote them where an agent would see them.
 
-| Component | Purpose |
+By lunchtime, one agent has committed a fixture with a real customer e-mail address, another has renamed half a module to a convention nobody agreed on, and Marco has typed *"I told you NOT to commit"* for the third time this week.
+
+Nobody did anything wrong. **There was simply no single place where the rules lived, no order between them, and no way to check that they were followed.**
+
+That is the problem Gradus exists to solve.
+
+## The idea: a pyramid of rules
+
+*Gradus* is Latin for **step**. Gradus organizes the rules your agents follow into a pyramid of steps, from the most general to the most specific:
+
+```
+                          ▲
+                         org          data policy · security · certifications      🔒 locked
+                      ─────────
+                        team          conventions · naming · adopted workflows      🔒 locked
+                   ───────────────
+                      project         rules for this repository                     ✎ editable
+               ───────────────────────
+                        you           your habits and preferences                   ✎ editable
+
+        + overlays, only where they apply:   gdpr · payments · client-x · stack-python-fastapi
+```
+
+The levels are **yours to define**: a solo developer may have two, a large company six. Each level knows where it comes from, who owns it, who approves changes, and whether it can be edited locally.
+
+One rule holds the whole thing together:
+
+> **A lower step can make the rules stricter or more specific. It can never make them looser.**
+
+Your personal preferences can say *"use single quotes."* They cannot say *"real personal data in tests is fine."* If two levels contradict each other, Gradus does not guess: it stops and asks the person who owns the decision.
+
+## Before / after
+
+*Illustrative — this is the behavior Gradus is designed for.*
+
+**Without Gradus**
+
+```text
+agent › Task complete. I've committed the changes: "feat: add user import" (a3f9c21)
+you   › I told you NOT to commit on your own.
+agent › You're right, I apologize. I won't do it again.
+        ... (next session, it does it again)
+```
+
+**With Gradus**
+
+```text
+agent › Task complete. Ready to commit "feat: add user import".
+gradus › ✋ USER-GIT-001 (you · MUST · hook): commits require your explicit request.
+         Allow this commit? [y/N]
+
+$ gradusctl check --staged                                    # planned
+✗ ORG-SEC-004  MUST  tests/fixtures/users.json:3
+  Real e-mail address in a test fixture.
+  Level: org · Source: Internal data policy v3, §4.2
+  1 violation. Commit blocked.
+```
+
+The difference is not a better prompt. It is that the rule *"don't commit without asking"* became a **deterministic guard**, and the company's data policy became a **check that runs on every commit**, with the exact rule, level and source it came from.
+
+And when you repeat the same correction twice, Gradus notices and proposes to turn it into a rule — at the right level, and only with your approval.
+
+## What we believe
+
+These are the intents behind every design decision.
+
+| | |
 |---|---|
-| `spec/` | Open specification of the formats (pyramid, levels, rules, overlays, lockfile, evidence) |
-| `skills/` | Agent skills: onboarding, loading, authoring, review, learning, linking, reconciliation |
-| `gradusctl` | CLI that resolves, verifies and compiles the pyramid for each agent |
-| `adapters/` | Integrations with agent tools and development workflows |
-| `templates/`, `examples/` | Starting points to adapt — never a one-size-fits-all scheme |
+| **Rules belong to whoever is responsible for them.** | Security owns security rules. The team owns its conventions. You own your habits. Gradus keeps each rule where it belongs and remembers who decided it. |
+| **Determinism beats persuasion.** | Anything a machine can check is checked by a machine: hooks, permissions, git hooks, CI. Prompts are for everything else, written to reject the excuses agents typically make. |
+| **The agent proposes. People approve.** | Gradus never approves a rule, an exception or a change on its own — not even if you ask it to in chat. |
+| **One source of truth.** | Agent instruction files are generated from the pyramid. Edit them by hand and Gradus tells you, then helps you put the change where it belongs. |
+| **Your tools stay.** | Gradus is not another workflow framework. Use Walden, spec-kit, your linters, your hook manager, your CI. Gradus connects to them instead of replacing them. |
+| **Useful alone before useful at scale.** | A single developer with a personal project gets value on day one. The same setup grows to a team, a business unit, a company — without changing tools. |
+| **It governs rules and code, never people.** | Gradus does not monitor, measure or rank developers. No activity metrics, by design. |
+| **Honest about its limits.** | Two rules written in natural language can contradict each other in ways no program can prove. Gradus flags likely conflicts with a model and lets a human decide. It never pretends to certify anything. |
 
-## Roadmap
+## How it works
 
-1. **Phase 0** — personal repositories: core format, CLI basics, first skills (Claude Code and Antigravity, plus AGENTS.md for other agents).
-2. **Phase 1** — team: shared levels, charters, rule tests, CI checks.
-3. **Phase 2** — business unit: locked remote levels, lockfile, obligations and bindings.
-4. **Phase 3** — organization: overlays, compliance mappings, chat agents and MCP.
+### Two halves: judgment and enforcement
 
-## Contributing
+| Skills (judgment, inside your agent) | `gradusctl` (enforcement, deterministic) |
+|---|---|
+| Understand your repository and propose a first pyramid | Resolve levels, overlays and exceptions into one view |
+| Help you write rules at the right level | Verify integrity, versions and conflicts |
+| Review your changes against rules that need judgment | Run deterministic checks and existing scanners |
+| Notice repeated corrections and propose new rules | Guard agent actions through hooks |
+| Explain drift and offer ways to fix it | Record evidence for git hooks and CI |
 
-The project is in its design phase. Feedback and discussion are welcome through issues.
+### Three levels of guarantee
+
+| Level | What you get | Where |
+|---|---|---|
+| **1 · Instructions** | Every agent reads the same resolved rules | Any agent that reads `AGENTS.md` or skills |
+| **2 · In-session guards** | Dangerous actions are blocked or need confirmation | Agents with hooks and permissions (Claude Code, Antigravity first) |
+| **3 · Universal checks** | Nothing reaches your main branch without the same checks | Git hooks and CI, whatever agent wrote the code |
+
+Level 3 is the one that matters most: **it does not depend on which agent your colleagues happen to use.**
+
+### The learning loop
+
+```mermaid
+flowchart LR
+    A[You correct the agent] --> B[Gradus records a lesson]
+    B --> C{Seen twice, or you confirm?}
+    C -- no --> B
+    C -- yes --> D[Proposal at the right level]
+    D --> E{Approved by the owner?}
+    E -- yes --> F[New rule, guard or check]
+    E -- no --> G[Dismissed, not asked again]
+```
+
+Corrections stay on your machine. Only an approved rule enters a level.
+
+## What's inside
+
+| Capability | In one sentence | Phase |
+|---|---|---|
+| Configurable pyramid | Your levels, your names, local or fetched from versioned repositories | 0 |
+| Locked levels and lockfile | Shared levels are pinned and hashed; tampering is detected | 0 |
+| Restriction invariant | Lower levels can tighten, never loosen | 0 |
+| Agent guards | Hooks that block or confirm risky actions | 0 |
+| Universal checks | `verify` and `check` in git hooks and CI, reusing existing scanners | 0 |
+| Evidence | Configurable: local, CI artifact, repository or your own archive | 0 |
+| Learning loop | Repeated corrections become proposed rules | 0 |
+| Drift reconciliation | Hand edits detected, with options that match your permissions | 0 |
+| Semantic conflict check | A model flags rules that may contradict each other; you decide | 0 |
+| Charters | Each level states what belongs there and what does not | 1 |
+| Overlays | Cross-cutting rules (data protection, payments, a client, a stack) only where relevant | 1–3 |
+| Exceptions and break-glass | Time-limited, approved waivers; hotfix-style emergencies | 1 |
+| Obligations and bindings | "An approved spec before code" — satisfied with Walden in one team, spec-kit in another | 2 |
+| Declared toolchain | Skills and tools required, recommended or forbidden by a level | 2 |
+| Chat agents and MCP | The same rules outside the editor | 3 |
+
+## Who it's for
+
+- **You, alone.** Stop repeating the same corrections to your agent. Keep your personal rules in one place and have them applied in every project and every agent.
+- **Team leads.** Agree on conventions once and have every agent follow them, whoever's laptop it runs on.
+- **Platform, security and compliance teams.** Publish policies as versioned, locked levels. Get evidence of what was checked, against which version, on which commit.
+
+## What Gradus is not
+
+- **Not a spec-driven development framework.** Keep your own; Gradus binds to it.
+- **Not a rule-file synchronizer.** Generating files for each agent is a means, not the goal.
+- **Not a certification tool.** It helps you produce evidence; it does not certify compliance.
+- **Not a monitoring tool.** It will never measure people.
+- **Not a universal template.** Examples are starting points. Your organization is not anyone else's.
+
+## Which agents?
+
+The first targets are **Claude Code** and **Antigravity**, with full in-session guards, plus **`AGENTS.md`** so that every other agent that reads it gets the rules from day one. Codex, GitHub Copilot and OpenCode follow. Gradus is built on open formats — [Agent Skills](https://agentskills.io), [AGENTS.md](https://agents.md) and [MCP](https://modelcontextprotocol.io) — so that no team is forced to change agent to follow the rules.
+
+## Status and roadmap
+
+| Phase | Where it is proven | Focus |
+|---|---|---|
+| **0 · Personal** | The author's own repositories, real rules, both first-target agents | Core format, CLI, guards, checks, evidence, learning, drift |
+| **1 · Team** | A shared team level | Charters, overlays, exceptions, rule tests, CI action, onboarding handbook |
+| **2 · Business unit** | Locked remote levels across teams | Obligations, bindings to Walden and spec-kit, toolchain, readable changelogs |
+| **3 · Organization** | Company-wide policies | Conditional overlays, framework mapping, model policy, chat agents and MCP |
+
+**Today:** the design is complete and published. Implementation of Phase 0 is starting. The CLI will be written in Go and distributed as a single binary.
+
+## Planned interface
+
+*Planned — names and flags may change before the first release.*
+
+```bash
+gradusctl init        # set up the pyramid in this repository
+gradusctl resolve     # fetch, verify and merge every level into one view
+gradusctl compile     # generate instructions, skills and hooks for your agents
+gradusctl verify      # integrity, versions, conflicts, drift
+gradusctl check       # deterministic checks, e.g. on staged changes or in CI
+gradusctl explain ID  # where a rule comes from, who owns it, and why
+```
+
+| Skill | What it does |
+|---|---|
+| `gradus-onboard` | Reads your repository, git history and any documents you give it, shows where developers diverge, and drafts a first pyramid |
+| `gradus-author` | Helps you write a rule at the right level, with the excuses it must reject and examples to test it |
+| `gradus-review` | Reviews staged changes against the rules, citing rule, level and source |
+| `gradus-learn` | Turns repeated corrections into lessons, and lessons into proposed rules |
+| `gradus-reconcile` | Explains drift and offers the fixes your permissions allow |
+| `gradus-conflicts` | Flags rules that may contradict each other, for a human to decide |
+
+## FAQ
+
+**Why not just a good `CLAUDE.md` or `AGENTS.md`?**
+For one person and one agent, that is often enough. Gradus starts to matter when rules come from several owners, live in several tools, must be enforced rather than suggested, and must be provably followed. It still generates those files — they just stop being the place where rules are decided.
+
+**Does it replace Walden, spec-kit or my linters?**
+No. It tells your agents to use them where your organization requires it, and checks that they were used.
+
+**Will it monitor my developers?**
+No. It records what was checked on code and commits, not what people did. This is a design principle, not a setting.
+
+**Do I need a server?**
+No. Everything runs locally and in your existing CI. Shared levels are ordinary git repositories.
+
+**Can an agent just switch Gradus off?**
+It is designed not to be able to do so silently: edits to the configuration and to the hooks that run Gradus require confirmation, and the same checks run again in CI.
+
+**What if two rules contradict each other?**
+Structural contradictions are detected deterministically and block until someone with authority decides. Contradictions in plain language are flagged by a model as *suspected*; a person confirms or dismisses them.
+
+**Why "Gradus"?**
+*Gradus ad Parnassum* — "steps to Parnassus" — is the classic method of learning something difficult one step at a time. That is how we think rules for agents should be built, and how we think teams should adopt them.
+
+## Learn more
+
+- [Design document](docs/design/gradus-design.md) — the complete design: concepts, specification, resolution algorithm, enforcement, decisions.
+- Issues and discussions are welcome: the design is public precisely so it can be challenged before the code exists.
 
 ## License
 
-Licensed under the [Apache License 2.0](LICENSE).
+[Apache 2.0](LICENSE). Use it, fork it, adapt it to your own pyramid.
+
+Gradus is an independent project, not affiliated with Anthropic, Google, OpenAI, GitHub or any other agent vendor. Product names are trademarks of their respective owners.
