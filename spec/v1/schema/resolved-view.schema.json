@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/resolved-view.schema.json",
+  "title": "Gradus Resolved View",
+  "type": "object",
+  "required": ["schema", "view_hash", "scope", "levels", "rules", "conflicts", "exceptions"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "const": "gradus/v1" },
+    "view_hash": { "type": "string" },
+    "lock_hash": { "type": "string" },
+    "scope": {
+      "type": "object",
+      "required": ["repository", "includes_user_level"],
+      "properties": {
+        "repository": { "type": "string" },
+        "path": { "type": ["string", "null"] },
+        "includes_user_level": { "type": "boolean" }
+      }
+    },
+    "levels": { "type": "array" },
+    "overlays": { "type": "array" },
+    "profile": { "type": "object" },
+    "rules": { "type": "array" },
+    "conflicts": { "type": "array" },
+    "exceptions": { "type": "array" },
+    "budget": { "type": "object" }
+  }
+}

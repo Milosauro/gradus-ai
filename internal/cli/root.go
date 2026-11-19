@@ -2,7 +2,9 @@ package cli
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -16,6 +18,23 @@ const (
 	ExitViolation = 1
 	ExitError     = 2
 )
+
+// ExitErrorWithCode carries an explicit CLI exit code alongside an error message.
+type ExitErrorWithCode struct {
+	Code int
+	Err  error
+}
+
+func (e *ExitErrorWithCode) Error() string {
+	if e.Err == nil {
+		return fmt.Sprintf("exit code %d", e.Code)
+	}
+	return e.Err.Error()
+}
+
+func (e *ExitErrorWithCode) Unwrap() error {
+	return e.Err
+}
 
 // NewRootCmd builds the root cobra command for gradusctl.
 func NewRootCmd() *cobra.Command {
@@ -34,16 +53,38 @@ guards actions, verifies lockfiles, and compiles target agent instructions.`,
 	rootCmd.PersistentFlags().BoolVar(&jsonOutput, "json", false, "Emit structured machine-readable JSON")
 
 	rootCmd.AddCommand(newVersionCmd(&jsonOutput))
+	rootCmd.AddCommand(newInitCmd(&jsonOutput))
+	rootCmd.AddCommand(newExplainCmd(&jsonOutput))
 
 	return rootCmd
 }
 
+// ExecuteCode runs the CLI with the given arguments and streams, returning the exit code (0, 1, or 2).
+func ExecuteCode(args []string, stdout, stderr io.Writer) int {
+	cmd := NewRootCmd()
+	cmd.SetArgs(args)
+	cmd.SetOut(stdout)
+	cmd.SetErr(stderr)
+
+	if err := cmd.Execute(); err != nil {
+		var coded *ExitErrorWithCode
+		if errors.As(err, &coded) {
+			if coded.Err != nil {
+				fmt.Fprintf(stderr, "Error: %v\n", coded.Err)
+			}
+			return coded.Code
+		}
+		fmt.Fprintf(stderr, "Error: %v\n", err)
+		return ExitError
+	}
+	return ExitPass
+}
+
 // Execute runs the root command and exits with the standard exit code.
 func Execute() {
-	cmd := NewRootCmd()
-	if err := cmd.Execute(); err != nil {
-		fmt.Fprintf(cmd.ErrOrStderr(), "Error: %v\n", err)
-		os.Exit(ExitError)
+	code := ExecuteCode(os.Args[1:], os.Stdout, os.Stderr)
+	if code != ExitPass {
+		os.Exit(code)
 	}
 }
 

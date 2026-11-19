@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/level.schema.json",
+  "title": "Gradus Level Definition (level.yaml)",
+  "type": "object",
+  "required": ["schema", "id"],
+  "additionalProperties": true,
+  "properties": {
+    "schema": { "type": "string", "const": "gradus/v1" },
+    "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "version": { "type": "string" },
+    "owners": { "type": "array", "items": { "type": "string" } },
+    "approvers": { "type": "array", "items": { "type": "string" } },
+    "charter": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "purpose": { "type": "string" },
+        "includes": { "type": "array", "items": { "type": "string" } },
+        "excludes": { "type": "array", "items": { "type": "string" } },
+        "examples_in": { "type": "array", "items": { "type": "string" } },
+        "examples_out": { "type": "array", "items": { "type": "string" } },
+        "allowed_severities": {
+          "type": "array",
+          "items": { "type": "string", "enum": ["MUST", "SHOULD", "MAY"] }
+        },
+        "review_cadence": { "type": "string" }
+      }
+    },
+    "constraints": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "require_levels": { "type": "array", "items": { "type": "string" } },
+        "max_extra_levels": { "type": "integer", "minimum": 0 },
+        "allowed_overlays": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "activation_rules": { "type": "array" },
+    "exceptions": {
+      "type": "object",
+      "properties": {
+        "max_duration": { "type": "string" },
+        "approvers": { "type": "array", "items": { "type": "string" } },
+        "break_glass": { "type": "boolean" }
+      }
+    }
+  }
+}

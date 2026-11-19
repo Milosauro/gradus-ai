@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://gradus.ai/spec/v1/rule-frontmatter.schema.json",
+  "title": "Gradus Rule Frontmatter",
+  "type": "object",
+  "required": ["id", "title", "severity"],
+  "additionalProperties": true,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$" },
+    "title": { "type": "string", "minLength": 1 },
+    "severity": { "type": "string", "enum": ["MUST", "SHOULD", "MAY"] },
+    "enforcement": {
+      "type": "string",
+      "enum": ["prompt", "review", "check", "hook", "permission"],
+      "default": "prompt"
+    },
+    "scope": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": ["**/*"]
+    },
+    "overrides": { "type": "string" },
+    "overridable": { "type": ["boolean", "object"] },
+    "applies_when": { "type": "object" },
+    "source": { "type": "string" },
+    "controls": { "type": "array", "items": { "type": "string" } },
+    "owner": { "type": "string" },
+    "status": {
+      "type": "string",
+      "enum": ["draft", "active", "deprecated", "retired"],
+      "default": "active"
+    },
+    "review_by": { "type": "string" },
+    "checker": {
+      "type": "object",
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string" },
+        "config": { "type": "string" }
+      }
+    },
+    "guard": {
+      "type": "object",
+      "required": ["action", "pattern", "decision"],
+      "properties": {
+        "action": { "type": "string" },
+        "pattern": { "type": "string" },
+        "decision": { "type": "string", "enum": ["deny", "ask"] }
+      }
+    },
+    "tags": { "type": "array", "items": { "type": "string" } },
+    "version": { "type": "integer", "minimum": 1 }
+  }
+}

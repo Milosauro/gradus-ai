@@ -3,6 +3,7 @@ package cli_test
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"strings"
 	"testing"
 
@@ -42,5 +43,21 @@ func TestVersionCommandJSON(t *testing.T) {
 	}
 	if info.Version == "" {
 		t.Fatalf("expected non-empty version in JSON output")
+	}
+}
+
+func TestExitErrorWithCode(t *testing.T) {
+	err := &cli.ExitErrorWithCode{Code: cli.ExitError, Err: errors.New("boom")}
+	if err.Error() != "boom" {
+		t.Fatalf("expected error message 'boom', got %q", err.Error())
+	}
+
+	var stdout, stderr bytes.Buffer
+	code := cli.ExecuteCode([]string{"unknown-subcommand"}, &stdout, &stderr)
+	if code != cli.ExitError {
+		t.Fatalf("expected unknown command to return exit code %d, got %d", cli.ExitError, code)
+	}
+	if !strings.Contains(stderr.String(), "Error:") {
+		t.Fatalf("expected error output on stderr, got %q", stderr.String())
 	}
 }
