@@ -3,6 +3,7 @@ package cli_test
 import (
 	"bytes"
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/Milosauro/gradus-ai/internal/cli"
@@ -18,6 +19,11 @@ func TestVersionCommandText(t *testing.T) {
 	if err := cmd.Execute(); err != nil {
 		t.Fatalf("expected command execution to succeed, got: %v", err)
 	}
+
+	out := buf.String()
+	if !strings.Contains(out, "gradusctl ") {
+		t.Fatalf("expected output to contain 'gradusctl ', got: %q", out)
+	}
 }
 
 func TestVersionCommandJSON(t *testing.T) {
@@ -31,9 +37,10 @@ func TestVersionCommandJSON(t *testing.T) {
 	}
 
 	var info version.Info
-	if err := json.Unmarshal(buf.Bytes(), &info); err == nil {
-		if info.Version == "" {
-			t.Fatalf("expected non-empty version in JSON output")
-		}
+	if err := json.Unmarshal(buf.Bytes(), &info); err != nil {
+		t.Fatalf("expected valid JSON output, got unmarshal error: %v (raw: %q)", err, buf.String())
+	}
+	if info.Version == "" {
+		t.Fatalf("expected non-empty version in JSON output")
 	}
 }

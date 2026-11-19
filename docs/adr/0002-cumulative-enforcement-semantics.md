@@ -21,7 +21,7 @@ There was a potential ambiguity regarding whether declaring `enforcement: check`
 
 Chosen approach: **Cumulative Enforcement Semantics toward instruction generation**.
 
-1. Every active rule in the resolved view is included in compiled agent instruction files (`AGENTS.md`, `CLAUDE.md`, `.agents/rules/`), regardless of its `enforcement` level. Prompt guidance is the universal base layer (Principio P3).
+1. Every active rule in the resolved view is included in compiled agent instruction files (`AGENTS.md`, `CLAUDE.md`, `.agents/rules/`), regardless of its `enforcement` level. Prompt guidance is the universal base layer (Principle P3).
 2. The `enforcement` frontmatter field specifies the highest deterministic tier applied to the rule:
    - `prompt`: Informative instruction only.
    - `review`: Evaluated during advisory semantic review (`gradus-review`).

@@ -13,8 +13,8 @@ During the initial development phase, security updates are applied to the active
 
 If you discover a security issue or vulnerability in **Gradus**, please do **NOT** open a public issue on GitHub.
 
-Instead, please send a private report to:
-- **Email:** `security@gradus.ai` (or via private GitHub Security Advisory on `github.com/Milosauro/gradus-ai/security/advisories/new`)
+Instead, please send a private report via GitHub Private Security Advisories:
+- `https://github.com/Milosauro/gradus-ai/security/advisories/new`
 
 Please include in your report:
 - A description of the vulnerability.

@@ -1,24 +1,16 @@
 run:
   timeout: 5m
   tests: true
-  modules-download-mode: readonly
-
-output:
-  formats:
-    - format: colored-line-number
 
 linters-settings:
   govet:
     enable-all: true
+    disable:
+      - fieldalignment
   gocyclo:
     min-complexity: 15
-  maligned:
-    suggest-new: true
-  dupl:
-    threshold: 100
-  goconst:
-    min-len: 2
-    min-occurrences: 3
+  misspell:
+    locale: US
 
 linters:
   enable:
@@ -26,7 +18,5 @@ linters:
     - errcheck
     - staticcheck
     - unused
-    - gosimple
     - ineffassign
-    - typecheck
     - misspell
