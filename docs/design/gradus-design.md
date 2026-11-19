@@ -930,7 +930,7 @@ Phase 0 is validated on a **real project of the author**, with real rules, in bo
 | Domain | To be chosen (`gradus.dev` is in use) |
 | Trademark | No evident conflict in developer software; a full search on EUIPO/TMview and WIPO (classes 9 and 42) is pending |
 | License | Apache-2.0 |
-| Repository structure | Monorepo: `spec/`, `skills/`, `cli/`, `adapters/`, `templates/`, `examples/`, `evals/`, `docs/` |
+| Repository structure | Monorepo: `spec/`, `skills/`, `cmd/gradusctl/`, `internal/`, `adapters/`, `templates/`, `examples/`, `evals/`, `docs/` |
 | Documentation | English canonical; Italian translations non-normative |
 
 ## 27. Open items

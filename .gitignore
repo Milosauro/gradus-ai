@@ -1,0 +1,26 @@
+# Binaries and build outputs
+/gradusctl
+/dist/
+bin/
+
+# Go test and coverage artifacts
+*.test
+*.out
+coverage.html
+
+# Gradus runtime cache and local evidence
+.gradus/cache/
+.gradus/evidence/
+
+# Agent user-level generated files (local habits, not committed)
+CLAUDE.local.md
+.agents/rules/gradus-user-*.md
+
+# Operating System files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
