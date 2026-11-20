@@ -6,16 +6,40 @@
 
 **Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-[![Status: design phase](https://img.shields.io/badge/status-design%20phase-orange?style=flat-square)](docs/design/gradus-design.md)
+[![Status: Phase 0 MVP v0.1.0](https://img.shields.io/badge/status-Phase%200%20MVP%20v0.1.0-brightgreen?style=flat-square)](docs/design/gradus-design.md)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Agents: Claude Code · Antigravity · AGENTS.md](https://img.shields.io/badge/first%20targets-Claude%20Code%20·%20Antigravity%20·%20AGENTS.md-555?style=flat-square)](#which-agents)
 
-[The problem](#the-monday-morning-problem) · [The idea](#the-idea-a-pyramid-of-rules) · [Before / after](#before--after) · [What we believe](#what-we-believe) · [How it works](#how-it-works) · [Status](#status-and-roadmap) · [FAQ](#faq) · [Design](docs/design/gradus-design.md)
+[Quick start](#quick-start-personal-setup) · [The problem](#the-monday-morning-problem) · [The idea](#the-idea-a-pyramid-of-rules) · [Before / after](#before--after) · [What we believe](#what-we-believe) · [How it works](#how-it-works) · [Status](#status-and-roadmap) · [FAQ](#faq) · [Design](docs/design/gradus-design.md)
 
 </div>
 
-> [!IMPORTANT]
-> **Gradus is in its design phase. Nothing is installable yet.** This README describes what we are building and why. Commands and outputs below are marked as *planned* or *illustrative*. The complete design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+> [!NOTE]
+> **Phase 0 MVP (`v0.1.0`) is available.** Install `gradusctl` as a single static binary and govern any repository with Claude Code, Antigravity, and `AGENTS.md`. The full design specification lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+
+## Quick Start (Personal Setup)
+
+Install `gradusctl` with Go (or download a signed binary from GitHub Releases):
+
+```bash
+go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.1.0
+```
+
+Initialize Gradus in your repository, resolve your pyramid, compile target agent instructions/hooks/skills, and verify integrity:
+
+```bash
+gradusctl init
+gradusctl resolve --write
+gradusctl compile
+gradusctl verify
+```
+
+To run deterministic code checks on staged changes or install git pre-commit hooks:
+
+```bash
+gradusctl check --staged
+gradusctl hooks install
+```
 
 ---
 
