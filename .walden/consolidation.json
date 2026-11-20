@@ -2,10 +2,50 @@
   "schema": "consolidation/v1",
   "started_at": "2026-11-20T08:35:58Z",
   "checkpoint": {
-    "at": "2026-11-20T08:50:33Z",
-    "view_fingerprint": "sha256:d159228209801f61eb7ad4b1e605de72a53b27652823541320e93aa35db73f8e"
+    "at": "2026-11-20T11:46:40Z",
+    "view_fingerprint": "sha256:75806795499440fe1b838a727839a6dd89e38f08a69a10d1ebbb2d7855c5e42b"
   },
   "features": {
+    "agent-compilers": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:d50c71049f40a7a8059bf4c0793319f121edf2c5e5564b5217c8be7fbb181021",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "R4.AC1",
+        "R4.AC2",
+        "R4.AC3",
+        "NFR1",
+        "NFR2",
+        "NFR3",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Builds on `internal/resolve` (`F2`) and `skills/embed.go` (`Wave 0B`).",
+        "C2": "Implements ADR 0002 (all active rules in compiled instructions) and ADR 0003 (static hook dispatchers).",
+        "NFR1": "**Idempotency \u0026 Determinism (E1):** Output ordering (levels, rules, JSON keys) MUST be deterministic so consecutive `compile` runs produce zero diff across OSes.",
+        "NFR2": "**Zero External Packaging Dependencies:** Skills are embedded via `go:embed` (`skills/embed.go`) with zero Node/npm runtime requirement.",
+        "NFR3": "**Exit Code Semantics (D-73):** `0` = compiled cleanly, `1` = blocking conflicts prevented compilation, `2` = configuration/lock/I/O error.",
+        "R1.AC1": "WHEN `internal/compile` updates a shared Markdown file (`AGENTS.md` or `CLAUDE.md`), the system SHALL insert or replace content strictly between `\u003c!-- gradus:begin view_hash=... --\u003e` and `\u003c!-- gradus:end --\u003e` markers while preserving all surrounding human-written content.",
+        "R1.AC2": "WHEN `agents-md` is configured in `targets`, the system SHALL render all active project-wide rules (excluding `user`-level rules) in pyramid order with rule ID, severity, provenance, text, and rejected rationalizations inside `AGENTS.md` (ADR 0002).",
+        "R2.AC1": "WHEN `claude-code` is configured in `targets`, the system SHALL generate a `CLAUDE.md` managed section, scoped `.claude/rules/gradus-*.md` files with `paths` frontmatter for non-global rules, and `CLAUDE.local.md` for `user`-level rules.",
+        "R2.AC2": "WHEN `claude-code` is configured in `targets`, the system SHALL generate or merge `.claude/settings.json` with static `PreToolUse` (`gradusctl guard`) and `SessionStart` (`gradusctl status --brief`) hook dispatchers (ADR 0003) plus `permissions.deny`/`permissions.ask` entries for project `permission` rules without removing unrelated user settings.",
+        "R2.AC3": "WHEN `claude-code` is configured in `targets`, the system SHALL extract embedded Gradus skills from `skills/embed.go` into `.claude/skills/gradus-*/SKILL.md`.",
+        "R3.AC1": "WHEN `antigravity` is configured in `targets`, the system SHALL generate an `AGENTS.md` managed section, project rule files under `.agents/rules/gradus-*.md`, and user-level rule files under `.agents/rules/gradus-user-*.md` with trigger frontmatter (`trigger: always_on` for global `**/*` rules, `trigger: glob` with `globs` for scoped rules).",
+        "R3.AC2": "The system SHALL split generated `.agents/rules/gradus-*.md` files whenever appending the next rule would exceed `11,500` characters, ensuring every generated file stays strictly below `12,000` characters (E1).",
+        "R3.AC3": "WHEN `antigravity` is configured in `targets`, the system SHALL generate or merge `.agents/hooks.json` with static `PreToolUse` (`gradusctl guard`) and `SessionStart` (`gradusctl status --brief`) dispatchers (ADR 0003) and extract embedded Gradus skills into `.agents/skills/gradus-*/SKILL.md`.",
+        "R4.AC1": "WHEN `gradusctl compile` runs on a conflict-free pyramid, the system SHALL write all target outputs deterministically such that a second consecutive run produces zero byte differences on disk (E1), and exit with code `0`.",
+        "R4.AC2": "IF the resolved pyramid contains one or more blocking conflicts, THEN `gradusctl compile` SHALL leave existing target files untouched and exit with code `1`.",
+        "R4.AC3": "IF configuration, lockfile verification, or source resolution fails, THEN `gradusctl compile` SHALL report the error to stderr and exit with code `2`."
+      }
+    },
     "core-schema-init": {
       "state": "consolidated",
       "requirements_fingerprint": "sha256:660f966777e8e9aed853659fb6d02260dd3245f9ba3395ed9726bd35629cc63c",
@@ -102,6 +142,88 @@
         "R4.AC1": "WHEN `gradusctl resolve` runs on a conflict-free pyramid, the system SHALL emit the resolved view (including `view_hash`, `lock_hash`, `levels`, `overlays`, `rules`, `conflicts`, `exceptions`, and `budget`) as text or `--json` and exit with code `0`.",
         "R4.AC2": "WHEN `gradusctl resolve` detects one or more blocking conflicts, the system SHALL still emit the resolved view with `conflicts` populated and exit with code `1`.",
         "R4.AC3": "WHEN `gradusctl status` or `gradusctl status --brief` runs in a Gradus repository, the system SHALL report lock state, conflict count, and pending lesson count in text or `--json` without making network calls."
+      }
+    },
+    "runtime-guard": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:9e7207caba6ad3c1e4c76a31e10c78a6efe997c064b7c3eaa81cf68344808ee6",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R2.AC1",
+        "R2.AC2",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "R4.AC1",
+        "R4.AC2",
+        "NFR1",
+        "NFR2",
+        "NFR3",
+        "C1",
+        "C2",
+        "C3"
+      ],
+      "statements": {
+        "C1": "Must use only approved dependencies (`github.com/spf13/cobra`, `github.com/bmatcuk/doublestar/v4`, and Go standard library) and build with `CGO_ENABLED=0`.",
+        "C2": "Must reuse `internal/resolve` (with `IncludeUser: true` and `OfflineOnly: true`) and `internal/schema` rather than duplicating pyramid or rule parsing logic.",
+        "C3": "Must preserve ADR 0003: `.agents/hooks.json` and `.claude/settings.json` remain static dispatchers invoking `gradusctl guard`.",
+        "NFR1": "**Latency Budget:** Evaluating a typical local pyramid with `gradusctl guard` must complete in `\u003c 100ms` (excluding cold OS process startup in CI containers) with zero network I/O.",
+        "NFR2": "**Cross-Platform Path Safety:** Protected governance path matching must normalize Windows backslashes (`\\`) and absolute paths rooted inside the workspace into clean relative slash paths so anti-tamper cannot be bypassed via `.\\gradus.yaml`, `./gradus.yaml`, or absolute workspace paths.",
+        "NFR3": "**Fail-Closed Technical Safety:** Configuration errors, lock tampering, or malformed hook payloads must return exit code `2` and never silently pass as `allow`.",
+        "R1.AC1": "WHEN `gradusctl guard` receives a valid Claude Code `PreToolUse` JSON payload on `stdin` (such as `Bash`, `Edit`, `Write`, or `MultiEdit` with `tool_input`), the system SHALL normalize the invocation into a canonical action class (`command` or `write`) and target string (shell command or normalized slash-separated path).",
+        "R1.AC2": "WHEN `gradusctl guard` receives a valid Antigravity `PreToolUse` JSON payload on `stdin` (such as `run_command`, `write_to_file`, `replace_file_content`, or `multi_replace_file_content` with `tool_input`), the system SHALL normalize the invocation into the same canonical action class (`command` or `write`) and target string.",
+        "R1.AC3": "WHEN `stdin` is empty, malformed JSON, or missing required tool identification, the system SHALL fail closed with exit code `2` and an actionable diagnostic error rather than returning `allow`.",
+        "R2.AC1": "WHEN a file-writing or file-editing tool targets any protected governance path (`gradus.yaml`, `gradus.lock`, `.gradus/**`, `.walden/**`, `.agents/hooks.json`, or `.claude/settings.json`), the system SHALL require at least `ask` (explicit human confirmation) even when no explicit user or project hook rule matches the path.",
+        "R2.AC2": "WHEN both built-in anti-tamper (`ask`) and an explicit `enforcement: hook` rule with `decision: deny` match the same governance target, the system SHALL resolve the decision to `deny`.",
+        "R3.AC1": "WHEN evaluating a normalized tool invocation against the local resolved view, the system SHALL load the repository pyramid together with `~/.gradus/levels/user` (when present) using local files/cache only and zero network calls.",
+        "R3.AC2": "WHEN evaluating active, non-waived `enforcement: hook` rules, the system SHALL match `guard.action` (`command`/`bash` against shell commands, `write`/`edit` against file paths), `guard.pattern` (regular expression for commands; doublestar glob or regex for paths), and rule `scope` (when a target file path is known).",
+        "R3.AC3": "WHEN multiple hook rules or built-in anti-tamper match the same invocation, the system SHALL combine decisions using strict precedence `deny \u003e ask \u003e allow` and report all matched rule IDs and reasons.",
+        "R4.AC1": "WHEN `gradusctl guard` completes evaluation, the system SHALL output a JSON payload containing `decision` (`allow` | `ask` | `deny`), `reason`, `matched_rules`, `anti_tamper`, and a `hookSpecificOutput` block (`hookEventName: \"PreToolUse\"`, `permissionDecision`, `permissionDecisionReason`).",
+        "R4.AC2": "WHEN `gradusctl guard` exits, the system SHALL return exit code `0` for `allow` or `ask`, exit code `1` for `deny`, and exit code `2` for technical errors (malformed payload, invalid regex pattern, unreadable/invalid configuration, or lock tamper)."
+      }
+    },
+    "verify-check-evidence": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:dbd6945d30689f079b80581f0d2bfed47321988dfd925c8c6273b26fc2161fd5",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R2.AC4",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "R4.AC1",
+        "R4.AC2",
+        "NFR1",
+        "NFR2",
+        "NFR3",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Builds on `internal/resolve` (`F2`), `internal/compile.PlanCompile` (`F3`), and `github.com/bmatcuk/doublestar/v4`.",
+        "C2": "Implements `gradus-design.md` §9.9, §11.4, §11.5, §12, and D-71/D-72/D-73.",
+        "NFR1": "**No Error-as-Pass Guarantee (D-73):** Missing checkers, broken git diff commands, or invalid lockfiles MUST return exit code `2`, never `0`.",
+        "NFR2": "**Subprocess Safety (`os/exec`):** All `git diff`, external checker, and `command` sink invocations MUST use `os/exec` with zero shell interpolation unless explicitly configured in `command` sink.",
+        "NFR3": "**Zero Personal Metrics (P16):** Evidence records MUST contain no user-activity tracking beyond standard git commit metadata.",
+        "R1.AC1": "WHEN `gradusctl verify` runs on a valid, conflict-free pyramid whose `gradus.lock` matches locked levels and whose compiled target files match `PlanCompile` byte-for-byte, the system SHALL exit with code `0`.",
+        "R1.AC2": "IF the pyramid has blocking conflicts, expired exceptions, OR any compiled target file on disk differs from `PlanCompile` (drift), THEN `gradusctl verify` SHALL report each finding with file/rule context and exit with code `1`.",
+        "R1.AC3": "IF `gradus.yaml` is invalid, `gradus.lock` is missing or mismatches a `locked: true` level, OR a `fail-closed` source is unreachable, THEN `gradusctl verify` SHALL report the error and exit with code `2`.",
+        "R2.AC1": "WHEN `gradusctl check` runs with `--staged` or `--base \u003cref\u003e`, the system SHALL determine changed files in scope using `git diff` via `os/exec` and filter rules with `enforcement: check` whose `scope` globs match the changed files (skipping waived rules).",
+        "R2.AC2": "WHEN a matching `check` rule uses the built-in pattern checker (`checker.name: pattern` or `regex`), the system SHALL scan the changed files and report any match with rule ID, severity, level, source, file path, and line number, exiting with code `1`.",
+        "R2.AC3": "WHEN a matching `check` rule specifies an external checker (`checker.name` such as `gitleaks`, `semgrep`, or a custom binary), the system SHALL invoke the external checker on the scoped files and map non-zero violation exits to `1`.",
+        "R2.AC4": "IF a configured external checker binary is missing from `PATH` OR exits with an execution/configuration error, THEN `gradusctl check` SHALL fail with exit code `2` and NEVER report a pass.",
+        "R3.AC1": "The system SHALL produce evidence records conforming to `spec/v1/schema/evidence.schema.json` (`schema: gradus/v1`, `id`, `kind`, `timestamp`, `commit`, `lock_hash`, `view_hash`, `producer`, `findings`, `verdict`) with zero personal activity metrics (P16).",
+        "R3.AC2": "WHEN writing evidence, the system SHALL support all 5 sink types (`none`, `local` in `.gradus/evidence/`, `ci-artifact` directory, `repo` committed path, and `command` piped via stdin), selecting `evidence.ci.sinks` when `CI` is set if configured.",
+        "R3.AC3": "WHEN `gradusctl evidence list` or `gradusctl evidence write` runs, the system SHALL list local `.gradus/evidence/*.json` records (pruning expired records past retention) or write an evidence record to configured sinks.",
+        "R4.AC1": "WHEN `gradusctl hooks` runs with `hooks.manager: auto`, the system SHALL detect `.pre-commit-config.yaml` (`pre-commit`), `lefthook.yml` (`lefthook`), `.husky/` (`husky`), or fall back to `native` (`.githooks/`) in that order.",
+        "R4.AC2": "WHEN `gradusctl hooks print` or `gradusctl hooks install` runs, the system SHALL emit the manager-specific configuration snippet running `gradusctl verify` and `gradusctl check --staged`, and with `install` write/update the hook config (requiring explicit `--native` consent before modifying `core.hooksPath`)."
       }
     }
   }
