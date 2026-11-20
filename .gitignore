@@ -11,6 +11,7 @@ coverage.html
 # Gradus runtime cache and local evidence
 .gradus/cache/
 .gradus/evidence/
+.gradus/ci-artifacts/
 
 # Agent user-level generated files (local habits, not committed)
 CLAUDE.local.md

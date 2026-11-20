@@ -1,0 +1,23 @@
+schema: gradus/v1
+
+levels:
+  - id: project
+    source:
+      path: .gradus/levels/project
+
+targets:
+  - claude-code
+  - antigravity
+  - agents-md
+
+hooks:
+  manager: auto
+
+evidence:
+  sinks:
+    - type: local
+      retention: 30d
+  ci:
+    sinks:
+      - type: ci-artifact
+        path: .gradus/ci-artifacts

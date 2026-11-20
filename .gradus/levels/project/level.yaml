@@ -1,0 +1,14 @@
+schema: gradus/v1
+id: project
+version: "0.1.0"
+charter:
+  purpose: Project-level governance rules for developing gradus-ai itself (Stage 1 dogfooding).
+  includes:
+    - Repository language policy (canonical English)
+    - Go static build and os/exec Git constraints
+    - GitHub Actions SHA pinning
+    - Runtime confirmation guard for git commit and push
+  allowed_severities:
+    - MUST
+    - SHOULD
+    - MAY

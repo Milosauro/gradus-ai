@@ -114,10 +114,8 @@ func chunkScopedGroups(files map[string][]byte, baseDir, filePrefix string, grou
 	for _, k := range keys {
 		rules := groups[k]
 		var fm strings.Builder
-		fm.WriteString("---\ntrigger: glob\nglobs:\n")
-		for _, g := range rules[0].Scope {
-			fmt.Fprintf(&fm, "  - %q\n", g)
-		}
+		fm.WriteString("---\ntrigger: glob\n")
+		fmt.Fprintf(&fm, "globs: %q\n", strings.Join(rules[0].Scope, ", "))
 		fm.WriteString("---\n\n")
 		header := fm.String()
 
