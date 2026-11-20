@@ -1,0 +1,84 @@
+scenarios:
+  - id: BENCH-01
+    title: Confirm before git commit via PreToolUse hook
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain AGENTS.md/CLAUDE.md relies on prompt compliance without a deterministic hook gate.
+    gradus_mechanism: gradusctl guard evaluates PreToolUse payload and returns decision ask.
+
+  - id: BENCH-02
+    title: Built-in anti-tamper protection on governance and hook configs
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files cannot intercept writes to .claude/settings.json or .agents/hooks.json.
+    gradus_mechanism: gradusctl guard enforces anti_tamper ask floor on protected governance paths.
+
+  - id: BENCH-03
+    title: Block destructive rm -rf command via PreToolUse deny hook
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files have no runtime command blocker.
+    gradus_mechanism: gradusctl guard matches deny hook rule and exits with code 1.
+
+  - id: BENCH-04
+    title: Deterministic pattern check detects forbidden dependency/pattern
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files do not scan repository files deterministically.
+    gradus_mechanism: gradusctl check scans scoped files and reports rule ID, path, line, and exit code 1.
+
+  - id: BENCH-05
+    title: Fail-closed exit 2 when configured external checker binary is missing
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files cannot enforce error-never-passes semantics.
+    gradus_mechanism: gradusctl check returns exit code 2 when an external checker is absent.
+
+  - id: BENCH-06
+    title: Detect tampered locked team level via gradus.lock hash verification
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files have no cryptographic lockfile integrity check.
+    gradus_mechanism: gradusctl verify detects lock integrity mismatch and exits with code 2.
+
+  - id: BENCH-07
+    title: Detect manual drift in compiled AGENTS.md / CLAUDE.md
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files do not detect out-of-sync edits against source rules.
+    gradus_mechanism: gradusctl verify detects byte-level drift against PlanCompile and exits with code 1.
+
+  - id: BENCH-08
+    title: Enforce P2 restriction invariant blocking lower-level relaxation
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files silently allow conflicting lower-level overrides.
+    gradus_mechanism: gradusctl resolve flags invalid overrides and exits with code 1.
+
+  - id: BENCH-09
+    title: Idempotent compilation and Antigravity <12,000-char rule splitting
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Hand-maintained instruction files drift and can exceed Antigravity's 12,000-char limit.
+    gradus_mechanism: gradusctl compile splits Antigravity files <11,500 chars and produces zero diff on re-run.
+
+  - id: BENCH-10
+    title: Redact API tokens and email addresses before persisting lessons
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files provide no automated secret/PII redaction layer.
+    gradus_mechanism: gradusctl lessons add replaces secrets and emails with [REDACTED] before disk write.
+
+  - id: BENCH-11
+    title: Refuse moving drift rules into locked levels during reconciliation
+    category: deterministic
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files cannot prevent edits to locked governance tiers.
+    gradus_mechanism: "gradusctl reconcile --move refuses locked: true levels with exit code 2."
+
+  - id: BENCH-12
+    title: Advisory prompt guidance rendered into target instruction files
+    category: advisory
+    targets: [claude-code, antigravity]
+    baseline_note: Plain instruction files include prompt guidance directly.
+    gradus_mechanism: gradusctl compile renders prompt rules with provenance, why, and rejected rationalizations.
