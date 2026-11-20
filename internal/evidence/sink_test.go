@@ -30,7 +30,7 @@ func TestEvidenceSinks(t *testing.T) {
 	cmdOutFile := filepath.Join(tmp, "cmd-sink.json")
 	sinkCmd := "cat > cmd-sink.json"
 	if runtime.GOOS == "windows" {
-		sinkCmd = `findstr "^" > cmd-sink.json`
+		sinkCmd = `findstr /R ".*" > cmd-sink.json`
 	}
 	cfg := &schema.EvidenceConfig{
 		Sinks: []schema.SinkConfig{
