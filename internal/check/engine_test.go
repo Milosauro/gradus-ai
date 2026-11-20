@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -90,8 +91,15 @@ func TestCheckEngine(t *testing.T) {
 
 	// 3. External checker exiting 1 reports violation finding
 	binDir := t.TempDir()
-	fakeChecker := filepath.Join(binDir, "fake-checker")
-	if err := os.WriteFile(fakeChecker, []byte("#!/bin/sh\necho 'found secret'\nexit 1\n"), 0o755); err != nil {
+	var fakeChecker, fakeBody string
+	if runtime.GOOS == "windows" {
+		fakeChecker = filepath.Join(binDir, "fake-checker.cmd")
+		fakeBody = "@echo off\r\necho found secret\r\nexit /b 1\r\n"
+	} else {
+		fakeChecker = filepath.Join(binDir, "fake-checker")
+		fakeBody = "#!/bin/sh\necho 'found secret'\nexit 1\n"
+	}
+	if err := os.WriteFile(fakeChecker, []byte(fakeBody), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))
