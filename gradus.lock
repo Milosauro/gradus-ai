@@ -1,0 +1,8 @@
+schema: gradus/v1
+definition_hash: sha256:5512dbcace1eb277709ac62c52831de996ceeb42d59b3dd293bc3cd68b367e25
+entries:
+    - kind: level
+      id: project
+      source: .gradus/levels/project
+      hash: sha256:92f997f1c90b30486328456620dec85c15da52cd0e9cffd75c488d5be6e3be54
+view_hash: sha256:55b065fadd20915d96397170c0f6d0d16baf1dbb6cd0475c919a4c661b8bcdaa

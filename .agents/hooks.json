@@ -1,0 +1,25 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "command": "gradusctl guard",
+            "type": "command"
+          }
+        ],
+        "matcher": "run_command|write_to_file|replace_file_content|multi_replace_file_content"
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "command": "gradusctl status --brief",
+            "type": "command"
+          }
+        ]
+      }
+    ]
+  }
+}

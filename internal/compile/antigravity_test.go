@@ -86,6 +86,12 @@ func TestAntigravityCompilerAndSplit(t *testing.T) {
 		t.Fatalf("expected > 25,000 chars of global rules to split into >= 2 chunks, got %d", alwaysChunks)
 	}
 
+	// Verify scoped rule uses string globs (Antigravity requires scalar string, not YAML sequence)
+	scopedContent := string(planned[".agents/rules/gradus-scoped-g1-001.md"])
+	if !strings.Contains(scopedContent, "trigger: glob\nglobs: \"api/**\"\n") {
+		t.Fatalf("expected scalar string globs in scoped rule, got:\n%s", scopedContent)
+	}
+
 	// Verify user rule went strictly to gradus-user-001.md
 	userContent := string(planned[".agents/rules/gradus-user-001.md"])
 	if !strings.Contains(userContent, "USR-001") {
