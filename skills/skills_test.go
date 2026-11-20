@@ -58,7 +58,7 @@ func TestEmbeddedSkills(t *testing.T) {
 		if err != nil {
 			t.Fatalf("missing embedded skill %s/SKILL.md: %v", name, err)
 		}
-		text := string(raw)
+		text := strings.ReplaceAll(string(raw), "\r\n", "\n")
 		if !strings.HasPrefix(text, "---\n") {
 			t.Fatalf("%s/SKILL.md missing YAML frontmatter", name)
 		}
