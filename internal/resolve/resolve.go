@@ -20,6 +20,7 @@ import (
 type Options struct {
 	IncludeDraft bool
 	InCI         bool
+	OfflineOnly  bool
 	Now          time.Time
 }
 
@@ -103,7 +104,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 			}
 		}
 
-		resSrc, err := resolveSource(rootDir, "level", lvl.ID, lvl.Source, lvl.Offline, lockEntry, inCI)
+		resSrc, err := resolveSource(rootDir, "level", lvl.ID, lvl.Source, lvl.Offline, lockEntry, inCI, opts.OfflineOnly)
 		if err != nil {
 			return out, err
 		}
@@ -192,7 +193,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 			}
 		}
 
-		resSrc, err := resolveSource(rootDir, "overlay", ov.ID, ov.Source, nil, lockEntry, inCI)
+		resSrc, err := resolveSource(rootDir, "overlay", ov.ID, ov.Source, nil, lockEntry, inCI, opts.OfflineOnly)
 		if err != nil {
 			return out, err
 		}
@@ -408,8 +409,11 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 	return out, nil
 }
 
-func resolveSource(rootDir, kind, id string, src schema.SourceRef, offline *schema.OfflinePolicy, lockEntry *lock.Entry, inCI bool) (source.ResolvedSource, error) {
+func resolveSource(rootDir, kind, id string, src schema.SourceRef, offline *schema.OfflinePolicy, lockEntry *lock.Entry, inCI, offlineOnly bool) (source.ResolvedSource, error) {
 	if src.Git != "" {
+		if offlineOnly {
+			return source.ResolveGitSourceOffline(rootDir, kind, id, src, offline, lockEntry)
+		}
 		return source.ResolveGitSource(rootDir, kind, id, src, offline, lockEntry)
 	}
 	return source.ResolveLocalSource(rootDir, kind, id, src.Path, inCI)
