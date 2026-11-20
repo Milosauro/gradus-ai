@@ -271,6 +271,9 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 
 		for _, name := range mdFiles {
 			rulePath := filepath.Join(rulesDir, name)
+			if linfo, lerr := os.Lstat(rulePath); lerr == nil && linfo.Mode()&os.ModeSymlink != 0 {
+				return out, fmt.Errorf("symlink rule file %s is not allowed (Threat Model T2)", rulePath)
+			}
 			rawBytes, err := os.ReadFile(rulePath)
 			if err != nil {
 				return out, err

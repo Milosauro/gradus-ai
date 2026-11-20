@@ -171,6 +171,36 @@ func TestAntiTamperProtection(t *testing.T) {
 	if resDeny.Decision != guard.DecisionDeny || !resDeny.AntiTamper || len(resDeny.MatchedRules) != 1 {
 		t.Fatalf("expected deny overriding anti-tamper ask, got %+v", resDeny)
 	}
+
+	// Shell commands targeting governance files must also trigger anti-tamper ask (T2)
+	for _, cmd := range []string{
+		"rm gradus.yaml",
+		"sed -i '' 's/MUST/MAY/' .gradus/levels/project/rules/R1.md",
+		"echo '{}' > .claude/settings.json",
+		"mv .agents/hooks.json /tmp/hooks.json",
+	} {
+		resShell, err := guard.Evaluate(guard.NormalizedAction{
+			ToolName: "Bash",
+			Action:   guard.ActionCommand,
+			Target:   cmd,
+		}, nil)
+		if err != nil {
+			t.Fatalf("Evaluate failed for %q: %v", cmd, err)
+		}
+		if resShell.Decision != guard.DecisionAsk || !resShell.AntiTamper {
+			t.Fatalf("expected shell anti-tamper ask for %q, got %+v", cmd, resShell)
+		}
+	}
+
+	// Read-only shell inspection of governance files remains allowed
+	resRead, err := guard.Evaluate(guard.NormalizedAction{
+		ToolName: "Bash",
+		Action:   guard.ActionCommand,
+		Target:   "cat gradus.yaml",
+	}, nil)
+	if err != nil || resRead.Decision != guard.DecisionAllow || resRead.AntiTamper {
+		t.Fatalf("expected read-only shell command to be allowed, got %+v (err=%v)", resRead, err)
+	}
 }
 
 func TestGuardEvaluatePrecedenceAndUserLevel(t *testing.T) {
@@ -223,7 +253,7 @@ Just guidance.
 		t.Fatal(err)
 	}
 
-	// Personal user-level hook rule (ADR 0003): ask before git commit or push
+	// Personal user-level hook rule (ADR 0003): ask before git commit or push (including -C/-c flags)
 	userRule := `---
 id: USR-HOOK-01
 title: Confirm git commit or push
@@ -231,7 +261,7 @@ severity: MUST
 enforcement: hook
 guard:
   action: command
-  pattern: "git\\s+(commit|push)"
+  pattern: '\bgit\b(?:\s+(?:-[Cc]\s+\S+|-\S+))*\s+(commit|push)\b'
   decision: ask
 ---
 Ask before committing or pushing.
@@ -246,17 +276,23 @@ Ask before committing or pushing.
 		t.Fatalf("LoadLocalGuardRules failed: %v", err)
 	}
 
-	// 1. User-level ask on git commit
-	resCommit, err := guard.Evaluate(guard.NormalizedAction{
-		ToolName: "Bash",
-		Action:   guard.ActionCommand,
-		Target:   "git commit -m 'feat: test'",
-	}, rules)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if resCommit.Decision != guard.DecisionAsk || len(resCommit.MatchedRules) != 1 || resCommit.MatchedRules[0].ID != "USR-HOOK-01" {
-		t.Fatalf("expected user-level ask on git commit, got %+v", resCommit)
+	// 1. User-level ask on git commit (including git -C . commit and git -c ... commit)
+	for _, cmd := range []string{
+		"git commit -m 'feat: test'",
+		"git -C . commit -m 'feat: bypass attempt'",
+		"git -c user.name=x commit -m 'feat: bypass attempt'",
+	} {
+		resCommit, err := guard.Evaluate(guard.NormalizedAction{
+			ToolName: "Bash",
+			Action:   guard.ActionCommand,
+			Target:   cmd,
+		}, rules)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if resCommit.Decision != guard.DecisionAsk || len(resCommit.MatchedRules) != 1 || resCommit.MatchedRules[0].ID != "USR-HOOK-01" {
+			t.Fatalf("expected user-level ask on %q, got %+v", cmd, resCommit)
+		}
 	}
 
 	// 2. Precedence deny > ask when both PRJ-HOOK-01 (deny) and USR-HOOK-01 (ask) match

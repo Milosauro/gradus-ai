@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-20
+
+### Security
+- **Symlink bypass prevention (Threat Model T2):** `internal/lock.HashDirectory`, `internal/resolve.Resolve`, and `internal/guard` now fail closed (`exit 2`) on symlinks inside governed level/overlay directories.
+- **Shell anti-tamper protection (Threat Model T2):** `gradusctl guard` now detects mutating or destructive shell commands targeting `gradus.yaml`, `gradus.lock`, `.gradus/`, `.walden/`, `.agents/hooks.json`, and `.claude/settings.json` and enforces an `ask` confirmation floor.
+- **Git flag bypass hardening (`PRJ-GIT-001`):** Updated command guard pattern to catch `git` global flags before `commit`/`push` (e.g., `git -C . commit`, `git -c user.name=x commit`).
+- **Expanded lesson redaction (Threat Model T4):** `internal/state/redact.go` now redacts key-value passwords/secrets, IBANs, and phone numbers in addition to API tokens and emails.
+
+### Fixed
+- `gradusctl status` now reports structural conflicts from offline resolution and counts pending JSON lessons from `state.LessonsDir`.
+- `gradusctl resolve --write` now computes `view.lock_hash` from the written `gradus.lock` bytes.
+- Added `--` argument separators to `git clone`/`checkout`/`diff` subprocess invocations in `internal/source` and `internal/check`.
+- Clarified `gradus-learn` occurrence threshold (`>= 2`) and aligned `README.md` / `evals/benchmark/RESULTS.md` honestly with technical preview status (noting that live-agent `E9` and real-project `O-1` remain open).
+
 ## [0.1.0] - 2026-11-20
 
 ### Added

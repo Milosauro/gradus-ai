@@ -3,6 +3,7 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -35,7 +36,9 @@ func newResolveCmd(jsonOutput *bool) *cobra.Command {
 				if err := lock.WriteLockfile(lockPath, res.Lockfile); err != nil {
 					return &ExitErrorWithCode{Code: ExitError, Err: err}
 				}
-				res.View.LockHash = lock.HashBytes([]byte(res.Lockfile.ViewHash))
+				if lockBytes, readErr := os.ReadFile(lockPath); readErr == nil {
+					res.View.LockHash = lock.HashBytes(lockBytes)
+				}
 			}
 
 			if *jsonOutput {

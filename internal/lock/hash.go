@@ -33,6 +33,9 @@ func HashDirectory(dir string) (string, error) {
 			return walkErr
 		}
 		name := d.Name()
+		if d.Type()&os.ModeSymlink != 0 {
+			return fmt.Errorf("symlink %q is not allowed in governed directory %s (Threat Model T2)", path, dir)
+		}
 		if d.IsDir() {
 			if name == ".git" {
 				return filepath.SkipDir

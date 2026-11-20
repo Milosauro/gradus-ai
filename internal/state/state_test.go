@@ -112,7 +112,7 @@ func TestLessonsAndRedaction(t *testing.T) {
 	// 2. AddLesson redacts secrets & emails before writing to disk
 	rec, dest, err := state.AddLesson(tmp, state.LessonRecord{
 		Kind:      "correction",
-		Statement: "Never hardcode ghp_1234567890abcdef123456 or sk-proj-abc1234567890xyz or AKIAIOSFODNN7EXAMPLE or alice@example.com",
+		Statement: "Never hardcode ghp_1234567890abcdef123456, sk-proj-abc1234567890xyz, AKIAIOSFODNN7EXAMPLE, password=hunter2, IT60X0542811101000000123456, +39 347 123 4567, or alice@example.com",
 		Evidence:  []string{"Authorization: Bearer secret_token_value_123456"},
 	}, now)
 	if err != nil {
@@ -123,12 +123,12 @@ func TestLessonsAndRedaction(t *testing.T) {
 		t.Fatal(err)
 	}
 	diskStr := string(raw)
-	for _, forbidden := range []string{"ghp_", "sk-proj-", "AKIAIOSFODNN7EXAMPLE", "alice@example.com", "secret_token_value_123456"} {
+	for _, forbidden := range []string{"ghp_", "sk-proj-", "AKIAIOSFODNN7EXAMPLE", "hunter2", "IT60X0542811101000000123456", "347 123 4567", "alice@example.com", "secret_token_value_123456"} {
 		if strings.Contains(diskStr, forbidden) {
 			t.Fatalf("expected %q to be redacted on disk, got:\n%s", forbidden, diskStr)
 		}
 	}
-	if strings.Count(diskStr, "[REDACTED]") < 5 {
+	if strings.Count(diskStr, "[REDACTED]") < 8 {
 		t.Fatalf("expected redacted placeholders on disk, got:\n%s", diskStr)
 	}
 

@@ -125,7 +125,7 @@ func resolveGitSource(rootDir, kind, id string, src schema.SourceRef, offline *s
 
 func syncGitRepo(repoDir, url, ref string) error {
 	if _, err := os.Stat(filepath.Join(repoDir, ".git")); os.IsNotExist(err) {
-		if err := runGit("", "clone", "--no-checkout", url, repoDir); err != nil {
+		if err := runGit("", "clone", "--no-checkout", "--", url, repoDir); err != nil {
 			return err
 		}
 	} else {
@@ -136,7 +136,7 @@ func syncGitRepo(repoDir, url, ref string) error {
 			return err
 		}
 	}
-	if err := runGit(repoDir, "checkout", "--detach", ref); err != nil {
+	if err := runGit(repoDir, "checkout", "--detach", ref, "--"); err != nil {
 		return fmt.Errorf("checkout %q: %w", ref, err)
 	}
 	return nil

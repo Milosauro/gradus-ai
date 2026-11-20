@@ -98,6 +98,9 @@ func loadUserLevelRules(userDir string, exceptions []resolve.ExceptionView) ([]r
 	var out []resolve.ResolvedRule
 	for _, name := range names {
 		fullPath := filepath.Join(rulesDir, name)
+		if linfo, lerr := os.Lstat(fullPath); lerr == nil && linfo.Mode()&os.ModeSymlink != 0 {
+			return nil, fmt.Errorf("symlink user rule file %s is not allowed (Threat Model T2)", fullPath)
+		}
 		rawBytes, err := os.ReadFile(fullPath)
 		if err != nil {
 			return nil, err
@@ -156,11 +159,15 @@ func Evaluate(action NormalizedAction, rules []resolve.ResolvedRule) (Evaluation
 
 	var reasons []string
 
-	// Built-in anti-tamper floor (Threat Model T2).
+	// Built-in anti-tamper floor (Threat Model T2) for both file writes and mutating shell commands.
 	if action.Action == ActionWrite && IsProtectedGovernancePath(action.Target) {
 		res.AntiTamper = true
 		res.Decision = DecisionAsk
 		reasons = append(reasons, fmt.Sprintf("anti-tamper: modifying protected governance file %q requires explicit human confirmation", action.Target))
+	} else if action.Action == ActionCommand && IsProtectedShellCommand(action.Target) {
+		res.AntiTamper = true
+		res.Decision = DecisionAsk
+		reasons = append(reasons, "anti-tamper: shell command targets protected governance path and requires explicit human confirmation")
 	}
 
 	for _, r := range rules {

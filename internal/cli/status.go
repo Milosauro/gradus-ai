@@ -11,7 +11,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/Milosauro/gradus-ai/internal/lock"
+	"github.com/Milosauro/gradus-ai/internal/resolve"
 	"github.com/Milosauro/gradus-ai/internal/schema"
+	"github.com/Milosauro/gradus-ai/internal/state"
 )
 
 type statusReport struct {
@@ -124,6 +126,9 @@ func buildStatusReport(rootDir string) (statusReport, int, error) {
 	}
 
 	rep.Conflicts = countConfirmedFindings(filepath.Join(rootDir, ".gradus", "findings"))
+	if res, rerr := resolve.Resolve(rootDir, resolve.Options{OfflineOnly: true}); rerr == nil {
+		rep.Conflicts = len(res.View.Conflicts)
+	}
 	rep.PendingLessons = countPendingLessons(rootDir)
 
 	if rep.LockState == "mismatch" {
@@ -160,33 +165,17 @@ func countConfirmedFindings(dir string) int {
 }
 
 func countPendingLessons(rootDir string) int {
-	home, err := os.UserHomeDir()
+	lessonsDir, err := state.LessonsDir(rootDir, "")
 	if err != nil {
 		return 0
 	}
-	absRoot, err := filepath.Abs(rootDir)
-	if err != nil {
-		return 0
-	}
-	projectKey := filepath.Base(absRoot)
-	lessonsDir := filepath.Join(home, ".gradus", "lessons", projectKey)
-	entries, err := os.ReadDir(lessonsDir)
+	items, err := state.ListLessons(lessonsDir)
 	if err != nil {
 		return 0
 	}
 	count := 0
-	for _, e := range entries {
-		if e.IsDir() || (!strings.HasSuffix(e.Name(), ".yaml") && !strings.HasSuffix(e.Name(), ".yml")) {
-			continue
-		}
-		data, err := os.ReadFile(filepath.Join(lessonsDir, e.Name()))
-		if err != nil {
-			continue
-		}
-		var l struct {
-			Status string `yaml:"status"`
-		}
-		if yaml.Unmarshal(data, &l) == nil && (l.Status == "open" || l.Status == "proposed") {
+	for _, l := range items {
+		if l.Status == "open" || l.Status == "proposed" {
 			count++
 		}
 	}

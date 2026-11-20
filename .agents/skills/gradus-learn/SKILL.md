@@ -10,10 +10,10 @@ description: "Capture session corrections and repeated mistakes as redacted loca
 - Existing lessons from `gradusctl lessons list --json`.
 
 ## Workflow
-1. Identify recurring corrections, preferences, or mistakes worth capturing.
-2. Redact any secrets, API tokens, credentials, or personal data before passing text to `gradusctl`.
-3. Persist or update the lesson locally via `gradusctl lessons add --kind <kind> --statement "<redacted>" --level <suggested> --enforcement <suggested>` (or `gradusctl lessons update --increment`).
-4. When a lesson recurs or warrants governance promotion, present a promotion proposal (suggested level, enforcement, and draft rule) to the user.
+1. Watch for session learning signals: explicit user corrections ("don't do X", "use Y instead"), repeated mistakes across turns, or explicit workflow/style preferences.
+2. Redact any secrets, API tokens, credentials, passwords, IBANs, phone numbers, or emails before passing text to `gradusctl`.
+3. Persist or update the lesson locally via `gradusctl lessons add --kind <kind> --statement "<redacted>" --level <suggested> --enforcement <suggested>` (or `gradusctl lessons update --increment` when seen again).
+4. Once a lesson reaches `occurrences >= 2` (or on explicit user request), present a rule promotion proposal (suggested level, enforcement, and draft rule) to the user.
 5. Only after explicit human approval, hand off to `gradus-author` to create the rule and mark the lesson `promoted` via `gradusctl lessons update --status promoted`.
 
 ## Outputs
