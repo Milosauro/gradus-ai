@@ -2,8 +2,8 @@
   "schema": "consolidation/v1",
   "started_at": "2026-11-20T08:35:58Z",
   "checkpoint": {
-    "at": "2026-11-20T11:46:40Z",
-    "view_fingerprint": "sha256:75806795499440fe1b838a727839a6dd89e38f08a69a10d1ebbb2d7855c5e42b"
+    "at": "2026-11-20T14:32:13Z",
+    "view_fingerprint": "sha256:36e285a5f61f96f284df32e4742a0ab51e96055d939251ec8ee8a0954e932e5b"
   },
   "features": {
     "agent-compilers": {
@@ -44,6 +44,46 @@
         "R4.AC1": "WHEN `gradusctl compile` runs on a conflict-free pyramid, the system SHALL write all target outputs deterministically such that a second consecutive run produces zero byte differences on disk (E1), and exit with code `0`.",
         "R4.AC2": "IF the resolved pyramid contains one or more blocking conflicts, THEN `gradusctl compile` SHALL leave existing target files untouched and exit with code `1`.",
         "R4.AC3": "IF configuration, lockfile verification, or source resolution fails, THEN `gradusctl compile` SHALL report the error to stderr and exit with code `2`."
+      }
+    },
+    "cli-lifecycle-state": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:183e39e2efa412975d1c33695f2cfde37629cde7f2e4542c447afa458d6b70ae",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R1.AC4",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "R3.AC4",
+        "NFR1",
+        "NFR2",
+        "NFR3",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must reuse `internal/resolve`, `internal/compile`, `internal/schema`, `internal/lock`, and `github.com/bmatcuk/doublestar/v4`.",
+        "C2": "Must build statically with `CGO_ENABLED=0` and invoke `git` only via `os/exec` if needed.",
+        "NFR1": "**Secret \u0026 PII Redaction (T4, P16):** Lesson persistence MUST redact secrets and email addresses before disk write and MUST omit personal user-activity metrics.",
+        "NFR2": "**Deterministic Project Key \u0026 Cross-Platform Paths:** Project keys for `~/.gradus/lessons/\u003cproject-key\u003e/` and finding paths MUST normalize slashes and paths identically across macOS, Linux, and Windows.",
+        "NFR3": "**Exit Code Contract (D-73):** Technical errors (invalid YAML/JSON, missing rule IDs, locked target level on `--move`, missing `gradus.yaml`) MUST exit with code `2`.",
+        "R1.AC1": "WHEN `gradusctl conflicts --candidates` runs, the system SHALL compare active rules across distinct levels or overlays whose `scope` patterns overlap and that share tags or significant statement keywords, skipping pairs already recorded in `.gradus/findings/` with identical `hash_a` and `hash_b`.",
+        "R1.AC2": "WHEN `gradusctl conflicts --confirm --rule-a \u003cid\u003e --rule-b \u003cid\u003e` runs, the system SHALL write or update a finding record in `.gradus/findings/` with `status: confirmed` and current rule content hashes so subsequent `resolve` and `verify` runs treat it as a blocking semantic conflict.",
+        "R1.AC3": "WHEN `gradusctl conflicts --dismiss --rule-a \u003cid\u003e --rule-b \u003cid\u003e` runs, the system SHALL write or update a finding record in `.gradus/findings/` with `status: dismissed` and current `hash_a` and `hash_b` so the unchanged pair is not surfaced again by `--candidates`, while surfacing again if either rule's content hash changes.",
+        "R1.AC4": "WHEN `gradusctl conflicts` runs without mutation flags, the system SHALL list existing `.gradus/findings/*.yaml` records and exit with code `0`.",
+        "R2.AC1": "WHEN `gradusctl lessons add` runs with `--kind`, `--statement`, and optional `--level`, `--enforcement`, or `--evidence`, the system SHALL persist a lesson JSON file conforming to `spec/v1/schema/lesson.schema.json` under `~/.gradus/lessons/\u003cproject-key\u003e/` (or `--lessons-dir` override) with zero personal activity metrics (P16).",
+        "R2.AC2": "WHEN persisting or updating a lesson, the system SHALL automatically redact common secrets and PII (such as API tokens `ghp_...`, `sk-...`, `AKIA...`, Bearer tokens, and email addresses) from `statement` and `evidence` with `[REDACTED]` before writing to disk (Threat Model T4).",
+        "R2.AC3": "WHEN `gradusctl lessons list` or `gradusctl lessons update --id \u003cid\u003e` runs, the system SHALL list stored lessons or update a lesson's `status` (`open`, `proposed`, `promoted`, `dismissed`) and/or increment `occurrences`.",
+        "R3.AC1": "WHEN `gradusctl reconcile` runs without `--restore` or `--move`, the system SHALL inspect compiled target outputs against `PlanCompile` and list every drifted file, exiting with code `0` when clean and code `1` when drift exists.",
+        "R3.AC2": "WHEN `gradusctl reconcile --restore` runs on a workspace with compiled-target drift, the system SHALL re-apply `compile.ApplyCompile` deterministically to restore generated sections and files, returning exit code `0`.",
+        "R3.AC3": "WHEN `gradusctl reconcile --move --rule-file \u003cpath\u003e --target-level \u003cid\u003e` runs targeting an unlocked level (`locked: false`), the system SHALL move or copy the rule file into that level's `rules/` directory and exit with code `0`.",
+        "R3.AC4": "IF `gradusctl reconcile --move` targets a `locked: true` or unknown level, THEN the system SHALL refuse the modification without altering the target level and exit with code `2`."
       }
     },
     "core-schema-init": {
@@ -94,6 +134,36 @@
         "R5.AC1": "WHEN `gradusctl explain \u003cid\u003e` is run for a rule present in local configured levels, the system SHALL print the rule ID, title, derived level, source, severity, enforcement, scope, statement, rationale, rejected rationalizations, examples, and `overrides` target if set, and exit with code `0`.",
         "R5.AC2": "WHEN `gradusctl explain \u003cid\u003e --json` is run for an existing rule, the system SHALL emit structured JSON containing the rule metadata, derived level, source provenance, body fields, and any diagnostic notes, and exit with code `0`.",
         "R5.AC3": "IF `\u003cid\u003e` is not found in any configured local level OR the repository configuration is missing/invalid, THEN `gradusctl explain \u003cid\u003e` SHALL print a diagnostic error to stderr and exit with code `2`."
+      }
+    },
+    "mvp-skills": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:aeab029fe780e698ea5f3fe3535ed21c4903b8a93e728dbd1225cb30816fb90d",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R3.AC1",
+        "R3.AC2",
+        "NFR1",
+        "NFR2",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must align strictly with the existing CLI surface implemented in F1–F6 (`gradusctl init`, `resolve`, `compile`, `verify`, `check`, `evidence`, `conflicts`, `lessons`, `reconcile`).",
+        "C2": "Must satisfy `gradus-design.md` §16, §22, §23, and exit criteria `E4`, `E5`, `E6`, `E7`.",
+        "NFR1": "**Zero External Runtime Dependencies:** All six skills remain embedded in the static `gradusctl` binary via `skills/embed.go` (`//go:embed gradus-*/*.md`).",
+        "NFR2": "**Canonical English \u0026 Conciseness:** All skill prompts and eval scenarios are written in canonical English and avoid bloated boilerplate so agent context budgets stay lean.",
+        "R1.AC1": "WHEN `gradusctl compile` targets `claude-code` or `antigravity`, the embedded `skills.FS` SHALL provide `gradus-onboard/SKILL.md`, `gradus-author/SKILL.md`, `gradus-review/SKILL.md`, `gradus-learn/SKILL.md`, `gradus-reconcile/SKILL.md`, and `gradus-conflicts/SKILL.md` without `gradus-placeholder`.",
+        "R1.AC2": "WHEN any canonical skill `SKILL.md` is parsed, the skill file SHALL include valid YAML frontmatter (`name` matching its directory name and non-empty `description`), explicit inputs, outputs, step-by-step `gradusctl` CLI workflow, and explicit prohibitions matching `gradus-design.md` §16.",
+        "R2.AC1": "WHEN `gradus-onboard` or `gradus-learn` processes repository history or session signals, the skill instructions SHALL forbid applying configuration changes without explicit user approval, forbid sending data outside the active model, and require secret/PII redaction (`gradusctl lessons add`).",
+        "R2.AC2": "WHEN `gradus-author` or `gradus-reconcile` proposes rule placements or drift resolution, the skill instructions SHALL forbid direct edits to `locked: true` levels and delegate mutations to `gradusctl reconcile` / `gradusctl resolve`.",
+        "R2.AC3": "WHEN `gradus-review` or `gradus-conflicts` evaluates code or candidate rule pairs, the skill instructions SHALL require citing rule ID, level, severity, provenance, and confidence, forbidding low-confidence violations, and recording evidence/findings strictly through `gradusctl` (`evidence` / `conflicts`).",
+        "R3.AC1": "The repository SHALL include at least one scenario specification under `evals/skills/` for each of the six MVP skills (plus a prompt-injection resistance scenario per §22), recording baseline failures/rationalizations and expected skill-guided behavior.",
+        "R3.AC2": "WHEN `go test ./skills/...` runs, the test suite SHALL deterministically verify `skills.FS` embedding, frontmatter validity, absence of `gradus-placeholder`, and full mapping between the six skills and `evals/skills/` scenarios."
       }
     },
     "resolve-and-lock": {
