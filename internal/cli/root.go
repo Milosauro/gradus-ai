@@ -63,6 +63,9 @@ guards actions, verifies lockfiles, and compiles target agent instructions.`,
 	rootCmd.AddCommand(newVerifyCmd(&jsonOutput))
 	rootCmd.AddCommand(newHooksCmd(&jsonOutput))
 	rootCmd.AddCommand(newGuardCmd(&jsonOutput))
+	rootCmd.AddCommand(newConflictsCmd(&jsonOutput))
+	rootCmd.AddCommand(newLessonsCmd(&jsonOutput))
+	rootCmd.AddCommand(newReconcileCmd(&jsonOutput))
 
 	return rootCmd
 }
