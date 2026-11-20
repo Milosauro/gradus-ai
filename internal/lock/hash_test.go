@@ -65,4 +65,14 @@ func TestHashDirectoryAndBytes(t *testing.T) {
 	if h1 != h2 {
 		t.Fatalf("expected identical directory hashes across CRLF/LF and ignored metadata: %s vs %s", h1, h2)
 	}
+
+	// Symlinks inside governed directories must fail closed (Threat Model T2)
+	extFile := filepath.Join(t.TempDir(), "injected.md")
+	_ = os.WriteFile(extFile, []byte("injected"), 0o644)
+	linkPath := filepath.Join(dirLF, "rules", "INJECTED.md")
+	if err := os.Symlink(extFile, linkPath); err == nil {
+		if _, hashErr := lock.HashDirectory(dirLF); hashErr == nil || !strings.Contains(hashErr.Error(), "symlink") {
+			t.Fatalf("expected symlink in governed directory to fail closed, got: %v", hashErr)
+		}
+	}
 }

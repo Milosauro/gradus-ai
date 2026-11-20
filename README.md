@@ -15,11 +15,11 @@
 </div>
 
 > [!NOTE]
-> **Phase 0 MVP (`v0.1.0`) is available.** Install `gradusctl` as a single static binary and govern any repository with Claude Code, Antigravity, and `AGENTS.md`. The full design specification lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+> **Phase 0 Technical Preview (`v0.1.x`) is available.** Install `gradusctl` as a single static binary and govern repositories with Claude Code, Antigravity, and `AGENTS.md`. Live agent comparative evaluation (`E9`) and real-project validation remain open before declaring Phase 0 complete. The full design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
 
 ## Quick Start (Personal Setup)
 
-Install `gradusctl` with Go (or download a signed binary from GitHub Releases):
+Install `gradusctl` with Go (or download a signed binary from [GitHub Releases](https://github.com/Milosauro/gradus-ai/releases)) and ensure `gradusctl` is on your `PATH` (agent `PreToolUse` and `SessionStart` hooks invoke `gradusctl` by name):
 
 ```bash
 go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.1.0
@@ -34,11 +34,11 @@ gradusctl compile
 gradusctl verify
 ```
 
-To run deterministic code checks on staged changes or install git pre-commit hooks:
+To run deterministic code checks on staged changes or install git pre-commit hooks (`--native` is required when no `pre-commit`, `lefthook`, or `husky` config is present):
 
 ```bash
 gradusctl check --staged
-gradusctl hooks install
+gradusctl hooks install --native
 ```
 
 ---
@@ -104,7 +104,7 @@ agent › Task complete. Ready to commit "feat: add user import".
 gradus › ✋ USER-GIT-001 (you · MUST · hook): commits require your explicit request.
          Allow this commit? [y/N]
 
-$ gradusctl check --staged                                    # planned
+$ gradusctl check --staged
 ✗ ORG-SEC-004  MUST  tests/fixtures/users.json:3
   Real e-mail address in a test fixture.
   Level: org · Source: Internal data policy v3, §4.2
@@ -214,11 +214,9 @@ The first targets are **Claude Code** and **Antigravity**, with full in-session 
 | **2 · Business unit** | Locked remote levels across teams | Obligations, bindings to Walden and spec-kit, toolchain, readable changelogs |
 | **3 · Organization** | Company-wide policies | Conditional overlays, framework mapping, model policy, chat agents and MCP |
 
-**Today:** the design is complete and published. Implementation of Phase 0 is starting. The CLI will be written in Go and distributed as a single binary.
+**Today:** Phase 0 technical preview (`v0.1.x`) is released with signed static binaries and deterministic CLI enforcement. Live agent comparative evaluation (`E9`) and real-project validation (`O-1`) are still open.
 
-## Planned interface
-
-*Planned — names and flags may change before the first release.*
+## CLI interface
 
 ```bash
 gradusctl init        # set up the pyramid in this repository

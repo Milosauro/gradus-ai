@@ -32,7 +32,7 @@ func DiscoverFiles(rootDir string, opts Options) ([]string, error) {
 	case opts.Staged:
 		args = []string{"diff", "--cached", "--name-only", "--diff-filter=ACMR"}
 	case opts.Base != "":
-		args = []string{"diff", "--name-only", "--diff-filter=ACMR", opts.Base + "...HEAD"}
+		args = []string{"diff", "--name-only", "--diff-filter=ACMR", opts.Base + "...HEAD", "--"}
 	default:
 		args = []string{"ls-files"}
 	}
