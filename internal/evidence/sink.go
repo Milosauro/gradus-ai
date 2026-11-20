@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -164,7 +165,12 @@ func WriteRecord(rootDir string, cfg *schema.EvidenceConfig, rec Record, now tim
 			if strings.TrimSpace(s.Command) == "" {
 				return written, fmt.Errorf("command evidence sink requires non-empty command")
 			}
-			cmd := exec.Command("sh", "-c", s.Command)
+			var cmd *exec.Cmd
+			if runtime.GOOS == "windows" {
+				cmd = exec.Command("cmd", "/C", s.Command)
+			} else {
+				cmd = exec.Command("sh", "-c", s.Command)
+			}
 			cmd.Dir = rootDir
 			cmd.Stdin = bytes.NewReader(data)
 			var stderr bytes.Buffer

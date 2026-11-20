@@ -3,6 +3,7 @@ package evidence_test
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -27,13 +28,17 @@ func TestEvidenceSinks(t *testing.T) {
 
 	// 2. Test all 5 sinks: none, local, ci-artifact, repo, command
 	cmdOutFile := filepath.Join(tmp, "cmd-sink.json")
+	sinkCmd := "cat > cmd-sink.json"
+	if runtime.GOOS == "windows" {
+		sinkCmd = `findstr "^" > cmd-sink.json`
+	}
 	cfg := &schema.EvidenceConfig{
 		Sinks: []schema.SinkConfig{
 			{Type: "none"},
 			{Type: "local", Retention: "30d"},
 			{Type: "ci-artifact", Path: "artifacts"},
 			{Type: "repo", Path: "audit/evidence"},
-			{Type: "command", Command: "cat > " + cmdOutFile},
+			{Type: "command", Command: sinkCmd},
 		},
 	}
 
