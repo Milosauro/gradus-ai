@@ -72,16 +72,23 @@ type HooksConfig struct {
 	Manager string `yaml:"manager" json:"manager"`
 }
 
-// EvidenceConfig configures evidence sinks.
+// EvidenceConfig configures evidence sinks for local and CI execution (§12).
 type EvidenceConfig struct {
+	Sinks []SinkConfig       `yaml:"sinks,omitempty" json:"sinks,omitempty"`
+	CI    *EvidenceSinksOnly `yaml:"ci,omitempty" json:"ci,omitempty"`
+}
+
+// EvidenceSinksOnly holds CI-specific evidence sinks (§12).
+type EvidenceSinksOnly struct {
 	Sinks []SinkConfig `yaml:"sinks,omitempty" json:"sinks,omitempty"`
 }
 
 // SinkConfig represents an evidence destination.
 type SinkConfig struct {
-	Type    string `yaml:"type" json:"type"`
-	Path    string `yaml:"path,omitempty" json:"path,omitempty"`
-	Command string `yaml:"command,omitempty" json:"command,omitempty"`
+	Type      string `yaml:"type" json:"type"`
+	Path      string `yaml:"path,omitempty" json:"path,omitempty"`
+	Command   string `yaml:"command,omitempty" json:"command,omitempty"`
+	Retention string `yaml:"retention,omitempty" json:"retention,omitempty"`
 }
 
 // LevelConfig represents level.yaml.

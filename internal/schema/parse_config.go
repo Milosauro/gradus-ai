@@ -60,9 +60,23 @@ var pyramidFieldSpec = FieldSpec{
 				"sinks": {
 					IsSeq: true,
 					Allowed: map[string]FieldSpec{
-						"type":    {},
-						"path":    {},
-						"command": {},
+						"type":      {},
+						"path":      {},
+						"command":   {},
+						"retention": {},
+					},
+				},
+				"ci": {
+					Allowed: map[string]FieldSpec{
+						"sinks": {
+							IsSeq: true,
+							Allowed: map[string]FieldSpec{
+								"type":      {},
+								"path":      {},
+								"command":   {},
+								"retention": {},
+							},
+						},
 					},
 				},
 			},
