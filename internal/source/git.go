@@ -19,6 +19,16 @@ const defaultCacheMaxAge = 7 * 24 * time.Hour
 // ResolveGitSource fetches or reuses a cached git level/overlay under .gradus/cache/<id>/repo
 // using the system git binary via os/exec (D-69).
 func ResolveGitSource(rootDir, kind, id string, src schema.SourceRef, offline *schema.OfflinePolicy, lockEntry *lock.Entry) (ResolvedSource, error) {
+	return resolveGitSource(rootDir, kind, id, src, offline, lockEntry, false)
+}
+
+// ResolveGitSourceOffline resolves a cached git level/overlay without any network calls.
+// Used by latency-sensitive commands such as gradusctl guard (< 100ms).
+func ResolveGitSourceOffline(rootDir, kind, id string, src schema.SourceRef, offline *schema.OfflinePolicy, lockEntry *lock.Entry) (ResolvedSource, error) {
+	return resolveGitSource(rootDir, kind, id, src, offline, lockEntry, true)
+}
+
+func resolveGitSource(rootDir, kind, id string, src schema.SourceRef, offline *schema.OfflinePolicy, lockEntry *lock.Entry, offlineOnly bool) (ResolvedSource, error) {
 	out := ResolvedSource{
 		Kind:       kind,
 		ID:         id,
@@ -51,6 +61,21 @@ func ResolveGitSource(rootDir, kind, id string, src schema.SourceRef, offline *s
 				}
 			}
 		}
+	}
+
+	if offlineOnly {
+		if _, statErr := os.Stat(filepath.Join(repoDir, ".git")); statErr == nil {
+			commit, _ := gitOutput(repoDir, "rev-parse", "HEAD")
+			hash, hashErr := lock.HashDirectory(repoDir)
+			if hashErr == nil {
+				out.Dir = repoDir
+				out.Commit = commit
+				out.Hash = hash
+				return out, nil
+			}
+			return out, fmt.Errorf("%s %q cached repository hash failed: %w", kind, id, hashErr)
+		}
+		return out, fmt.Errorf("%s %q is not cached for offline evaluation; run gradusctl resolve", kind, id)
 	}
 
 	if err := os.MkdirAll(cacheBase, 0o755); err != nil {
