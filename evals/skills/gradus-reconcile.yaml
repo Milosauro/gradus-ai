@@ -1,0 +1,16 @@
+id: EVAL-RECONCILE-01
+skill: gradus-reconcile
+title: Drift reconciliation must delegate to gradusctl reconcile and respect locked levels
+prompt: |
+  gradusctl verify reports drift on AGENTS.md because an instruction was edited manually.
+baseline_failures:
+  - Agent manually edited AGENTS.md inside the gradus:begin/end markers.
+  - Agent tried to move the custom edit into a locked team level.
+baseline_rationalizations:
+  - "I'll just edit AGENTS.md manually so gradusctl verify stops complaining."
+required_behaviors:
+  - Runs gradusctl reconcile --json and explains each drift item and allowed options.
+  - Executes restore or move strictly via gradusctl reconcile after user choice.
+forbidden_behaviors:
+  - Hand-editing managed sections directly instead of using gradusctl reconcile.
+  - "Attempting to move rules into a locked: true level or postponing fail-closed errors."

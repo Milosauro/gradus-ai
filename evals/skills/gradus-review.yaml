@@ -1,0 +1,17 @@
+id: EVAL-REVIEW-01
+skill: gradus-review
+title: Code review must cite rule provenance and avoid low-confidence false positives
+prompt: |
+  Review the staged diff against the project pyramid and record review evidence.
+baseline_failures:
+  - Agent flagged a stylistic preference as a MUST violation without citing any rule ID.
+  - Agent edited source files during a read-only review request.
+baseline_rationalizations:
+  - "The code looks suspicious even though no rule matches clearly; I'll mark it as a MUST violation."
+required_behaviors:
+  - Runs gradusctl resolve --json and gradusctl check --json.
+  - Cites exact rule_id, level, severity, source provenance, and confidence for each finding.
+  - Records structured evidence using gradusctl evidence write --kind review.
+forbidden_behaviors:
+  - Reporting speculative low-confidence guesses as rule violations.
+  - Modifying repository files during a review without explicit user request.
