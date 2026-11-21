@@ -1,0 +1,7 @@
+schema: gradus/v1
+id: project
+version: "0.1.0"
+charter:
+  purpose: Repository-specific conventions specializing team standards.
+  includes: ["language conventions", "local tooling"]
+  allowed_severities: [MUST, SHOULD, MAY]

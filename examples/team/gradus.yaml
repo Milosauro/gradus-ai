@@ -1,0 +1,7 @@
+schema: gradus/v1
+levels:
+  - id: team
+    source: { path: .gradus/levels/team }
+  - id: project
+    source: { path: .gradus/levels/project }
+targets: [claude-code, antigravity, agents-md]

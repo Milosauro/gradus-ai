@@ -1,0 +1,8 @@
+schema: gradus/v1
+id: project
+version: "0.1.0"
+charter:
+  purpose: Repository-specific guardrails and hygiene checks.
+  includes: ["git safety", "debug hygiene"]
+  excludes: ["personal editor preferences"]
+  allowed_severities: [MUST, SHOULD, MAY]

@@ -1,0 +1,13 @@
+schema: gradus/v1
+id: compliance
+version: "0.1.0"
+owners: ["security-compliance@example.com"]
+charter:
+  purpose: Non-negotiable regulatory and audit controls.
+  includes: ["secrets", "pii", "auditability"]
+  allowed_severities: [MUST]
+constraints:
+  allowed_overlays: ["payments", "gdpr"]
+exceptions:
+  max_duration: 14d
+  break_glass: false

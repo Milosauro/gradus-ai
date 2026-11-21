@@ -1,0 +1,84 @@
+{
+  "schema_version": "v1alpha2",
+  "feature": "handbook-and-templates",
+  "tasks": {
+    "1.1": {
+      "task_fingerprint": "sha256:5061d0a7b5dad38f8c08a867d1514fa2bb0f548c0a8b6cec693fdf811dc92e8d",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:0a559f47768563f5c5a356746001159723f1cce9d5ebb24ef80ab38ad38fecf8"
+      },
+      "requirements_fingerprint": "sha256:17ef5367df3c7b5743b97df94bb4cfae3fc328f4938cb8ea075778a3bf52af43",
+      "design_fingerprint": "sha256:ad2ebcd789f60fa649f2d671e1419a79659c02f9b4822708eb90a0dda484f597",
+      "tasks_fingerprint": "sha256:c3b7a53a57da6b2caee2eee02b255078418463199563f9b4290fc80a226726af",
+      "code_identity": "sha256:0a559f47768563f5c5a356746001159723f1cce9d5ebb24ef80ab38ad38fecf8",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestHandbookCommand$",
+            "./internal/cli"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:fafb4b1885931eb9df75aee2ecf1ce70ae0614b1c00b0bdb493a0cf326757586"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-21T17:45:30Z"
+    },
+    "2.1": {
+      "task_fingerprint": "sha256:79254a0dd5e2daa4d2c7370ca8e3e6ca0c41dc2dfa4a0177125a38f8a2866047",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:2ff6dbea0738eee3e8941bcffda0748c0fa1208f07b5b408bf1203a21861b03b"
+      },
+      "requirements_fingerprint": "sha256:17ef5367df3c7b5743b97df94bb4cfae3fc328f4938cb8ea075778a3bf52af43",
+      "design_fingerprint": "sha256:ad2ebcd789f60fa649f2d671e1419a79659c02f9b4822708eb90a0dda484f597",
+      "tasks_fingerprint": "sha256:c3b7a53a57da6b2caee2eee02b255078418463199563f9b4290fc80a226726af",
+      "code_identity": "sha256:2ff6dbea0738eee3e8941bcffda0748c0fa1208f07b5b408bf1203a21861b03b",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestExampleTemplates$",
+            "./internal/cli"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:a82debf488b885c01ab54ca7f9c89d192dd8d1f615b101bcb7e419f7e2078945"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-21T17:47:54Z"
+    }
+  }
+}

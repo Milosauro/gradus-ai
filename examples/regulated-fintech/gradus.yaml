@@ -1,0 +1,14 @@
+schema: gradus/v1
+anti_tamper:
+  mode: deny
+levels:
+  - id: compliance
+    source: { path: .gradus/levels/compliance }
+  - id: project
+    source: { path: .gradus/levels/project }
+overlays:
+  - id: payments
+    source: { path: .gradus/overlays/payments }
+    strength: compliance
+    activation: explicit
+targets: [claude-code, antigravity, agents-md]
