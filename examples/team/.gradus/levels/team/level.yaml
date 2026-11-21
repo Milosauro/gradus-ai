@@ -1,0 +1,16 @@
+schema: gradus/v1
+id: team
+version: "0.1.0"
+owners: ["platform-team@example.com"]
+approvers: ["tech-leads@example.com"]
+charter:
+  purpose: Shared engineering standards across team repositories.
+  includes: ["security", "testing", "git safety"]
+  excludes: ["repository-local folder layout"]
+  allowed_severities: [MUST, SHOULD]
+context_budget:
+  max_rules: 20
+  max_chars: 12000
+exceptions:
+  max_duration: 30d
+  break_glass: true

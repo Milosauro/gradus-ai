@@ -1,0 +1,5 @@
+schema: gradus/v1
+id: payments
+version: "0.1.0"
+strength: compliance
+activation: explicit

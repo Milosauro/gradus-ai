@@ -1,0 +1,6 @@
+schema: gradus/v1
+id: project
+version: "0.1.0"
+charter:
+  purpose: Application-level conventions under compliance guardrails.
+  allowed_severities: [MUST, SHOULD, MAY]
