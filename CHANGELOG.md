@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-21
+
+### Fixed
+- **Live Antigravity hooks integration:** Updated `.agents/hooks.json` compiler output to Antigravity's native top-level named hook schema (`gradus` with grouped `PreToolUse` matching `run_command|write_file|edit_file|write_to_file|replace_file_content|multi_replace_file_content` and flat `SessionStart` calling `gradusctl status --brief --antigravity-hook`).
+- **Native Antigravity `PreToolUse` payload & workspace CWD resolution:** `gradusctl guard` now parses Antigravity camelCase `toolCall.name`/`toolCall.args` payloads alongside Claude Code `tool_name`/`tool_input` and resolves the repository root from `cwd`/`workspacePaths` (including when hooks run from `.agents/`).
+- **Anti-tamper hardening (T2):** Protected `.claude/settings.local.json`, `.git/hooks/**`, and `.githooks/**`; expanded shell anti-tamper for `git config core.hooksPath`, `git checkout <ref> -- .gradus`, whitespace-free redirections (`echo x>gradus.yaml`), `find -delete`, `ln`, `unlink`, and `gradus.*` globs; clarified defense-in-depth boundary in `README.md`.
+- **Redaction precision (T4):** Added PEM private key blocks, Italian Codice Fiscale, and `+39 333 1234567` mobile phone formats while eliminating false positives on plain space-separated numbers.
+- **Conflict candidate noise reduction:** Expanded stopword filtering in `gradusctl conflicts --candidates` to reduce generic lexical false positives.
+- **Version & authoring UX:** `gradusctl version` now falls back to `runtime/debug.ReadBuildInfo()` when installed via `go install`; `gradus-author/SKILL.md` now includes full YAML templates for `checker`, `guard`, and `level.yaml` (`charter`); `internal/source/git.go` rejects refs starting with `-`; `gradusctl resolve --write` reminds users to re-run `gradusctl compile`.
+
 ## [0.1.1] - 2026-11-20
 
 ### Security

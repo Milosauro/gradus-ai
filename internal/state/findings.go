@@ -223,7 +223,15 @@ func scopesOverlap(a, b []string) bool {
 var stopwords = map[string]bool{
 	"must": true, "should": true, "never": true, "always": true, "with": true,
 	"from": true, "that": true, "this": true, "when": true, "into": true,
-	"only": true, "without": true, "using": true, "files": true, "rule": true,
+	"only": true, "without": true, "using": true, "files": true, "file": true,
+	"rule": true, "rules": true, "code": true, "source": true, "explicit": true,
+	"before": true, "after": true, "changes": true, "change": true, "application": true,
+	"project": true, "repository": true, "repo": true, "user": true, "local": true,
+	"running": true, "require": true, "required": true, "confirm": true, "confirmation": true,
+	"approval": true, "human": true, "agent": true, "agents": true, "written": true,
+	"write": true, "edit": true, "update": true, "check": true, "verify": true,
+	"every": true, "each": true, "also": true, "then": true, "where": true,
+	"keep": true, "ensure": true, "follow": true, "avoid": true, "prefer": true,
 }
 
 func sharedKeywords(r1, r2 resolve.ResolvedRule) []string {

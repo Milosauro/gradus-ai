@@ -251,7 +251,7 @@ No. It records what was checked on code and commits, not what people did. This i
 No. Everything runs locally and in your existing CI. Shared levels are ordinary git repositories.
 
 **Can an agent just switch Gradus off?**
-It is designed not to be able to do so silently: edits to the configuration and to the hooks that run Gradus require confirmation, and the same checks run again in CI.
+In-session anti-tamper (`gradusctl guard`) acts as **defense-in-depth** by requiring confirmation on writes or shell mutations targeting governance and hook files. Because shell pattern matching cannot be absolute, the hard guarantee is enforced outside the agent session via git hooks and CI (`gradusctl verify` and `gradusctl check`).
 
 **What if two rules contradict each other?**
 Structural contradictions are detected deterministically and block until someone with authority decides. Contradictions in plain language are flagged by a model as *suspected*; a person confirms or dismisses them.

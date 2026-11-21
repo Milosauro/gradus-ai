@@ -31,6 +31,9 @@ func newGuardCmd(_ *bool) *cobra.Command {
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
+			if action.WorkspaceDir != "" {
+				rootDir = action.WorkspaceDir
+			}
 
 			rules, err := guard.LoadLocalGuardRules(rootDir, userDir)
 			if err != nil {
@@ -43,6 +46,21 @@ func newGuardCmd(_ *bool) *cobra.Command {
 			}
 
 			enc := json.NewEncoder(cmd.OutOrStdout())
+			if action.IsAntigravityNative {
+				// Antigravity parses PreToolUse stdout with strict protojson (rejects unknown fields)
+				// and requires exit 0 to honor structured allow/ask/deny decisions.
+				agResp := struct {
+					Decision string `json:"decision"`
+					Reason   string `json:"reason,omitempty"`
+				}{
+					Decision: res.Decision,
+					Reason:   res.Reason,
+				}
+				if err := enc.Encode(agResp); err != nil {
+					return &ExitErrorWithCode{Code: ExitError, Err: err}
+				}
+				return nil
+			}
 			if err := enc.Encode(res); err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}

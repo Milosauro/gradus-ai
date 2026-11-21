@@ -44,6 +44,9 @@ func resolveGitSource(rootDir, kind, id string, src schema.SourceRef, offline *s
 		ref = "HEAD"
 		out.Ref = ref
 	}
+	if strings.HasPrefix(ref, "-") {
+		return out, fmt.Errorf("%s %q: invalid git ref %q (cannot start with '-')", kind, id, ref)
+	}
 
 	cacheBase := filepath.Join(rootDir, ".gradus", "cache", id)
 	repoDir := filepath.Join(cacheBase, "repo")

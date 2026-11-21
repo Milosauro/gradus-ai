@@ -101,10 +101,10 @@ func TestAntigravityCompilerAndSplit(t *testing.T) {
 		t.Fatalf("expected USR-001 excluded from AGENTS.md")
 	}
 
-	// Verify static .agents/hooks.json dispatcher (ADR 0003)
+	// Verify static .agents/hooks.json dispatcher uses Antigravity top-level named hook schema (ADR 0003)
 	hooksJSON := string(planned[".agents/hooks.json"])
-	if !strings.Contains(hooksJSON, "gradusctl guard") || !strings.Contains(hooksJSON, "gradusctl status --brief") {
-		t.Fatalf("expected static dispatchers in .agents/hooks.json, got:\n%s", hooksJSON)
+	if !strings.Contains(hooksJSON, `"gradus"`) || !strings.Contains(hooksJSON, "write_file|edit_file") || !strings.Contains(hooksJSON, "gradusctl guard") || !strings.Contains(hooksJSON, "gradusctl status --brief --antigravity-hook") {
+		t.Fatalf("expected Antigravity named hook dispatchers in .agents/hooks.json, got:\n%s", hooksJSON)
 	}
 
 	// Verify skill extracted

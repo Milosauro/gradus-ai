@@ -170,9 +170,34 @@ func mergeAntigravityHooks(hooksPath string) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read %s: %w", hooksPath, err)
 	}
 
-	hooksMap := ensureStringMap(doc, "hooks")
-	ensureHookDispatcher(hooksMap, "PreToolUse", "run_command|write_to_file|replace_file_content|multi_replace_file_content", "gradusctl guard")
-	ensureHookDispatcher(hooksMap, "SessionStart", "", "gradusctl status --brief")
+	// Clean up legacy Claude-style top-level "hooks" wrapper emitted by v0.1.0/v0.1.1.
+	if legacy, ok := doc["hooks"].(map[string]any); ok {
+		if _, hasPre := legacy["PreToolUse"]; hasPre {
+			delete(doc, "hooks")
+		}
+	}
+
+	// Antigravity hooks.json uses top-level named hook objects; PreToolUse is grouped,
+	// while SessionStart is a flat array of command handlers.
+	doc["gradus"] = map[string]any{
+		"PreToolUse": []any{
+			map[string]any{
+				"matcher": "run_command|write_file|edit_file|write_to_file|replace_file_content|multi_replace_file_content",
+				"hooks": []any{
+					map[string]any{
+						"type":    "command",
+						"command": "gradusctl guard",
+					},
+				},
+			},
+		},
+		"SessionStart": []any{
+			map[string]any{
+				"type":    "command",
+				"command": "gradusctl status --brief --antigravity-hook",
+			},
+		},
+	}
 
 	out, err := json.MarshalIndent(doc, "", "  ")
 	if err != nil {
