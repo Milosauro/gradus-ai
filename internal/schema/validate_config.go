@@ -53,6 +53,9 @@ func ValidatePyramidConfig(cfg *PyramidConfig) error {
 		if ov.Source.Path == "" && ov.Source.Git == "" {
 			return fmt.Errorf("gradus.yaml: overlays[%d] (%s) source must specify path or git", i, ov.ID)
 		}
+		if err := validateOverlayActivation("gradus.yaml", ov.Activation); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -97,8 +100,17 @@ func ValidateOverlayConfig(cfg *OverlayConfig) error {
 	if !levelIDPattern.MatchString(cfg.Strength) {
 		return fmt.Errorf("overlay.yaml: strength %q must match ^[a-z][a-z0-9-]*$", cfg.Strength)
 	}
-	if cfg.Activation != "" && cfg.Activation != "always" && cfg.Activation != "profile" {
-		return fmt.Errorf("overlay.yaml: invalid activation %q (expected always or profile)", cfg.Activation)
+	if err := validateOverlayActivation("overlay.yaml", cfg.Activation); err != nil {
+		return err
 	}
 	return nil
+}
+
+func validateOverlayActivation(fileLabel, activation string) error {
+	switch activation {
+	case "", "always", "explicit", "disabled", "profile":
+		return nil
+	default:
+		return fmt.Errorf("%s: invalid activation %q (expected always, explicit, disabled, or profile)", fileLabel, activation)
+	}
 }

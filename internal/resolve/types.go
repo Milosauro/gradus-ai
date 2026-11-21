@@ -84,12 +84,15 @@ type Conflict struct {
 
 // ExceptionView describes an active exception in the resolved view.
 type ExceptionView struct {
-	ID         string   `json:"id"`
-	RuleID     string   `json:"rule_id"`
-	Scope      []string `json:"scope"`
-	Kind       string   `json:"kind"`
-	Expires    string   `json:"expires"`
-	ApprovedBy []string `json:"approved_by"`
+	ID            string   `json:"id"`
+	RuleID        string   `json:"rule_id"`
+	Scope         []string `json:"scope"`
+	Kind          string   `json:"kind"`
+	Reason        string   `json:"reason,omitempty"`
+	Created       string   `json:"created,omitempty"`
+	Expires       string   `json:"expires"`
+	PostReviewDue string   `json:"post_review_due,omitempty"`
+	ApprovedBy    []string `json:"approved_by"`
 }
 
 // BudgetInfo tracks rendered size against target limits (§9.7).

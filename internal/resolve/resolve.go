@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -31,15 +32,16 @@ type ResolveResult struct {
 }
 
 type exceptionRecord struct {
-	Schema     string   `yaml:"schema"`
-	ID         string   `yaml:"id"`
-	RuleID     string   `yaml:"rule_id"`
-	Scope      []string `yaml:"scope"`
-	Reason     string   `yaml:"reason"`
-	ApprovedBy []string `yaml:"approved_by"`
-	Created    string   `yaml:"created"`
-	Expires    string   `yaml:"expires"`
-	Kind       string   `yaml:"kind"`
+	Schema        string   `yaml:"schema"`
+	ID            string   `yaml:"id"`
+	RuleID        string   `yaml:"rule_id"`
+	Scope         []string `yaml:"scope"`
+	Reason        string   `yaml:"reason"`
+	ApprovedBy    []string `yaml:"approved_by"`
+	Created       string   `yaml:"created"`
+	Expires       string   `yaml:"expires"`
+	Kind          string   `yaml:"kind"`
+	PostReviewDue string   `yaml:"post_review_due,omitempty"`
 }
 
 type findingRecord struct {
@@ -214,7 +216,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 			notes = append(notes, parsed.Notes...)
 		}
 
-		active := ov.Activation == "" || ov.Activation == "always"
+		active := ov.Activation == "" || ov.Activation == "always" || ov.Activation == "explicit"
 		overlaySummaries = append(overlaySummaries, OverlaySummary{
 			ID:       ov.ID,
 			Strength: ov.Strength,
@@ -342,6 +344,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		return out, err
 	}
 	notes = append(notes, expNotes...)
+	conflicts = append(conflicts, validateExceptionPolicies(cfg, levelConfigs, mergedRules, activeExceptions, now)...)
 
 	for i := range mergedRules {
 		for _, ex := range activeExceptions {
@@ -545,16 +548,128 @@ func loadExceptions(dir string, now time.Time) ([]ExceptionView, []string, error
 			notes = append(notes, fmt.Sprintf("exception %s for rule %s expired on %s", ex.ID, ex.RuleID, ex.Expires))
 			continue
 		}
+		if (ex.Kind == "" || ex.Kind == "exception") && len(ex.ApprovedBy) == 0 {
+			notes = append(notes, fmt.Sprintf("exception %s for rule %s is pending approval", ex.ID, ex.RuleID))
+			continue
+		}
 		active = append(active, ExceptionView{
-			ID:         ex.ID,
-			RuleID:     ex.RuleID,
-			Scope:      ex.Scope,
-			Kind:       ex.Kind,
-			Expires:    ex.Expires,
-			ApprovedBy: ex.ApprovedBy,
+			ID:            ex.ID,
+			RuleID:        ex.RuleID,
+			Scope:         ex.Scope,
+			Kind:          ex.Kind,
+			Reason:        ex.Reason,
+			Created:       ex.Created,
+			Expires:       ex.Expires,
+			PostReviewDue: ex.PostReviewDue,
+			ApprovedBy:    ex.ApprovedBy,
 		})
 	}
 	return active, notes, nil
+}
+
+// ParseDurationSpan parses durations like "30d" or "72h".
+func ParseDurationSpan(raw string) (time.Duration, error) {
+	s := strings.TrimSpace(raw)
+	if strings.HasSuffix(s, "d") {
+		days, err := strconv.Atoi(strings.TrimSuffix(s, "d"))
+		if err != nil || days < 0 {
+			return 0, fmt.Errorf("invalid day duration %q", raw)
+		}
+		return time.Duration(days) * 24 * time.Hour, nil
+	}
+	return time.ParseDuration(s)
+}
+
+// ValidateExceptionAgainstLevel validates a single exception against its target level policy.
+func ValidateExceptionAgainstLevel(ex ExceptionView, lvlID string, lc *schema.LevelConfig, offline *schema.OfflinePolicy, now time.Time) []Conflict {
+	var conflicts []Conflict
+	today := now.UTC().Format("2006-01-02")
+
+	if lc != nil && lc.Exceptions != nil && lc.Exceptions.MaxDuration != "" && ex.Created != "" && ex.Expires != "" {
+		maxDur, err := ParseDurationSpan(lc.Exceptions.MaxDuration)
+		if err == nil {
+			createdAt, errC := time.Parse("2006-01-02", ex.Created)
+			expiresAt, errE := time.Parse("2006-01-02", ex.Expires)
+			if errC == nil && errE == nil && expiresAt.Sub(createdAt) > maxDur {
+				conflicts = append(conflicts, Conflict{
+					Kind:    "exception",
+					RuleID:  ex.RuleID,
+					Level:   lvlID,
+					Message: fmt.Sprintf("exception %s for rule %s exceeds level %q exceptions.max_duration (%s)", ex.ID, ex.RuleID, lvlID, lc.Exceptions.MaxDuration),
+				})
+			}
+		}
+	}
+
+	if ex.Kind == "break-glass" {
+		if strings.TrimSpace(ex.Reason) == "" {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "exception",
+				RuleID:  ex.RuleID,
+				Level:   lvlID,
+				Message: fmt.Sprintf("break-glass %s for rule %s requires a non-empty reason", ex.ID, ex.RuleID),
+			})
+		}
+		if strings.TrimSpace(ex.PostReviewDue) == "" {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "exception",
+				RuleID:  ex.RuleID,
+				Level:   lvlID,
+				Message: fmt.Sprintf("break-glass %s for rule %s requires post_review_due", ex.ID, ex.RuleID),
+			})
+		} else if _, err := time.Parse("2006-01-02", ex.PostReviewDue); err != nil {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "exception",
+				RuleID:  ex.RuleID,
+				Level:   lvlID,
+				Message: fmt.Sprintf("break-glass %s post_review_due %q must be YYYY-MM-DD", ex.ID, ex.PostReviewDue),
+			})
+		} else if ex.PostReviewDue < today {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "exception",
+				RuleID:  ex.RuleID,
+				Level:   lvlID,
+				Message: fmt.Sprintf("break-glass %s for rule %s post_review_due %s has passed", ex.ID, ex.RuleID, ex.PostReviewDue),
+			})
+		}
+		if offline != nil && offline.Mode == "fail-closed" {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "exception",
+				RuleID:  ex.RuleID,
+				Level:   lvlID,
+				Message: fmt.Sprintf("break-glass %s is disallowed on fail-closed level %q", ex.ID, lvlID),
+			})
+		} else if lc != nil && lc.Exceptions != nil && !lc.Exceptions.BreakGlass {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "exception",
+				RuleID:  ex.RuleID,
+				Level:   lvlID,
+				Message: fmt.Sprintf("break-glass %s is disallowed by level %q exceptions.break_glass: false", ex.ID, lvlID),
+			})
+		}
+	}
+
+	return conflicts
+}
+
+func validateExceptionPolicies(cfg schema.PyramidConfig, levelConfigs map[string]*schema.LevelConfig, rules []ResolvedRule, exceptions []ExceptionView, now time.Time) []Conflict {
+	ruleLevel := make(map[string]string, len(rules))
+	for _, r := range rules {
+		ruleLevel[r.ID] = r.Level
+	}
+	offlineByLevel := make(map[string]*schema.OfflinePolicy, len(cfg.Levels))
+	for _, l := range cfg.Levels {
+		offlineByLevel[l.ID] = l.Offline
+	}
+	var conflicts []Conflict
+	for _, ex := range exceptions {
+		lvl := ruleLevel[ex.RuleID]
+		if lvl == "" {
+			continue
+		}
+		conflicts = append(conflicts, ValidateExceptionAgainstLevel(ex, lvl, levelConfigs[lvl], offlineByLevel[lvl], now)...)
+	}
+	return conflicts
 }
 
 func loadConfirmedFindings(dir string) ([]Conflict, error) {

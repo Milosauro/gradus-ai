@@ -283,3 +283,260 @@ Expired statement.
 		t.Fatalf("expected lifecycle conflict for expired rule PRJ-EXP, got: %+v", res.View.Conflicts)
 	}
 }
+
+func TestResolveExplicitAndDisabledOverlays(t *testing.T) {
+	tmp := t.TempDir()
+	teamDir := filepath.Join(tmp, "levels", "team")
+	ovExpDir := filepath.Join(tmp, "overlays", "go-strict")
+	ovDisDir := filepath.Join(tmp, "overlays", "legacy-off")
+	for _, d := range []string{
+		filepath.Join(teamDir, "rules"),
+		filepath.Join(ovExpDir, "rules"),
+		filepath.Join(ovDisDir, "rules"),
+	} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write := func(path, content string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write(filepath.Join(tmp, "gradus.yaml"), `schema: gradus/v1
+levels:
+  - id: team
+    source: { path: levels/team }
+overlays:
+  - id: go-strict
+    source: { path: overlays/go-strict }
+    strength: team
+    activation: explicit
+  - id: legacy-off
+    source: { path: overlays/legacy-off }
+    strength: team
+    activation: disabled
+targets: [agents-md]
+`)
+	write(filepath.Join(teamDir, "level.yaml"), `schema: gradus/v1
+id: team
+constraints:
+  allowed_overlays: ["go-*", "legacy-*"]
+`)
+	write(filepath.Join(teamDir, "rules", "TEAM-01.md"), `---
+id: TEAM-01
+title: Team baseline
+severity: SHOULD
+---
+Team baseline.
+`)
+	write(filepath.Join(ovExpDir, "overlay.yaml"), `schema: gradus/v1
+id: go-strict
+strength: team
+activation: explicit
+`)
+	write(filepath.Join(ovExpDir, "rules", "GO-01.md"), `---
+id: GO-01
+title: Explicit Go overlay rule
+severity: MUST
+---
+Must pass race tests.
+`)
+	write(filepath.Join(ovDisDir, "rules", "LEG-01.md"), `---
+id: LEG-01
+title: Disabled overlay rule
+severity: SHOULD
+---
+Should not be active.
+`)
+
+	res, err := resolve.Resolve(tmp, resolve.Options{})
+	if err != nil {
+		t.Fatalf("Resolve failed: %v", err)
+	}
+	if len(res.View.Conflicts) != 0 {
+		t.Fatalf("expected 0 conflicts, got %+v", res.View.Conflicts)
+	}
+
+	var expActive, disFound bool
+	for _, ov := range res.View.Overlays {
+		if ov.ID == "go-strict" && ov.Active {
+			expActive = true
+		}
+		if ov.ID == "legacy-off" && !ov.Active {
+			disFound = true
+		}
+	}
+	if !expActive || !disFound {
+		t.Fatalf("expected go-strict active=true and legacy-off active=false, got %+v", res.View.Overlays)
+	}
+
+	var sawGO01, sawLEG01 bool
+	for _, r := range res.View.Rules {
+		if r.ID == "GO-01" {
+			sawGO01 = true
+		}
+		if r.ID == "LEG-01" {
+			sawLEG01 = true
+		}
+	}
+	if !sawGO01 || sawLEG01 {
+		t.Fatalf("expected GO-01 included and LEG-01 excluded, got rules=%+v", res.View.Rules)
+	}
+}
+
+func TestResolveExceptionAndBreakGlassPolicies(t *testing.T) {
+	tmp := t.TempDir()
+	orgDir := filepath.Join(tmp, "levels", "org")
+	teamDir := filepath.Join(tmp, "levels", "team")
+	excDir := filepath.Join(tmp, ".gradus", "exceptions")
+	for _, d := range []string{
+		filepath.Join(orgDir, "rules"),
+		filepath.Join(teamDir, "rules"),
+		excDir,
+	} {
+		if err := os.MkdirAll(d, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write := func(path, content string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write(filepath.Join(tmp, "gradus.yaml"), `schema: gradus/v1
+levels:
+  - id: org
+    source: { path: levels/org }
+    offline: { mode: fail-closed }
+  - id: team
+    source: { path: levels/team }
+targets: [agents-md]
+`)
+	write(filepath.Join(orgDir, "level.yaml"), `schema: gradus/v1
+id: org
+exceptions:
+  max_duration: 7d
+  break_glass: false
+`)
+	write(filepath.Join(teamDir, "level.yaml"), `schema: gradus/v1
+id: team
+exceptions:
+  max_duration: 30d
+  break_glass: true
+`)
+	write(filepath.Join(orgDir, "rules", "ORG-01.md"), `---
+id: ORG-01
+title: Org rule
+severity: MUST
+---
+Org rule.
+`)
+	write(filepath.Join(teamDir, "rules", "TEAM-01.md"), `---
+id: TEAM-01
+title: Team rule 1
+severity: SHOULD
+---
+Team rule 1.
+`)
+	write(filepath.Join(teamDir, "rules", "TEAM-02.md"), `---
+id: TEAM-02
+title: Team rule 2
+severity: SHOULD
+---
+Team rule 2.
+`)
+	write(filepath.Join(teamDir, "rules", "TEAM-03.md"), `---
+id: TEAM-03
+title: Team rule 3
+severity: SHOULD
+---
+Team rule 3.
+`)
+
+	// 1. Pending unapproved exception for TEAM-01 -> must NOT waive.
+	write(filepath.Join(excDir, "EX-PENDING.yaml"), `schema: gradus/v1
+id: EX-PENDING
+rule_id: TEAM-01
+scope: ["**/*"]
+reason: Waiting for review
+approved_by: []
+created: 2026-06-01
+expires: 2026-06-15
+kind: exception
+`)
+
+	// 2. Approved exception for TEAM-02 exceeding max_duration: 30d -> conflict.
+	write(filepath.Join(excDir, "EX-LONG.yaml"), `schema: gradus/v1
+id: EX-LONG
+rule_id: TEAM-02
+scope: ["**/*"]
+reason: Too long
+approved_by: ["lead@example.com"]
+created: 2026-06-01
+expires: 2026-08-15
+kind: exception
+`)
+
+	// 3. Valid break-glass for TEAM-03 -> waives TEAM-03, no conflict.
+	write(filepath.Join(excDir, "BG-VALID.yaml"), `schema: gradus/v1
+id: BG-VALID
+rule_id: TEAM-03
+scope: ["**/*"]
+reason: Production hotfix
+approved_by: ["oncall@example.com"]
+created: 2026-06-01
+expires: 2026-06-05
+kind: break-glass
+post_review_due: 2026-06-10
+`)
+
+	// 4. Disallowed break-glass for ORG-01 (break_glass: false + fail-closed) -> conflict.
+	write(filepath.Join(excDir, "BG-ORG.yaml"), `schema: gradus/v1
+id: BG-ORG
+rule_id: ORG-01
+scope: ["**/*"]
+reason: Incident
+approved_by: ["oncall@example.com"]
+created: 2026-06-01
+expires: 2026-06-03
+kind: break-glass
+post_review_due: 2026-06-08
+`)
+
+	now := time.Date(2026, 6, 2, 12, 0, 0, 0, time.UTC)
+	res, err := resolve.Resolve(tmp, resolve.Options{Now: now})
+	if err != nil {
+		t.Fatalf("Resolve failed: %v", err)
+	}
+
+	waived := make(map[string]bool)
+	for _, r := range res.View.Rules {
+		waived[r.ID] = r.Waived
+	}
+	if waived["TEAM-01"] {
+		t.Fatalf("expected TEAM-01 NOT to be waived by pending unapproved exception")
+	}
+	if !waived["TEAM-03"] {
+		t.Fatalf("expected TEAM-03 to be waived by valid break-glass BG-VALID")
+	}
+
+	var sawMaxDur, sawBGDisallowed bool
+	for _, c := range res.View.Conflicts {
+		if c.Kind == "exception" && c.RuleID == "TEAM-02" && strings.Contains(c.Message, "max_duration") {
+			sawMaxDur = true
+		}
+		if c.Kind == "exception" && c.RuleID == "ORG-01" && strings.Contains(c.Message, "break-glass") {
+			sawBGDisallowed = true
+		}
+	}
+	if !sawMaxDur || !sawBGDisallowed {
+		t.Fatalf("expected max_duration and break-glass disallowed exception conflicts, got: %+v", res.View.Conflicts)
+	}
+}
