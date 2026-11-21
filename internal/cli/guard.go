@@ -66,6 +66,26 @@ func newGuardCmd(_ *bool) *cobra.Command {
 				}
 				return nil
 			}
+			if action.IsClaudeCodeNative {
+				// Claude Code validates PreToolUse stdout strictly and rejects top-level "decision": "ask"
+				// or non-zero exit codes when structured JSON is returned. Return {} on allow so normal
+				// Claude Code permissions remain in effect, and hookSpecificOutput only on ask/deny with exit 0.
+				if res.Decision == guard.DecisionAllow {
+					if err := enc.Encode(struct{}{}); err != nil {
+						return &ExitErrorWithCode{Code: ExitError, Err: err}
+					}
+					return nil
+				}
+				ccResp := struct {
+					HookSpecificOutput *guard.HookSpecificOutput `json:"hookSpecificOutput"`
+				}{
+					HookSpecificOutput: res.HookSpecificOutput,
+				}
+				if err := enc.Encode(ccResp); err != nil {
+					return &ExitErrorWithCode{Code: ExitError, Err: err}
+				}
+				return nil
+			}
 			if err := enc.Encode(res); err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}

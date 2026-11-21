@@ -119,7 +119,31 @@ func TestGuardCommand(t *testing.T) {
 		t.Fatalf("expected strict protojson force_ask output for native Antigravity, got: %s", out)
 	}
 
-	// 6. Malformed JSON -> fail closed exit 2
+	// 6. Native Claude Code payload emits {} on allow
+	code, out, _ = runGuardWithStdin(t, []string{"--user-dir", userDir}, `{"session_id":"sess_1","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git status"}}`)
+	if code != cli.ExitPass || strings.TrimSpace(out) != "{}" {
+		t.Fatalf("expected exit 0 and {} for native Claude Code allow, got code=%d out=%s", code, out)
+	}
+
+	// 7. Native Claude Code payload emits strict hookSpecificOutput only on ask/anti-tamper (exit 0)
+	code, out, _ = runGuardWithStdin(t, []string{"--user-dir", userDir}, `{"session_id":"sess_1","hook_event_name":"PreToolUse","tool_name":"Edit","tool_input":{"file_path":"gradus.yaml"}}`)
+	if code != cli.ExitPass {
+		t.Fatalf("expected exit 0 for native Claude Code ask, got %d (%s)", code, out)
+	}
+	if strings.Contains(out, `"decision"`) || strings.Contains(out, "matched_rules") || strings.Contains(out, "anti_tamper") || !strings.Contains(out, `"permissionDecision":"ask"`) {
+		t.Fatalf("expected strict hookSpecificOutput ask for native Claude Code, got: %s", out)
+	}
+
+	// 8. Native Claude Code payload emits strict hookSpecificOutput deny with exit 0
+	code, out, _ = runGuardWithStdin(t, []string{"--user-dir", userDir}, `{"session_id":"sess_1","hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"rm -rf /tmp/foo"}}`)
+	if code != cli.ExitPass {
+		t.Fatalf("expected exit 0 for native Claude Code deny, got %d (%s)", code, out)
+	}
+	if strings.Contains(out, `"decision"`) || !strings.Contains(out, `"permissionDecision":"deny"`) {
+		t.Fatalf("expected strict hookSpecificOutput deny for native Claude Code, got: %s", out)
+	}
+
+	// 9. Malformed JSON -> fail closed exit 2
 	code, _, _ = runGuardWithStdin(t, []string{"--user-dir", userDir}, `{invalid json`)
 	if code != cli.ExitError {
 		t.Fatalf("expected exit 2 on malformed JSON, got %d", code)

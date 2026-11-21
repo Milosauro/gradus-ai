@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-11-21
+
+### Fixed
+- **Native Claude Code `PreToolUse` JSON schema compliance:** `gradusctl guard` now detects native Claude Code payloads (`hook_event_name` / `session_id`) and emits `{}` on `allow` (preserving normal Claude Code permission prompts) or strict `{"hookSpecificOutput": ...}` without top-level `decision`, `matched_rules`, or `anti_tamper` fields on `ask`/`deny` with exit code `0`, preventing Claude Code's strict hook JSON validator from rejecting Gradus guard responses.
+
 ## [0.1.3] - 2026-11-21
 
 ### Fixed

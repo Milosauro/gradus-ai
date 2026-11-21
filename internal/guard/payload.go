@@ -24,6 +24,7 @@ type NormalizedAction struct {
 	Target              string
 	WorkspaceDir        string
 	IsAntigravityNative bool
+	IsClaudeCodeNative  bool
 }
 
 type antigravityToolCall struct {
@@ -34,10 +35,12 @@ type antigravityToolCall struct {
 
 type rawHookPayload struct {
 	// Claude Code / generic format
-	ToolName  string         `json:"tool_name"`
-	Tool      string         `json:"tool"`
-	ToolInput map[string]any `json:"tool_input"`
-	Input     map[string]any `json:"input"`
+	HookEventName string         `json:"hook_event_name"`
+	SessionID     string         `json:"session_id"`
+	ToolName      string         `json:"tool_name"`
+	Tool          string         `json:"tool"`
+	ToolInput     map[string]any `json:"tool_input"`
+	Input         map[string]any `json:"input"`
 
 	// Antigravity native camelCase protojson format
 	ToolCall       *antigravityToolCall `json:"toolCall"`
@@ -82,6 +85,7 @@ func ParsePayload(rootDir string, data []byte) (NormalizedAction, error) {
 	}
 
 	effectiveRoot := resolveWorkspaceRoot(rootDir, raw.Cwd, raw.WorkspacePaths)
+	isClaudeCodeNative := !isAntigravityNative && (strings.TrimSpace(raw.HookEventName) != "" || strings.TrimSpace(raw.SessionID) != "")
 
 	switch toolName {
 	case "Bash", "run_command":
@@ -92,6 +96,7 @@ func ParsePayload(rootDir string, data []byte) (NormalizedAction, error) {
 			Target:              cmd,
 			WorkspaceDir:        effectiveRoot,
 			IsAntigravityNative: isAntigravityNative,
+			IsClaudeCodeNative:  isClaudeCodeNative,
 		}, nil
 
 	case "Edit", "Write", "MultiEdit",
@@ -104,6 +109,7 @@ func ParsePayload(rootDir string, data []byte) (NormalizedAction, error) {
 			Target:              NormalizeTargetPath(effectiveRoot, p),
 			WorkspaceDir:        effectiveRoot,
 			IsAntigravityNative: isAntigravityNative,
+			IsClaudeCodeNative:  isClaudeCodeNative,
 		}, nil
 
 	default:
@@ -113,6 +119,7 @@ func ParsePayload(rootDir string, data []byte) (NormalizedAction, error) {
 			Target:              "",
 			WorkspaceDir:        effectiveRoot,
 			IsAntigravityNative: isAntigravityNative,
+			IsClaudeCodeNative:  isClaudeCodeNative,
 		}, nil
 	}
 }
