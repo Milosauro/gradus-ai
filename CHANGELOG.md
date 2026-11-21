@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-21
+
+### Added
+- **Level Charters, Rule Lifecycle & Context Budgets (`F9`):** Enforce `charter.allowed_severities` and optional `context_budget` (`max_rules`, `max_chars`) during `resolve` and `verify`; partition `draft`/`retired` rules into `ResolvedView.InactiveRules`; validate `YYYY-MM-DD` `review_by`/`expires` dates; emit non-fatal warnings for `deprecated` and overdue `review_by` rules and fail on expired rules; expose level charters in `resolve --json`, `explain`, `gradus-author`, and `gradus-review`.
+- **Explicit Overlays, Break-Glass & `gradusctl exception` (`F10`):** Support `activation: explicit | always | disabled | profile` on overlays; enforce `exceptions.max_duration`, pending unapproved exceptions, and `kind: break-glass` policies (`post_review_due`, `break_glass: false`, `fail-closed`); add `gradusctl exception request | approve | break-glass | list | expire`.
+- **`gradusctl doctor`, Strict Anti-Tamper & Hygiene (`F11`):** Add `gradusctl doctor [--json]` diagnosing `gradus.yaml`, `gradus.lock`, `PATH`, `.claude/settings.json` hook types/guard registration, and `.agents/hooks.json`; add configurable `anti_tamper.mode` (`ask` | `deny`) for hard-blocking governance edits even in Claude Code `auto` mode; add `gradusctl evidence prune`, `gradusctl lessons prune`, and `user_rules` in `gradusctl status --json`.
+- **Rule Testing & Impact Simulation (`F12`):** Add `gradusctl test [--rule <id>]` running `### Compliant` and `### Non-compliant` examples for `check` and `hook` rules, and `gradusctl simulate [--commits N | --since ref]` scanning git history non-destructively via `os/exec` `git`.
+- **Composite GitHub Action & Team Agent Profiles (`F13`):** Add SHA-pinned composite GitHub Action `.github/actions/gradus/action.yml` and `--agent-profile` / `GRADUS_AGENT_PROFILE` support on `resolve`, `compile`, and `guard` replacing personal `user` rules in CI/background agents.
+- **Onboarding Handbook & Starter Templates (`F14`):** Add deterministic `gradusctl handbook [--output <file>] [--json]` and non-prescriptive starter templates under `examples/personal/`, `examples/team/`, and `examples/regulated-fintech/`.
+
 ## [0.1.4] - 2026-11-21
 
 ### Fixed
