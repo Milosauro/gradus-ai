@@ -120,7 +120,33 @@ func newLessonsCmd(jsonOutput *bool) *cobra.Command {
 	updateCmd.Flags().StringVar(&status, "status", "", "New status (open|proposed|promoted|dismissed)")
 	updateCmd.Flags().BoolVar(&increment, "increment", false, "Increment occurrence counter")
 
-	cmd.AddCommand(addCmd, listCmd, updateCmd)
+	var pruneDismissed, pruneAll bool
+	pruneCmd := &cobra.Command{
+		Use:   "prune",
+		Short: "Remove dismissed or all lessons from the lessons store",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			if dir == "" {
+				dir = "."
+			}
+			storeDir, err := state.LessonsDir(dir, lessonsDir)
+			if err != nil {
+				return &ExitErrorWithCode{Code: ExitError, Err: err}
+			}
+			removed, remaining, err := state.PruneLessons(storeDir, pruneDismissed, pruneAll)
+			if err != nil {
+				return &ExitErrorWithCode{Code: ExitError, Err: err}
+			}
+			if *jsonOutput {
+				return encodeJSON(cmd, map[string]int{"removed": removed, "remaining": remaining})
+			}
+			_, err = fmt.Fprintf(cmd.OutOrStdout(), "pruned %d lesson(s) (%d remaining)\n", removed, remaining)
+			return err
+		},
+	}
+	pruneCmd.Flags().BoolVar(&pruneDismissed, "dismissed", false, "Remove only dismissed lessons")
+	pruneCmd.Flags().BoolVar(&pruneAll, "all", false, "Remove all lessons in the store")
+
+	cmd.AddCommand(addCmd, listCmd, updateCmd, pruneCmd)
 	return cmd
 }
 

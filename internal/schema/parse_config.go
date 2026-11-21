@@ -49,6 +49,11 @@ var pyramidFieldSpec = FieldSpec{
 			},
 		},
 		"profile": {}, // Extensible profile vocabulary (§6.4)
+		"anti_tamper": {
+			Allowed: map[string]FieldSpec{
+				"mode": {},
+			},
+		},
 		"targets": {},
 		"hooks": {
 			Allowed: map[string]FieldSpec{

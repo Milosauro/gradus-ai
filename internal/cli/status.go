@@ -17,16 +17,18 @@ import (
 )
 
 type statusReport struct {
-	LockState      string `json:"lock_state"` // ok | missing | invalid | mismatch
-	DefinitionHash string `json:"definition_hash,omitempty"`
-	ViewHash       string `json:"view_hash,omitempty"`
-	Conflicts      int    `json:"conflicts"`
-	PendingLessons int    `json:"pending_lessons"`
-	Drift          int    `json:"drift"`
+	LockState      string   `json:"lock_state"` // ok | missing | invalid | mismatch
+	DefinitionHash string   `json:"definition_hash,omitempty"`
+	ViewHash       string   `json:"view_hash,omitempty"`
+	Conflicts      int      `json:"conflicts"`
+	PendingLessons int      `json:"pending_lessons"`
+	Drift          int      `json:"drift"`
+	UserRules      []string `json:"user_rules,omitempty"`
 }
 
 func newStatusCmd(jsonOutput *bool) *cobra.Command {
 	var dir string
+	var userDir string
 	var brief bool
 	var antigravityHook bool
 
@@ -48,7 +50,7 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 					}
 				}
 			}
-			rep, exitCode, err := buildStatusReport(dir)
+			rep, exitCode, err := buildStatusReport(dir, userDir)
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
@@ -103,13 +105,14 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&dir, "dir", ".", "Target repository directory")
+	cmd.Flags().StringVar(&userDir, "user-dir", "", "Override user-level rules directory (defaults to ~/.gradus/levels/user)")
 	cmd.Flags().BoolVar(&brief, "brief", false, "Emit compact single-line summary")
 	cmd.Flags().BoolVar(&antigravityHook, "antigravity-hook", false, "Emit Antigravity SessionStart injectSteps JSON")
 	return cmd
 }
 
 // buildStatusReport performs zero-network local inspection (< 100ms).
-func buildStatusReport(rootDir string) (statusReport, int, error) {
+func buildStatusReport(rootDir, userDir string) (statusReport, int, error) {
 	var rep statusReport
 
 	cfgBytes, err := os.ReadFile(filepath.Join(rootDir, "gradus.yaml"))
@@ -162,6 +165,7 @@ func buildStatusReport(rootDir string) (statusReport, int, error) {
 		rep.Conflicts = len(res.View.Conflicts)
 	}
 	rep.PendingLessons = countPendingLessons(rootDir)
+	rep.UserRules = loadUserRuleIDs(userDir)
 
 	if rep.LockState == "mismatch" {
 		return rep, ExitError, nil
@@ -212,4 +216,35 @@ func countPendingLessons(rootDir string) int {
 		}
 	}
 	return count
+}
+
+func loadUserRuleIDs(userDir string) []string {
+	dir := strings.TrimSpace(userDir)
+	if dir == "" {
+		if os.Getenv("CI") != "" {
+			return nil
+		}
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return nil
+		}
+		dir = filepath.Join(home, ".gradus", "levels", "user")
+	}
+	rulesDir := filepath.Join(dir, "rules")
+	entries, err := os.ReadDir(rulesDir)
+	if err != nil {
+		return nil
+	}
+	var ids []string
+	for _, e := range entries {
+		if e.IsDir() || !strings.HasSuffix(strings.ToLower(e.Name()), ".md") {
+			continue
+		}
+		if parsed, err := schema.ParseRuleFile(filepath.Join(rulesDir, e.Name()), "user", "user"); err == nil {
+			if parsed.Value.Status != "draft" && parsed.Value.Status != "retired" {
+				ids = append(ids, parsed.Value.ID)
+			}
+		}
+	}
+	return ids
 }

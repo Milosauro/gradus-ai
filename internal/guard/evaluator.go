@@ -148,13 +148,45 @@ func loadUserLevelRules(userDir string, exceptions []resolve.ExceptionView) ([]r
 	return out, nil
 }
 
+// EvaluateOptions configures guard evaluation behavior.
+type EvaluateOptions struct {
+	AntiTamperMode string // "ask" (default) or "deny"
+}
+
+// LoadAntiTamperMode reads anti_tamper.mode from rootDir/gradus.yaml, defaulting to "ask".
+func LoadAntiTamperMode(rootDir string) string {
+	raw, err := os.ReadFile(filepath.Join(rootDir, "gradus.yaml"))
+	if err != nil {
+		return DecisionAsk
+	}
+	parsed, err := schema.ParsePyramidConfig(raw)
+	if err != nil || parsed.Value.AntiTamper == nil || parsed.Value.AntiTamper.Mode == "" {
+		return DecisionAsk
+	}
+	if parsed.Value.AntiTamper.Mode == DecisionDeny {
+		return DecisionDeny
+	}
+	return DecisionAsk
+}
+
 // Evaluate applies built-in anti-tamper protection (T2) and active hook rules using
 // strict precedence: deny > ask > allow.
 func Evaluate(action NormalizedAction, rules []resolve.ResolvedRule) (EvaluationResult, error) {
+	return EvaluateWithOptions(action, rules, EvaluateOptions{AntiTamperMode: DecisionAsk})
+}
+
+// EvaluateWithOptions applies built-in anti-tamper protection (T2) and active hook rules
+// using strict precedence: deny > ask > allow.
+func EvaluateWithOptions(action NormalizedAction, rules []resolve.ResolvedRule, opts EvaluateOptions) (EvaluationResult, error) {
 	res := EvaluationResult{
 		Decision:     DecisionAllow,
 		Reason:       "allowed by guard",
 		MatchedRules: []MatchedRule{},
+	}
+
+	tamperDecision := DecisionAsk
+	if opts.AntiTamperMode == DecisionDeny {
+		tamperDecision = DecisionDeny
 	}
 
 	var reasons []string
@@ -162,11 +194,11 @@ func Evaluate(action NormalizedAction, rules []resolve.ResolvedRule) (Evaluation
 	// Built-in anti-tamper floor (Threat Model T2) for both file writes and mutating shell commands.
 	if action.Action == ActionWrite && IsProtectedGovernancePath(action.Target) {
 		res.AntiTamper = true
-		res.Decision = DecisionAsk
+		res.Decision = tamperDecision
 		reasons = append(reasons, fmt.Sprintf("anti-tamper: modifying protected governance file %q requires explicit human confirmation", action.Target))
 	} else if action.Action == ActionCommand && IsProtectedShellCommand(action.Target) {
 		res.AntiTamper = true
-		res.Decision = DecisionAsk
+		res.Decision = tamperDecision
 		reasons = append(reasons, "anti-tamper: shell command targets protected governance path and requires explicit human confirmation")
 	}
 
