@@ -11,7 +11,7 @@ import (
 )
 
 func newGuardCmd(_ *bool) *cobra.Command {
-	var userDir string
+	var userDir, agentProfile string
 
 	cmd := &cobra.Command{
 		Use:   "guard",
@@ -35,7 +35,7 @@ func newGuardCmd(_ *bool) *cobra.Command {
 				rootDir = action.WorkspaceDir
 			}
 
-			rules, err := guard.LoadLocalGuardRules(rootDir, userDir)
+			rules, err := guard.LoadLocalGuardRulesWithProfile(rootDir, userDir, agentProfile)
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
@@ -100,5 +100,6 @@ func newGuardCmd(_ *bool) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&userDir, "user-dir", "", "Override user-level rules directory (defaults to ~/.gradus/levels/user)")
+	cmd.Flags().StringVar(&agentProfile, "agent-profile", "", "Team agent profile directory replacing personal user rules")
 	return cmd
 }

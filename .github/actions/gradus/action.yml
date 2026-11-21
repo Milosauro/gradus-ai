@@ -1,0 +1,92 @@
+name: 'Gradus Verify & Check'
+description: 'Run deterministic gradusctl verify and gradusctl check in CI with SHA-pinned dependencies and evidence upload.'
+
+inputs:
+  version:
+    description: 'gradusctl module version or tag to install (e.g. v0.2.0 or latest)'
+    required: false
+    default: 'latest'
+  working-directory:
+    description: 'Repository directory containing gradus.yaml'
+    required: false
+    default: '.'
+  base-ref:
+    description: 'Optional git base ref for gradusctl check --base'
+    required: false
+    default: ''
+  write-evidence:
+    description: 'Persist verification and check evidence records'
+    required: false
+    default: 'true'
+  upload-evidence:
+    description: 'Upload .gradus/evidence as a workflow artifact'
+    required: false
+    default: 'true'
+
+outputs:
+  verify-exit-code:
+    description: 'Exit code returned by gradusctl verify'
+    value: ${{ steps.run-gradus.outputs.verify_exit_code }}
+  check-exit-code:
+    description: 'Exit code returned by gradusctl check'
+    value: ${{ steps.run-gradus.outputs.check_exit_code }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Go
+      uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+      with:
+        go-version: '1.24'
+
+    - name: Install gradusctl (static CGO_ENABLED=0)
+      shell: bash
+      run: |
+        set -euo pipefail
+        CGO_ENABLED=0 go install "github.com/Milosauro/gradus-ai/cmd/gradusctl@${{ inputs.version }}"
+
+    - name: Run gradusctl verify and check
+      id: run-gradus
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: |
+        set +e
+        VERIFY_ARGS=(verify --json)
+        CHECK_ARGS=(check --json)
+        if [ "${{ inputs.write-evidence }}" = "true" ]; then
+          VERIFY_ARGS+=(--write-evidence)
+          CHECK_ARGS+=(--write-evidence)
+        fi
+        if [ -n "${{ inputs.base-ref }}" ]; then
+          CHECK_ARGS+=(--base "${{ inputs.base-ref }}")
+        fi
+
+        gradusctl "${VERIFY_ARGS[@]}" > gradus-verify.json
+        VERIFY_CODE=$?
+        gradusctl "${CHECK_ARGS[@]}" > gradus-check.json
+        CHECK_CODE=$?
+
+        echo "verify_exit_code=${VERIFY_CODE}" >> "$GITHUB_OUTPUT"
+        echo "check_exit_code=${CHECK_CODE}" >> "$GITHUB_OUTPUT"
+
+        {
+          echo "### Gradus CI Governance Summary"
+          echo "- **verify exit code:** \`${VERIFY_CODE}\`"
+          echo "- **check exit code:** \`${CHECK_CODE}\`"
+        } >> "$GITHUB_STEP_SUMMARY"
+
+        if [ "$VERIFY_CODE" -eq 2 ] || [ "$CHECK_CODE" -eq 2 ]; then
+          exit 2
+        fi
+        if [ "$VERIFY_CODE" -ne 0 ] || [ "$CHECK_CODE" -ne 0 ]; then
+          exit 1
+        fi
+        exit 0
+
+    - name: Upload Gradus evidence artifact
+      if: ${{ always() && inputs.upload-evidence == 'true' }}
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: gradus-evidence
+        path: ${{ inputs.working-directory }}/.gradus/evidence
+        if-no-files-found: ignore
