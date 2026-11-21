@@ -149,3 +149,42 @@ func TestGuardCommand(t *testing.T) {
 		t.Fatalf("expected exit 2 on malformed JSON, got %d", code)
 	}
 }
+
+func TestGuardAntiTamperDenyMode(t *testing.T) {
+	tmp := t.TempDir()
+	projDir := filepath.Join(tmp, ".gradus", "levels", "project", "rules")
+	if err := os.MkdirAll(projDir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	_ = os.WriteFile(filepath.Join(tmp, "gradus.yaml"), []byte("schema: gradus/v1\nanti_tamper:\n  mode: deny\nlevels:\n  - id: project\n    source: { path: .gradus/levels/project }\ntargets: [claude-code, antigravity]\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(projDir, "PRJ-01.md"), []byte("---\nid: PRJ-01\ntitle: Basic\nseverity: SHOULD\n---\nKeep clean.\n"), 0o644)
+
+	origWD, _ := os.Getwd()
+	_ = os.Chdir(tmp)
+	defer func() { _ = os.Chdir(origWD) }()
+
+	// 1. Native Claude Code payload -> permissionDecision: deny with exit 0
+	code, out, _ := runGuardWithStdin(t, []string{}, `{"session_id":"s1","hook_event_name":"PreToolUse","tool_name":"Edit","tool_input":{"file_path":"gradus.yaml"}}`)
+	if code != cli.ExitPass || !strings.Contains(out, `"permissionDecision":"deny"`) {
+		t.Fatalf("expected exit 0 with permissionDecision:deny for Claude Code, got code=%d out=%s", code, out)
+	}
+
+	// 2. Native Antigravity payload -> decision: deny with exit 0
+	code, out, _ = runGuardWithStdin(t, []string{}, `{"toolCall":{"id":"t1","name":"write_file","args":{"Path":"gradus.yaml"}},"cwd":"`+filepath.ToSlash(tmp)+`","hookEventName":"PreToolUse"}`)
+	if code != cli.ExitPass || !strings.Contains(out, `"decision":"deny"`) {
+		t.Fatalf("expected exit 0 with decision:deny for Antigravity, got code=%d out=%s", code, out)
+	}
+
+	// 3. Generic payload -> decision: deny with exit 1
+	code, out, _ = runGuardWithStdin(t, []string{}, `{"tool_name":"Bash","tool_input":{"command":"touch .claude/settings.json"}}`)
+	if code != cli.ExitViolation || !strings.Contains(out, `"decision":"deny"`) {
+		t.Fatalf("expected exit 1 with decision:deny for generic payload, got code=%d out=%s", code, out)
+	}
+
+	// 4. Invalid anti_tamper.mode -> fail closed exit 2
+	_ = os.WriteFile(filepath.Join(tmp, "gradus.yaml"), []byte("schema: gradus/v1\nanti_tamper:\n  mode: allow\nlevels:\n  - id: project\n    source: { path: .gradus/levels/project }\n"), 0o644)
+	var stdout, stderr bytes.Buffer
+	if code := cli.ExecuteCode([]string{"resolve", "--dir", tmp}, &stdout, &stderr); code != cli.ExitError {
+		t.Fatalf("expected exit 2 for invalid anti_tamper.mode, got %d", code)
+	}
+}

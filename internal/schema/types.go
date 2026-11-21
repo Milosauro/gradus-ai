@@ -15,16 +15,22 @@ type ParseResult[T any] struct {
 	Notes []string
 }
 
+// AntiTamperConfig configures built-in anti-tamper guard behavior (ask | deny).
+type AntiTamperConfig struct {
+	Mode string `yaml:"mode,omitempty" json:"mode,omitempty"`
+}
+
 // PyramidConfig represents gradus.yaml.
 type PyramidConfig struct {
-	Schema   string          `yaml:"schema" json:"schema"`
-	Extends  *string         `yaml:"extends,omitempty" json:"extends,omitempty"`
-	Levels   []LevelRef      `yaml:"levels" json:"levels"`
-	Overlays []OverlayRef    `yaml:"overlays,omitempty" json:"overlays,omitempty"`
-	Profile  *Profile        `yaml:"profile,omitempty" json:"profile,omitempty"`
-	Targets  []string        `yaml:"targets,omitempty" json:"targets,omitempty"`
-	Hooks    *HooksConfig    `yaml:"hooks,omitempty" json:"hooks,omitempty"`
-	Evidence *EvidenceConfig `yaml:"evidence,omitempty" json:"evidence,omitempty"`
+	Schema     string            `yaml:"schema" json:"schema"`
+	Extends    *string           `yaml:"extends,omitempty" json:"extends,omitempty"`
+	AntiTamper *AntiTamperConfig `yaml:"anti_tamper,omitempty" json:"anti_tamper,omitempty"`
+	Levels     []LevelRef        `yaml:"levels" json:"levels"`
+	Overlays   []OverlayRef      `yaml:"overlays,omitempty" json:"overlays,omitempty"`
+	Profile    *Profile          `yaml:"profile,omitempty" json:"profile,omitempty"`
+	Targets    []string          `yaml:"targets,omitempty" json:"targets,omitempty"`
+	Hooks      *HooksConfig      `yaml:"hooks,omitempty" json:"hooks,omitempty"`
+	Evidence   *EvidenceConfig   `yaml:"evidence,omitempty" json:"evidence,omitempty"`
 }
 
 // LevelRef references a pyramid level in gradus.yaml.

@@ -12,6 +12,13 @@ func ValidatePyramidConfig(cfg *PyramidConfig) error {
 	if cfg.Schema != SchemaVersion {
 		return fmt.Errorf("gradus.yaml: unsupported schema %q (expected %q)", cfg.Schema, SchemaVersion)
 	}
+	if cfg.AntiTamper != nil {
+		switch cfg.AntiTamper.Mode {
+		case "", "ask", "deny":
+		default:
+			return fmt.Errorf("gradus.yaml: invalid anti_tamper.mode %q (expected ask or deny)", cfg.AntiTamper.Mode)
+		}
+	}
 	if len(cfg.Levels) == 0 {
 		return fmt.Errorf("gradus.yaml: levels must contain at least one level")
 	}

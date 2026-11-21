@@ -85,6 +85,13 @@
       "type": "array",
       "items": { "type": "string" }
     },
+    "anti_tamper": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "mode": { "type": "string", "enum": ["ask", "deny"] }
+      }
+    },
     "hooks": {
       "type": "object",
       "properties": {

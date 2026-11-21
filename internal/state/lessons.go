@@ -189,6 +189,45 @@ func UpdateLesson(dir, id, status string, increment bool) (LessonRecord, error) 
 	return rec, nil
 }
 
+// PruneLessons deletes dismissed (or all) lesson JSON files from dir and returns (removed, remaining).
+func PruneLessons(dir string, dismissedOnly, all bool) (int, int, error) {
+	if !dismissedOnly && !all {
+		return 0, 0, fmt.Errorf("specify --dismissed or --all")
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return 0, 0, nil
+		}
+		return 0, 0, err
+	}
+	removed, remaining := 0, 0
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
+			continue
+		}
+		full := filepath.Join(dir, e.Name())
+		shouldDelete := all
+		if !shouldDelete && dismissedOnly {
+			if raw, rerr := os.ReadFile(full); rerr == nil {
+				var rec LessonRecord
+				if json.Unmarshal(raw, &rec) == nil && rec.Status == "dismissed" {
+					shouldDelete = true
+				}
+			}
+		}
+		if shouldDelete {
+			if rerr := os.Remove(full); rerr != nil {
+				return removed, remaining, rerr
+			}
+			removed++
+		} else {
+			remaining++
+		}
+	}
+	return removed, remaining, nil
+}
+
 func isValidLessonKind(k string) bool {
 	switch k {
 	case "correction", "repeated-mistake", "preference", "frustration":

@@ -40,7 +40,9 @@ func newGuardCmd(_ *bool) *cobra.Command {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
 
-			res, err := guard.Evaluate(action, rules)
+			res, err := guard.EvaluateWithOptions(action, rules, guard.EvaluateOptions{
+				AntiTamperMode: guard.LoadAntiTamperMode(rootDir),
+			})
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
