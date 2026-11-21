@@ -12,6 +12,6 @@
     "strength": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "owners": { "type": "array", "items": { "type": "string" } },
     "approvers": { "type": "array", "items": { "type": "string" } },
-    "activation": { "type": "string", "enum": ["always", "profile"] }
+    "activation": { "type": "string", "enum": ["always", "explicit", "disabled", "profile"] }
   }
 }
