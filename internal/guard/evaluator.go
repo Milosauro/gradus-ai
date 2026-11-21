@@ -49,16 +49,24 @@ type EvaluationResult struct {
 // LoadLocalGuardRules resolves the local pyramid offline (zero network calls) and appends
 // personal user-level rules from userLevelDir (defaulting to ~/.gradus/levels/user) when present (ADR 0003).
 func LoadLocalGuardRules(rootDir, userLevelDir string) ([]resolve.ResolvedRule, error) {
+	return LoadLocalGuardRulesWithProfile(rootDir, userLevelDir, "")
+}
+
+// LoadLocalGuardRulesWithProfile resolves the local pyramid offline and optionally replaces
+// the personal user level with a team-defined agent profile directory (§21).
+func LoadLocalGuardRulesWithProfile(rootDir, userLevelDir, agentProfile string) ([]resolve.ResolvedRule, error) {
 	res, err := resolve.Resolve(rootDir, resolve.Options{
-		OfflineOnly: true,
+		OfflineOnly:  true,
+		AgentProfile: agentProfile,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	rules := append([]resolve.ResolvedRule(nil), res.View.Rules...)
+	activeProfile := strings.TrimSpace(agentProfile) != "" || strings.TrimSpace(os.Getenv("GRADUS_AGENT_PROFILE")) != ""
 
-	if !res.View.Scope.IncludesUserLevel {
+	if !activeProfile && !res.View.Scope.IncludesUserLevel {
 		dir := strings.TrimSpace(userLevelDir)
 		if dir == "" && os.Getenv("CI") == "" {
 			if home, homeErr := os.UserHomeDir(); homeErr == nil {

@@ -15,7 +15,7 @@ import (
 )
 
 func newCompileCmd(jsonOutput *bool) *cobra.Command {
-	var dir string
+	var dir, agentProfile string
 
 	cmd := &cobra.Command{
 		Use:   "compile",
@@ -34,7 +34,9 @@ func newCompileCmd(jsonOutput *bool) *cobra.Command {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
 
-			resolved, err := resolve.Resolve(dir, resolve.Options{})
+			resolved, err := resolve.Resolve(dir, resolve.Options{
+				AgentProfile: agentProfile,
+			})
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
@@ -66,5 +68,6 @@ func newCompileCmd(jsonOutput *bool) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&dir, "dir", ".", "Target repository directory")
+	cmd.Flags().StringVar(&agentProfile, "agent-profile", "", "Team agent profile directory replacing personal user rules")
 	return cmd
 }

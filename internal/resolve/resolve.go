@@ -22,6 +22,7 @@ type Options struct {
 	IncludeDraft bool
 	InCI         bool
 	OfflineOnly  bool
+	AgentProfile string
 	Now          time.Time
 }
 
@@ -75,6 +76,28 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		return out, err
 	}
 	cfg := cfgRes.Value
+	agentProfile := strings.TrimSpace(opts.AgentProfile)
+	if agentProfile == "" {
+		agentProfile = strings.TrimSpace(os.Getenv("GRADUS_AGENT_PROFILE"))
+	}
+	if agentProfile != "" {
+		info, serr := os.Stat(agentProfile)
+		if serr != nil || !info.IsDir() {
+			return out, fmt.Errorf("agent-profile directory %q not found or not a directory", agentProfile)
+		}
+		var filteredLevels []schema.LevelRef
+		for _, l := range cfg.Levels {
+			if l.ID == "user" || strings.HasPrefix(l.Source.Path, "~/") {
+				continue
+			}
+			filteredLevels = append(filteredLevels, l)
+		}
+		filteredLevels = append(filteredLevels, schema.LevelRef{
+			ID:     "agent-profile",
+			Source: schema.SourceRef{Path: agentProfile},
+		})
+		cfg.Levels = filteredLevels
+	}
 
 	var notes []string
 	notes = append(notes, cfgRes.Notes...)

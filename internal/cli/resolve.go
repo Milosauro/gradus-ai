@@ -13,7 +13,7 @@ import (
 )
 
 func newResolveCmd(jsonOutput *bool) *cobra.Command {
-	var dir string
+	var dir, agentProfile string
 	var writeLock bool
 	var includeDraft bool
 
@@ -26,6 +26,7 @@ func newResolveCmd(jsonOutput *bool) *cobra.Command {
 			}
 			res, err := resolve.Resolve(dir, resolve.Options{
 				IncludeDraft: includeDraft,
+				AgentProfile: agentProfile,
 			})
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
@@ -74,6 +75,7 @@ func newResolveCmd(jsonOutput *bool) *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&dir, "dir", ".", "Target repository directory")
+	cmd.Flags().StringVar(&agentProfile, "agent-profile", "", "Team agent profile directory replacing personal user rules")
 	cmd.Flags().BoolVar(&writeLock, "write", false, "Write resolved entries and view_hash to gradus.lock")
 	cmd.Flags().BoolVar(&includeDraft, "include-draft", false, "Include rules with status: draft")
 	return cmd
