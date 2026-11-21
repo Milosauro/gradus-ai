@@ -7,7 +7,7 @@
 | Previous milestone | Phase 0 MVP (`v0.1.0`–`v0.1.4`, all 8 Walden features `F1`–`F8` certified) |
 | Target milestone | **Phase 1 — Team (`v0.2.0`)** |
 | SDD Workflow | Walden (`walden v0.14.0+`) |
-| Status | Verified against `gradus-design.md` and `internal/schema`; ready for `F9` |
+| Status | Complete (`F9`–`F14` implemented and verified; ready for `v0.2.0` release) |
 
 ---
 

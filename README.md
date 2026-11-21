@@ -6,7 +6,7 @@
 
 **Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-[![Status: Phase 0 MVP v0.1.4](https://img.shields.io/badge/status-Phase%200%20MVP%20v0.1.4-brightgreen?style=flat-square)](docs/design/gradus-design.md)
+[![Status: Phase 1 Team v0.2.0](https://img.shields.io/badge/status-Phase%201%20Team%20v0.2.0-brightgreen?style=flat-square)](docs/design/gradus-design.md)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Agents: Claude Code · Antigravity · AGENTS.md](https://img.shields.io/badge/first%20targets-Claude%20Code%20·%20Antigravity%20·%20AGENTS.md-555?style=flat-square)](#which-agents)
 
@@ -15,14 +15,14 @@
 </div>
 
 > [!NOTE]
-> **Phase 0 Technical Preview (`v0.1.x`) is available.** Install `gradusctl` as a single static binary and govern repositories with Claude Code, Antigravity, and `AGENTS.md`. Live agent comparative evaluation (`E9`) and real-project validation remain open before declaring Phase 0 complete. The full design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+> **Phase 1 Team (`v0.2.0`) is available.** Install `gradusctl` as a single static binary and govern personal or team repositories with Claude Code, Antigravity, `AGENTS.md`, charters, overlays, exceptions/break-glass, `doctor`, rule tests, historical impact simulation, CI GitHub Action, and onboarding handbooks. The full design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
 
 ## Quick Start (Personal Setup)
 
 Install `gradusctl` with Go (or download a signed binary from [GitHub Releases](https://github.com/Milosauro/gradus-ai/releases)) and ensure `gradusctl` is on your `PATH` (agent `PreToolUse` and `SessionStart` hooks invoke `gradusctl` by name):
 
 ```bash
-go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.1.4
+go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.2.0
 ```
 
 Initialize Gradus in your repository, resolve your pyramid, compile target agent instructions/hooks/skills, and verify integrity:
@@ -219,7 +219,7 @@ The first targets are **Claude Code** and **Antigravity**, with full in-session 
 | **2 · Business unit** | Locked remote levels across teams | Obligations, bindings to Walden and spec-kit, toolchain, readable changelogs |
 | **3 · Organization** | Company-wide policies | Conditional overlays, framework mapping, model policy, chat agents and MCP |
 
-**Today:** Phase 0 technical preview (`v0.1.x`) is released with signed static binaries and deterministic CLI enforcement. Live agent comparative evaluation (`E9`) and real-project validation (`O-1`) are still open.
+**Today:** Phase 1 ("Team", `v0.2.0`) is implemented and certified across all 14 Walden features (`F1`–`F14`), with signed static binaries, deterministic CLI enforcement, team charters/overlays/exceptions, `doctor`, `test`, `simulate`, `handbook`, starter templates in `examples/`, and a SHA-pinned composite GitHub Action.
 
 ## CLI interface
 
@@ -227,9 +227,14 @@ The first targets are **Claude Code** and **Antigravity**, with full in-session 
 gradusctl init        # set up the pyramid in this repository
 gradusctl resolve     # fetch, verify and merge every level into one view
 gradusctl compile     # generate instructions, skills and hooks for your agents
-gradusctl verify      # integrity, versions, conflicts, drift
+gradusctl verify      # integrity, versions, charters, lifecycle, conflicts, drift
 gradusctl check       # deterministic checks, e.g. on staged changes or in CI
-gradusctl explain ID  # where a rule comes from, who owns it, and why
+gradusctl doctor      # diagnose config, lockfile, PATH, and agent hook files
+gradusctl exception   # request, approve, list, expire exceptions and break-glass
+gradusctl test        # run rule tests from Compliant / Non-compliant examples
+gradusctl simulate    # simulate check rule impact across recent git commits
+gradusctl handbook    # generate a Markdown onboarding handbook from the pyramid
+gradusctl explain ID  # where a rule comes from, its charter, who owns it, and why
 ```
 
 | Skill | What it does |
