@@ -96,6 +96,9 @@ func newCheckCmd(jsonOutput *bool) *cobra.Command {
 			}
 
 			if len(checkRes.Findings) > 0 {
+				if *jsonOutput {
+					return &ExitErrorWithCode{Code: ExitViolation}
+				}
 				return &ExitErrorWithCode{
 					Code: ExitViolation,
 					Err:  fmt.Errorf("%d check violation(s) found", len(checkRes.Findings)),

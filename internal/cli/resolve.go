@@ -61,6 +61,9 @@ func newResolveCmd(jsonOutput *bool) *cobra.Command {
 			}
 
 			if len(res.View.Conflicts) > 0 {
+				if *jsonOutput {
+					return &ExitErrorWithCode{Code: ExitViolation}
+				}
 				return &ExitErrorWithCode{
 					Code: ExitViolation,
 					Err:  fmt.Errorf("%d blocking conflict(s) detected", len(res.View.Conflicts)),

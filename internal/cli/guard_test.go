@@ -110,13 +110,13 @@ func TestGuardCommand(t *testing.T) {
 		t.Fatalf("expected deny result, got %+v", resDeny)
 	}
 
-	// 5. Native Antigravity protojson payload emits strict {decision, reason} without unknown fields
+	// 5. Native Antigravity protojson payload emits strict {decision: "force_ask", reason} without unknown fields
 	code, out, _ = runGuardWithStdin(t, []string{"--user-dir", userDir}, `{"toolCall":{"id":"toolu_1","name":"run_command","args":{"CommandLine":"git commit -m hi"}},"cwd":"`+filepath.ToSlash(tmp)+`","hookEventName":"PreToolUse"}`)
 	if code != cli.ExitPass {
 		t.Fatalf("expected exit 0 for native Antigravity ask, got %d (%s)", code, out)
 	}
-	if strings.Contains(out, "matched_rules") || strings.Contains(out, "hookSpecificOutput") || !strings.Contains(out, `"decision":"ask"`) {
-		t.Fatalf("expected strict protojson output for native Antigravity, got: %s", out)
+	if strings.Contains(out, "matched_rules") || strings.Contains(out, "hookSpecificOutput") || !strings.Contains(out, `"decision":"force_ask"`) {
+		t.Fatalf("expected strict protojson force_ask output for native Antigravity, got: %s", out)
 	}
 
 	// 6. Malformed JSON -> fail closed exit 2

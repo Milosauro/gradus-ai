@@ -48,12 +48,17 @@ func newGuardCmd(_ *bool) *cobra.Command {
 			enc := json.NewEncoder(cmd.OutOrStdout())
 			if action.IsAntigravityNative {
 				// Antigravity parses PreToolUse stdout with strict protojson (rejects unknown fields)
-				// and requires exit 0 to honor structured allow/ask/deny decisions.
+				// and requires exit 0 to honor structured allow/force_ask/deny decisions.
+				// Map ask -> force_ask so cached "Always Allow" tool approvals do not bypass Gradus guards.
+				agDecision := res.Decision
+				if agDecision == guard.DecisionAsk {
+					agDecision = "force_ask"
+				}
 				agResp := struct {
 					Decision string `json:"decision"`
 					Reason   string `json:"reason,omitempty"`
 				}{
-					Decision: res.Decision,
+					Decision: agDecision,
 					Reason:   res.Reason,
 				}
 				if err := enc.Encode(agResp); err != nil {

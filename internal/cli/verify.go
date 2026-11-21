@@ -76,6 +76,9 @@ func newVerifyCmd(jsonOutput *bool) *cobra.Command {
 			}
 
 			if exitCode != ExitPass {
+				if *jsonOutput {
+					return &ExitErrorWithCode{Code: exitCode}
+				}
 				return &ExitErrorWithCode{
 					Code: exitCode,
 					Err:  fmt.Errorf("verification failed: %d conflict(s), %d drift item(s), %d expired exception(s)", len(rep.Conflicts), len(rep.Drift), len(rep.ExpiredExceptions)),
