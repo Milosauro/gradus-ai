@@ -10,13 +10,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -36,11 +36,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:8575e48b13b5ff01cdc93baec385fbbb64d7fe204cece4e617af8c151fe1434e"
+          "output_digest": "sha256:d794bf6772b484dc6eb2a4188c31cebd0db31b2b74d595fe7bc6caa6d3b9b754"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "1.2": {
       "task_fingerprint": "sha256:2b608ef69f7bce2b41f96795da9bdabebb39111fd6ac72447ae1f602ab3d15eb",
@@ -50,13 +50,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -76,11 +76,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:a58c12e3306c4c2b07dc7be1fe07f4795df106df8185529a166adbee4b353bab"
+          "output_digest": "sha256:adc92977d3269198c92fe4e2e7a73be5f071fb6ea66b92af82d68e9e4d1ffd59"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "2.1": {
       "task_fingerprint": "sha256:9b72beadac46b12bf67e49228cd634d243505b311d7fc5e5654c96ebb7379c22",
@@ -90,13 +90,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -116,11 +116,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:00c695fc18c03edc14c3345cd265f046a0bb5e90768dc0b475133794dc87e0e3"
+          "output_digest": "sha256:6383fb919a31232491503be57b998c0374ed7e8504bbba14b338d49ad5efb14f"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "2.2": {
       "task_fingerprint": "sha256:efb5072b6944ae349bd966b9a4ff029abf2e045e09be322afcd21e4d3ad99559",
@@ -130,13 +130,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -156,11 +156,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:32191558739ee6a58addfd92a9aaaf901860166d4f11a01695c78ce881c26076"
+          "output_digest": "sha256:11461f1e8877ad93affa5b56ce4752d9e8ed7d7efaeb224ff73aad3187d65394"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "3.1": {
       "task_fingerprint": "sha256:d8883218ee03edfaa8d1ca3ed4f15c7c7f5ff5b65307b2217b4c0a3f36700397",
@@ -170,13 +170,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -196,11 +196,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:2c0f4d2cd2bdfb2e55c8d18f7d4110a5528f2093697013228ab9abb2bdd6e246"
+          "output_digest": "sha256:166666405c1323bce1fec46c7c32d16124eae01912fcdee75b7b3cb0890e7c66"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "3.2": {
       "task_fingerprint": "sha256:198b3ee6e68e3c59ef7513b334245fd62585ffb4ebe3771732293ca4623f8f78",
@@ -210,13 +210,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -236,11 +236,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:ee085544f9ed4ddfd689239664d9b5387566696e73677defd3b8ff02c2403a35"
+          "output_digest": "sha256:c896fe5d70024e60f91f3d5fcd170fc42d659e819b174d0a868ebc5c7cb3f954"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "3.3": {
       "task_fingerprint": "sha256:84a43be06b9537b7be28d60ec66c7080ff338d0513793ed6dac082d2cf1835a2",
@@ -250,13 +250,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -276,11 +276,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:f4ab9a0037e71b9cbe803276d04a7ce3b488b3199f9743305682236da8959149"
+          "output_digest": "sha256:2e1fe8c917bc0a4322cf4ade1e2054a99dc94f69bd2df3d1f35a6e7f47aa8194"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "4.1": {
       "task_fingerprint": "sha256:c1e44d0a327997ef7bcf1c36ea95a7d0c779efee2c3592b59bf77e387c932a5a",
@@ -290,13 +290,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -316,11 +316,11 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:ad24ca31ad87e7a5fc3bb8965b60f6c4953963c461ed2ae8c62c03c7e8f8b3a7"
+          "output_digest": "sha256:c064bf3ea819fe523375c4de010df2abe9063dcaa38d1a86458c4f352cd6394d"
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     },
     "4.2": {
       "task_fingerprint": "sha256:73327bdad8953c86814c3b05b8b80bd42b83d2bafa12e175b08389d17d6b34ab",
@@ -330,13 +330,13 @@
         "policy": "verify-purity/v1",
         "assertion_result": "passed",
         "integrity": "pure",
-        "before_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
-        "after_code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639"
+        "before_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
+        "after_code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e"
       },
       "requirements_fingerprint": "sha256:041ac152455b6c43b29532f471d1604c730988bd510d5c6ca744989e7cae19c1",
       "design_fingerprint": "sha256:08463f52e6ecf2a2a8789d62f70c8f6b186349d43d101d3fb6161d3fa3fe1921",
       "tasks_fingerprint": "sha256:fec3744f9ace47ff905e9cc48cd35088d4656cca4447611ba91017f64137c381",
-      "code_identity": "sha256:0d755edb01afd686efb5fa1cd5a97f125aa16ec43b35c68cc5cec828e37ba639",
+      "code_identity": "sha256:2f452b7dc9b2a94f081e8c3dd23a4b26bc9e7225b36d8a12d2aaa75a0dc00d2e",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -356,7 +356,7 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:888b81fc74e1a45d84de5542c8efbc5177a1c46a8f8d0bd0b4b01c3a77bd495e"
+          "output_digest": "sha256:d1cedba3d5f23a534830d07b75088b28a5fa4ec30eb1555f35611acf2cfb9846"
         },
         {
           "command": [
@@ -370,7 +370,7 @@
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-20T16:09:53Z"
+      "verified_at": "2026-11-21T13:13:04Z"
     }
   }
 }
