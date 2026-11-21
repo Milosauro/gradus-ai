@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-11-21
+
+### Fixed
+- **Antigravity `force_ask` hook decision:** `gradusctl guard` now maps `ask` decisions to `force_ask` for native Antigravity `toolCall` payloads so cached "Always Allow" tool approvals do not silently bypass Gradus confirmation guards.
+- **Clean `--json` output on violations:** `gradusctl check --json`, `verify --json`, `resolve --json`, and `reconcile --json` no longer emit trailing `Error: ...` text to `stderr` on exit code `1` (`ExitViolation`), keeping combined `2>&1` output valid JSON.
+- **Session reload & enforcement documentation (`README.md`):** Documented restarting/opening a new agent session after `gradusctl compile` so `.agents/hooks.json` and `.claude/settings.json` hooks take effect, and clarified `hook` vs `check` vs `review` enforcement timing.
+
 ## [0.1.2] - 2026-11-21
 
 ### Fixed
