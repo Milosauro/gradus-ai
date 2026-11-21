@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -18,19 +19,34 @@ const (
 
 // NormalizedAction represents a tool invocation normalized across Claude Code and Antigravity.
 type NormalizedAction struct {
-	ToolName string
-	Action   string
-	Target   string
+	ToolName            string
+	Action              string
+	Target              string
+	WorkspaceDir        string
+	IsAntigravityNative bool
+}
+
+type antigravityToolCall struct {
+	ID   string         `json:"id"`
+	Name string         `json:"name"`
+	Args map[string]any `json:"args"`
 }
 
 type rawHookPayload struct {
+	// Claude Code / generic format
 	ToolName  string         `json:"tool_name"`
 	Tool      string         `json:"tool"`
 	ToolInput map[string]any `json:"tool_input"`
 	Input     map[string]any `json:"input"`
+
+	// Antigravity native camelCase protojson format
+	ToolCall       *antigravityToolCall `json:"toolCall"`
+	Cwd            string               `json:"cwd"`
+	WorkspacePaths []string             `json:"workspacePaths"`
 }
 
 // ParsePayload parses a PreToolUse JSON payload from Claude Code or Antigravity
+// (both legacy tool_name/tool_input and native Antigravity toolCall/args + cwd)
 // and normalizes it into a canonical action class and target.
 // Empty, malformed, or tool-less payloads fail closed with an error.
 func ParsePayload(rootDir string, data []byte) (NormalizedAction, error) {
@@ -45,25 +61,37 @@ func ParsePayload(rootDir string, data []byte) (NormalizedAction, error) {
 	}
 
 	toolName := strings.TrimSpace(raw.ToolName)
+	input := raw.ToolInput
+	isAntigravityNative := false
+
+	if toolName == "" && raw.ToolCall != nil {
+		isAntigravityNative = true
+		toolName = strings.TrimSpace(raw.ToolCall.Name)
+		if input == nil {
+			input = raw.ToolCall.Args
+		}
+	}
 	if toolName == "" {
 		toolName = strings.TrimSpace(raw.Tool)
 	}
 	if toolName == "" {
 		return NormalizedAction{}, fmt.Errorf("guard payload missing tool_name")
 	}
-
-	input := raw.ToolInput
 	if input == nil {
 		input = raw.Input
 	}
+
+	effectiveRoot := resolveWorkspaceRoot(rootDir, raw.Cwd, raw.WorkspacePaths)
 
 	switch toolName {
 	case "Bash", "run_command":
 		cmd := firstString(input, "command", "CommandLine", "cmd")
 		return NormalizedAction{
-			ToolName: toolName,
-			Action:   ActionCommand,
-			Target:   cmd,
+			ToolName:            toolName,
+			Action:              ActionCommand,
+			Target:              cmd,
+			WorkspaceDir:        effectiveRoot,
+			IsAntigravityNative: isAntigravityNative,
 		}, nil
 
 	case "Edit", "Write", "MultiEdit",
@@ -71,18 +99,54 @@ func ParsePayload(rootDir string, data []byte) (NormalizedAction, error) {
 		"write_file", "edit_file":
 		p := firstString(input, "file_path", "TargetFile", "Path", "path")
 		return NormalizedAction{
-			ToolName: toolName,
-			Action:   ActionWrite,
-			Target:   NormalizeTargetPath(rootDir, p),
+			ToolName:            toolName,
+			Action:              ActionWrite,
+			Target:              NormalizeTargetPath(effectiveRoot, p),
+			WorkspaceDir:        effectiveRoot,
+			IsAntigravityNative: isAntigravityNative,
 		}, nil
 
 	default:
 		return NormalizedAction{
-			ToolName: toolName,
-			Action:   ActionOther,
-			Target:   "",
+			ToolName:            toolName,
+			Action:              ActionOther,
+			Target:              "",
+			WorkspaceDir:        effectiveRoot,
+			IsAntigravityNative: isAntigravityNative,
 		}, nil
 	}
+}
+
+func resolveWorkspaceRoot(fallback, cwd string, workspacePaths []string) string {
+	candidates := make([]string, 0, 2+len(workspacePaths))
+	if strings.TrimSpace(cwd) != "" {
+		candidates = append(candidates, strings.TrimSpace(cwd))
+	}
+	for _, wp := range workspacePaths {
+		if strings.TrimSpace(wp) != "" {
+			candidates = append(candidates, strings.TrimSpace(wp))
+		}
+	}
+	if strings.TrimSpace(fallback) != "" {
+		candidates = append(candidates, strings.TrimSpace(fallback))
+	}
+
+	// Prefer the first candidate (or its parent, e.g. when hook CWD is .agents/) that contains gradus.yaml.
+	for _, c := range candidates {
+		if _, err := os.Stat(filepath.Join(c, "gradus.yaml")); err == nil {
+			return c
+		}
+		parent := filepath.Dir(c)
+		if parent != c {
+			if _, err := os.Stat(filepath.Join(parent, "gradus.yaml")); err == nil {
+				return parent
+			}
+		}
+	}
+	if len(candidates) > 0 {
+		return candidates[0]
+	}
+	return fallback
 }
 
 // NormalizeTargetPath converts backslashes to forward slashes, strips a matching rootDir prefix,

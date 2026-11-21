@@ -70,6 +70,18 @@ func TestParsePayload(t *testing.T) {
 			wantTarget: ".claude/settings.json",
 		},
 		{
+			name:       "antigravity native protojson toolCall run_command",
+			raw:        `{"toolCall":{"id":"toolu_01","name":"run_command","args":{"CommandLine":"git commit -m hi"}},"cwd":"` + filepath.ToSlash(root) + `","hookEventName":"PreToolUse"}`,
+			wantAction: guard.ActionCommand,
+			wantTarget: "git commit -m hi",
+		},
+		{
+			name:       "antigravity native protojson toolCall write_file",
+			raw:        `{"toolCall":{"id":"toolu_02","name":"write_file","args":{"Path":"` + filepath.ToSlash(filepath.Join(root, ".agents", "hooks.json")) + `"}},"cwd":"` + filepath.ToSlash(root) + `"}`,
+			wantAction: guard.ActionWrite,
+			wantTarget: ".agents/hooks.json",
+		},
+		{
 			name:    "empty stdin fails closed",
 			raw:     "   ",
 			wantErr: true,
@@ -116,6 +128,9 @@ func TestAntiTamperProtection(t *testing.T) {
 		".walden/constitution.md",
 		".agents/hooks.json",
 		".claude/settings.json",
+		".claude/settings.local.json",
+		".git/hooks/pre-commit",
+		".githooks/pre-commit",
 	}
 
 	for _, p := range protected {
@@ -177,7 +192,14 @@ func TestAntiTamperProtection(t *testing.T) {
 		"rm gradus.yaml",
 		"sed -i '' 's/MUST/MAY/' .gradus/levels/project/rules/R1.md",
 		"echo '{}' > .claude/settings.json",
+		"echo x>gradus.yaml",
 		"mv .agents/hooks.json /tmp/hooks.json",
+		"git config core.hooksPath /tmp/empty",
+		"git checkout HEAD~1 -- .gradus",
+		"find .gradus -delete",
+		"ln -sf /tmp/evil gradus.yaml",
+		"unlink gradus.lock",
+		"rm gradus.y*",
 	} {
 		resShell, err := guard.Evaluate(guard.NormalizedAction{
 			ToolName: "Bash",

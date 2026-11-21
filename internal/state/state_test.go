@@ -109,11 +109,14 @@ func TestLessonsAndRedaction(t *testing.T) {
 		t.Fatalf("expected deterministic ProjectKey")
 	}
 
-	// 2. AddLesson redacts secrets & emails before writing to disk
+	// 2. AddLesson redacts secrets & PII (including PEM keys, Codice Fiscale, mobile numbers) without false positives
 	rec, dest, err := state.AddLesson(tmp, state.LessonRecord{
 		Kind:      "correction",
-		Statement: "Never hardcode ghp_1234567890abcdef123456, sk-proj-abc1234567890xyz, AKIAIOSFODNN7EXAMPLE, password=hunter2, IT60X0542811101000000123456, +39 347 123 4567, or alice@example.com",
-		Evidence:  []string{"Authorization: Bearer secret_token_value_123456"},
+		Statement: "Never hardcode ghp_1234567890abcdef123456, sk-proj-abc1234567890xyz, AKIAIOSFODNN7EXAMPLE, password=hunter2, IT60X0542811101000000123456, RSSMRA80A01H501U, +39 333 1234567, or alice@example.com (keep numbers 100 200 300 400 intact)",
+		Evidence: []string{
+			"Authorization: Bearer secret_token_value_123456",
+			"-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEAtest\n-----END RSA PRIVATE KEY-----",
+		},
 	}, now)
 	if err != nil {
 		t.Fatalf("AddLesson failed: %v", err)
@@ -123,12 +126,15 @@ func TestLessonsAndRedaction(t *testing.T) {
 		t.Fatal(err)
 	}
 	diskStr := string(raw)
-	for _, forbidden := range []string{"ghp_", "sk-proj-", "AKIAIOSFODNN7EXAMPLE", "hunter2", "IT60X0542811101000000123456", "347 123 4567", "alice@example.com", "secret_token_value_123456"} {
+	for _, forbidden := range []string{"ghp_", "sk-proj-", "AKIAIOSFODNN7EXAMPLE", "hunter2", "IT60X0542811101000000123456", "RSSMRA80A01H501U", "333 1234567", "alice@example.com", "secret_token_value_123456", "BEGIN RSA PRIVATE KEY"} {
 		if strings.Contains(diskStr, forbidden) {
 			t.Fatalf("expected %q to be redacted on disk, got:\n%s", forbidden, diskStr)
 		}
 	}
-	if strings.Count(diskStr, "[REDACTED]") < 8 {
+	if !strings.Contains(diskStr, "100 200 300 400") {
+		t.Fatalf("expected plain space-separated numbers not to trigger phone false positive, got:\n%s", diskStr)
+	}
+	if strings.Count(diskStr, "[REDACTED]") < 10 {
 		t.Fatalf("expected redacted placeholders on disk, got:\n%s", diskStr)
 	}
 
