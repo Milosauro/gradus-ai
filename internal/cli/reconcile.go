@@ -98,6 +98,9 @@ func newReconcileCmd(jsonOutput *bool) *cobra.Command {
 			}
 
 			if len(drift) > 0 {
+				if *jsonOutput {
+					return &ExitErrorWithCode{Code: ExitViolation}
+				}
 				return &ExitErrorWithCode{Code: ExitViolation, Err: fmt.Errorf("found %d drifted file(s)", len(drift))}
 			}
 			return nil

@@ -41,6 +41,10 @@ gradusctl check --staged
 gradusctl hooks install --native
 ```
 
+> [!TIP]
+> - **Restart or start a new agent session** after running `gradusctl compile` for the first time so Antigravity (`.agents/hooks.json`) and Claude Code (`.claude/settings.json`) load the newly generated `PreToolUse` and `SessionStart` hooks.
+> - **Enforcement scopes:** `hook` rules gate tool calls live at runtime (`gradusctl guard`); `check` rules scan repository files deterministically during `gradusctl check`, git pre-commit hooks, and CI (not on every file write); `review` rules are evaluated by `/gradus-review`.
+
 ---
 
 ## The Monday morning problem
