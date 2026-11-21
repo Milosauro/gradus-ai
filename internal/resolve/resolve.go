@@ -138,13 +138,16 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		}
 
 		ver := ""
+		var charter *schema.Charter
 		if lc != nil {
 			ver = lc.Version
+			charter = lc.Charter
 		}
 		levelSummaries = append(levelSummaries, LevelSummary{
 			ID:      lvl.ID,
 			Version: ver,
 			Hash:    resSrc.Hash,
+			Charter: charter,
 		})
 
 		if lvl.ID != "user" {
@@ -246,6 +249,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 
 	// Load rules in ordered sequence.
 	var rawRules []ResolvedRule
+	var inactiveRules []ResolvedRule
 	for _, step := range orderedSteps {
 		rulesDir := filepath.Join(step.Dir, "rules")
 		entries, err := os.ReadDir(rulesDir)
@@ -285,20 +289,13 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 			notes = append(notes, parsed.Notes...)
 
 			r := parsed.Value
-			if r.Status == "retired" {
-				continue
-			}
-			if r.Status == "draft" && !opts.IncludeDraft {
-				continue
-			}
-
 			var ovPtr *string
 			if r.Overrides != "" {
 				s := r.Overrides
 				ovPtr = &s
 			}
 
-			rawRules = append(rawRules, ResolvedRule{
+			resolved := ResolvedRule{
 				ID:               r.ID,
 				Title:            r.Title,
 				Level:            r.Level,
@@ -312,13 +309,21 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 				Overridable:      r.Overridable,
 				Checker:          r.Checker,
 				Guard:            r.Guard,
+				Status:           r.Status,
+				ReviewBy:         r.ReviewBy,
+				Expires:          r.Expires,
 				IsOverlay:        step.Kind == "overlay",
 				Provenance: RuleProvenance{
 					Source: step.SourceLabel,
 					Path:   filepath.ToSlash(filepath.Join("rules", name)),
 					Hash:   lock.HashBytes(rawBytes),
 				},
-			})
+			}
+			if r.Status == "retired" || (r.Status == "draft" && !opts.IncludeDraft) {
+				inactiveRules = append(inactiveRules, resolved)
+				continue
+			}
+			rawRules = append(rawRules, resolved)
 		}
 	}
 
@@ -327,6 +332,9 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		return out, err
 	}
 	conflicts = append(conflicts, mergeConflicts...)
+	conflicts = append(conflicts, checkCharterAndBudget(mergedRules, levelConfigs, levelSummaries)...)
+	lifecycleWarnings, lifecycleConflicts := checkRuleLifecycle(mergedRules, now)
+	conflicts = append(conflicts, lifecycleConflicts...)
 
 	// Load exceptions (.gradus/exceptions/*.yaml).
 	activeExceptions, expNotes, err := loadExceptions(filepath.Join(rootDir, ".gradus", "exceptions"), now)
@@ -363,10 +371,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 
 	charCount := 0
 	for _, r := range mergedRules {
-		charCount += len(r.ID) + len(r.Title) + len(r.Text) + len(r.Why)
-		for _, rat := range r.Rationalizations {
-			charCount += len(rat)
-		}
+		charCount += ruleCharCount(r)
 	}
 
 	lockHash := ""
@@ -384,19 +389,21 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 			Path:              nil,
 			IncludesUserLevel: includesUser,
 		},
-		Levels:     levelSummaries,
-		Overlays:   overlaySummaries,
-		Profile:    cfg.Profile,
-		Rules:      mergedRules,
-		Conflicts:  conflicts,
-		Exceptions: activeExceptions,
+		Levels:        levelSummaries,
+		Overlays:      overlaySummaries,
+		Profile:       cfg.Profile,
+		Rules:         mergedRules,
+		InactiveRules: inactiveRules,
+		Conflicts:     conflicts,
+		Exceptions:    activeExceptions,
 		Budget: BudgetInfo{
 			Characters: charCount,
 			Targets: map[string]TargetLimit{
 				"antigravity": {Limit: 12000},
 			},
 		},
-		Notes: notes,
+		Warnings: lifecycleWarnings,
+		Notes:    notes,
 	}
 
 	viewBytes, _ := json.Marshal(view)
@@ -410,6 +417,93 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		ViewHash:       view.ViewHash,
 	}
 	return out, nil
+}
+
+func ruleCharCount(r ResolvedRule) int {
+	n := len(r.ID) + len(r.Title) + len(r.Text) + len(r.Why)
+	for _, rat := range r.Rationalizations {
+		n += len(rat)
+	}
+	return n
+}
+
+func checkCharterAndBudget(rules []ResolvedRule, levelConfigs map[string]*schema.LevelConfig, levelSummaries []LevelSummary) []Conflict {
+	var conflicts []Conflict
+	ruleCounts := make(map[string]int)
+	charCounts := make(map[string]int)
+
+	for _, r := range rules {
+		if r.IsOverlay {
+			continue
+		}
+		ruleCounts[r.Level]++
+		charCounts[r.Level] += ruleCharCount(r)
+
+		lc := levelConfigs[r.Level]
+		if lc != nil && lc.Charter != nil && len(lc.Charter.AllowedSeverities) > 0 {
+			allowed := false
+			for _, sev := range lc.Charter.AllowedSeverities {
+				if r.Severity == sev {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				conflicts = append(conflicts, Conflict{
+					Kind:    "charter",
+					RuleID:  r.ID,
+					Level:   r.Level,
+					Message: fmt.Sprintf("rule %s uses severity %s, which is not allowed by level %q charter (allowed: %s)", r.ID, r.Severity, r.Level, strings.Join(lc.Charter.AllowedSeverities, ", ")),
+				})
+			}
+		}
+	}
+
+	for _, ls := range levelSummaries {
+		lc := levelConfigs[ls.ID]
+		if lc == nil || lc.ContextBudget == nil {
+			continue
+		}
+		if lc.ContextBudget.MaxRules != nil && ruleCounts[ls.ID] > *lc.ContextBudget.MaxRules {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "budget",
+				Level:   ls.ID,
+				Message: fmt.Sprintf("level %q exceeds context_budget.max_rules (%d > %d)", ls.ID, ruleCounts[ls.ID], *lc.ContextBudget.MaxRules),
+			})
+		}
+		if lc.ContextBudget.MaxChars != nil && charCounts[ls.ID] > *lc.ContextBudget.MaxChars {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "budget",
+				Level:   ls.ID,
+				Message: fmt.Sprintf("level %q exceeds context_budget.max_chars (%d > %d)", ls.ID, charCounts[ls.ID], *lc.ContextBudget.MaxChars),
+			})
+		}
+	}
+	return conflicts
+}
+
+func checkRuleLifecycle(rules []ResolvedRule, now time.Time) ([]string, []Conflict) {
+	today := now.UTC().Format("2006-01-02")
+	var warnings []string
+	var conflicts []Conflict
+
+	for _, r := range rules {
+		if r.Status == "deprecated" {
+			warnings = append(warnings, fmt.Sprintf("rule %s (%s) is deprecated", r.ID, r.Level))
+		}
+		if r.ReviewBy != "" && r.ReviewBy < today {
+			warnings = append(warnings, fmt.Sprintf("rule %s (%s) review_by date %s has passed", r.ID, r.Level, r.ReviewBy))
+		}
+		if r.Expires != "" && r.Expires < today {
+			conflicts = append(conflicts, Conflict{
+				Kind:    "lifecycle",
+				RuleID:  r.ID,
+				Level:   r.Level,
+				Message: fmt.Sprintf("rule %s (%s) expired on %s", r.ID, r.Level, r.Expires),
+			})
+		}
+	}
+	return warnings, conflicts
 }
 
 func resolveSource(rootDir, kind, id string, src schema.SourceRef, offline *schema.OfflinePolicy, lockEntry *lock.Entry, inCI, offlineOnly bool) (source.ResolvedSource, error) {

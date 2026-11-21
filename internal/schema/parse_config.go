@@ -102,6 +102,12 @@ var levelFieldSpec = FieldSpec{
 				"review_cadence":     {},
 			},
 		},
+		"context_budget": {
+			Allowed: map[string]FieldSpec{
+				"max_rules": {},
+				"max_chars": {},
+			},
+		},
 		"constraints": {
 			Allowed: map[string]FieldSpec{
 				"require_levels":   {},

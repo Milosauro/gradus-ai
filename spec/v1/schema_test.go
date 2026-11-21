@@ -57,3 +57,8 @@ func TestStateSchemasValid(t *testing.T) {
 		"exception.schema.json",
 	})
 }
+
+func TestJSONSchemasCompileAndValidate(t *testing.T) {
+	t.Run("config", TestConfigSchemasValid)
+	t.Run("state", TestStateSchemasValid)
+}

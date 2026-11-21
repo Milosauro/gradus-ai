@@ -99,9 +99,16 @@ type LevelConfig struct {
 	Owners          []string         `yaml:"owners,omitempty" json:"owners,omitempty"`
 	Approvers       []string         `yaml:"approvers,omitempty" json:"approvers,omitempty"`
 	Charter         *Charter         `yaml:"charter,omitempty" json:"charter,omitempty"`
+	ContextBudget   *ContextBudget   `yaml:"context_budget,omitempty" json:"context_budget,omitempty"`
 	Constraints     *Constraints     `yaml:"constraints,omitempty" json:"constraints,omitempty"`
 	ActivationRules []any            `yaml:"activation_rules,omitempty" json:"activation_rules,omitempty"`
 	Exceptions      *ExceptionPolicy `yaml:"exceptions,omitempty" json:"exceptions,omitempty"`
+}
+
+// ContextBudget defines optional per-level context limits (X-07).
+type ContextBudget struct {
+	MaxRules *int `yaml:"max_rules,omitempty" json:"max_rules,omitempty"`
+	MaxChars *int `yaml:"max_chars,omitempty" json:"max_chars,omitempty"`
 }
 
 // Charter defines what belongs to a level.
@@ -206,6 +213,7 @@ type Rule struct {
 	Owner           string           `yaml:"owner,omitempty" json:"owner,omitempty"`
 	Status          string           `yaml:"status,omitempty" json:"status"`
 	ReviewBy        string           `yaml:"review_by,omitempty" json:"review_by,omitempty"`
+	Expires         string           `yaml:"expires,omitempty" json:"expires,omitempty"`
 	Checker         *CheckerConfig   `yaml:"checker,omitempty" json:"checker,omitempty"`
 	Guard           *GuardConfig     `yaml:"guard,omitempty" json:"guard,omitempty"`
 	Tags            []string         `yaml:"tags,omitempty" json:"tags,omitempty"`

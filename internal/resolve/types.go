@@ -10,12 +10,14 @@ type ResolvedView struct {
 	Scope      ViewScope        `json:"scope"`
 	Levels     []LevelSummary   `json:"levels"`
 	Overlays   []OverlaySummary `json:"overlays,omitempty"`
-	Profile    *schema.Profile  `json:"profile,omitempty"`
-	Rules      []ResolvedRule   `json:"rules"`
-	Conflicts  []Conflict       `json:"conflicts"`
-	Exceptions []ExceptionView  `json:"exceptions"`
-	Budget     BudgetInfo       `json:"budget"`
-	Notes      []string         `json:"notes,omitempty"`
+	Profile       *schema.Profile  `json:"profile,omitempty"`
+	Rules         []ResolvedRule   `json:"rules"`
+	InactiveRules []ResolvedRule   `json:"inactive_rules,omitempty"`
+	Conflicts     []Conflict       `json:"conflicts"`
+	Exceptions    []ExceptionView  `json:"exceptions"`
+	Budget        BudgetInfo       `json:"budget"`
+	Warnings      []string         `json:"warnings,omitempty"`
+	Notes         []string         `json:"notes,omitempty"`
 }
 
 // ViewScope describes the scope of a resolved view.
@@ -27,9 +29,10 @@ type ViewScope struct {
 
 // LevelSummary summarizes a resolved level.
 type LevelSummary struct {
-	ID      string `json:"id"`
-	Version string `json:"version,omitempty"`
-	Hash    string `json:"hash"`
+	ID      string          `json:"id"`
+	Version string          `json:"version,omitempty"`
+	Hash    string          `json:"hash"`
+	Charter *schema.Charter `json:"charter,omitempty"`
 }
 
 // OverlaySummary summarizes an overlay in the pyramid.
@@ -61,6 +64,9 @@ type ResolvedRule struct {
 	Overridable      *schema.OverridableSpec `json:"overridable,omitempty"`
 	Checker          *schema.CheckerConfig `json:"checker,omitempty"`
 	Guard            *schema.GuardConfig   `json:"guard,omitempty"`
+	Status           string                `json:"status,omitempty"`
+	ReviewBy         string                `json:"review_by,omitempty"`
+	Expires          string                `json:"expires,omitempty"`
 	Waived           bool                  `json:"waived,omitempty"`
 	WaiverIDs        []string              `json:"waiver_ids,omitempty"`
 	Provenance       RuleProvenance        `json:"provenance"`

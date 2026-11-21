@@ -10,8 +10,8 @@ description: "Author or refine Gradus rules with valid frontmatter, level charte
 - Target level charters (`level.yaml`) and `gradusctl resolve --json` output.
 
 ## Workflow
-1. Inspect `gradus.yaml` and the target level's `level.yaml` charter to verify the rule belongs at that level.
-2. If the rule belongs to another level, redirect it to the appropriate level and explain why.
+1. Inspect `gradus.yaml` and the target level's `level.yaml` charter (`charter.includes`, `charter.excludes`, `charter.examples_in`, `charter.examples_out`, `charter.allowed_severities`) to verify the rule belongs at that level and uses an allowed severity.
+2. If the rule matches `charter.excludes` or `charter.examples_out` (or belongs to another level), redirect it to the appropriate level and explain why.
 3. If the target level has `locked: true`, draft a pull-request proposal for the upstream level repository instead of editing local locked caches.
 4. Author the Markdown rule with valid `gradus/v1` frontmatter (`id`, `title`, `severity`, `enforcement`, `scope`, `status: active`), clear statement, `## Why`, `## Rationalizations`, and `## Examples` (`### Compliant` / `### Non-compliant`).
 5. Validate the pyramid with `gradusctl resolve --json` and `gradusctl conflicts --candidates --json`.

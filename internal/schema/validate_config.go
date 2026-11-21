@@ -75,6 +75,14 @@ func ValidateLevelConfig(cfg *LevelConfig) error {
 			}
 		}
 	}
+	if cfg.ContextBudget != nil {
+		if cfg.ContextBudget.MaxRules != nil && *cfg.ContextBudget.MaxRules < 0 {
+			return fmt.Errorf("level.yaml: context_budget.max_rules must be >= 0, got %d", *cfg.ContextBudget.MaxRules)
+		}
+		if cfg.ContextBudget.MaxChars != nil && *cfg.ContextBudget.MaxChars < 0 {
+			return fmt.Errorf("level.yaml: context_budget.max_chars must be >= 0, got %d", *cfg.ContextBudget.MaxChars)
+		}
+	}
 	return nil
 }
 

@@ -170,3 +170,22 @@ func TestEmbeddedSkillsAndEvals(t *testing.T) {
 		}
 	}
 }
+
+func TestCharterSkillGuidance(t *testing.T) {
+	required := map[string][]string{
+		"gradus-author/SKILL.md": {"charter.includes", "charter.excludes", "charter.examples_in", "charter.examples_out", "charter.allowed_severities"},
+		"gradus-review/SKILL.md": {"charter.includes", "charter.excludes", "charter.allowed_severities"},
+	}
+	for path, tokens := range required {
+		raw, err := fs.ReadFile(skills.FS, path)
+		if err != nil {
+			t.Fatalf("failed to read %s: %v", path, err)
+		}
+		text := string(raw)
+		for _, tok := range tokens {
+			if !strings.Contains(text, tok) {
+				t.Fatalf("skill %s missing charter guidance token %q", path, tok)
+			}
+		}
+	}
+}

@@ -11,9 +11,10 @@ import (
 )
 
 type explainResult struct {
-	Rule         schema.Rule `json:"rule"`
-	OverriddenBy []string    `json:"overridden_by,omitempty"`
-	Notes        []string    `json:"notes,omitempty"`
+	Rule         schema.Rule     `json:"rule"`
+	Charter      *schema.Charter `json:"charter,omitempty"`
+	OverriddenBy []string        `json:"overridden_by,omitempty"`
+	Notes        []string        `json:"notes,omitempty"`
 }
 
 func newExplainCmd(jsonOutput *bool) *cobra.Command {
@@ -53,8 +54,14 @@ func newExplainCmd(jsonOutput *bool) *cobra.Command {
 				}
 			}
 
+			var levelCharter *schema.Charter
+			if lc, ok := pyramid.Levels[found.Level]; ok {
+				levelCharter = lc.Charter
+			}
+
 			res := explainResult{
 				Rule:         *found,
+				Charter:      levelCharter,
 				OverriddenBy: overriddenBy,
 				Notes:        pyramid.Notes,
 			}
@@ -81,6 +88,9 @@ func newExplainCmd(jsonOutput *bool) *cobra.Command {
 			}
 			if len(overriddenBy) > 0 {
 				fmt.Fprintf(out, "Overridden by: %s\n", strings.Join(overriddenBy, ", "))
+			}
+			if levelCharter != nil && levelCharter.Purpose != "" {
+				fmt.Fprintf(out, "Charter:     %s\n", levelCharter.Purpose)
 			}
 			fmt.Fprintf(out, "\nStatement:\n  %s\n", found.Statement)
 			if found.Why != "" {

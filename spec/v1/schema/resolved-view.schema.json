@@ -22,8 +22,10 @@
     "overlays": { "type": "array" },
     "profile": { "type": "object" },
     "rules": { "type": "array" },
+    "inactive_rules": { "type": "array" },
     "conflicts": { "type": "array" },
     "exceptions": { "type": "array" },
-    "budget": { "type": "object" }
+    "budget": { "type": "object" },
+    "warnings": { "type": "array", "items": { "type": "string" } }
   }
 }
