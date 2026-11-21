@@ -23,6 +23,7 @@ var ruleFrontmatterSpec = FieldSpec{
 		"owner":        {},
 		"status":       {},
 		"review_by":    {},
+		"expires":      {},
 		"checker": {
 			Allowed: map[string]FieldSpec{
 				"name":    {},

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var ruleIDPattern = regexp.MustCompile(`^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$`)
@@ -34,6 +35,12 @@ func ValidateRule(r *Rule) error {
 	if strings.TrimSpace(r.Statement) == "" {
 		return fmt.Errorf("rule %s: body must begin with a non-empty statement paragraph", r.ID)
 	}
+	if err := validateISODate(r.ID, "review_by", r.ReviewBy); err != nil {
+		return err
+	}
+	if err := validateISODate(r.ID, "expires", r.Expires); err != nil {
+		return err
+	}
 
 	if r.Enforcement == "check" && (r.Checker == nil || strings.TrimSpace(r.Checker.Name) == "") {
 		return fmt.Errorf("rule %s: enforcement 'check' requires checker.name", r.ID)
@@ -60,5 +67,16 @@ func ValidateRule(r *Rule) error {
 		}
 	}
 
+	return nil
+}
+
+func validateISODate(ruleID, field, value string) error {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return nil
+	}
+	if _, err := time.Parse("2006-01-02", trimmed); err != nil {
+		return fmt.Errorf("rule %s: %s %q must be a valid YYYY-MM-DD date", ruleID, field, value)
+	}
 	return nil
 }

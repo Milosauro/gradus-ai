@@ -32,6 +32,7 @@ type verifyReport struct {
 	Conflicts         []resolve.Conflict `json:"conflicts"`
 	Drift             []DriftItem        `json:"drift"`
 	ExpiredExceptions []string           `json:"expired_exceptions,omitempty"`
+	Warnings          []string           `json:"warnings,omitempty"`
 	Notes             []string           `json:"notes,omitempty"`
 	EvidenceWritten   []string           `json:"evidence_written,omitempty"`
 }
@@ -72,6 +73,9 @@ func newVerifyCmd(jsonOutput *bool) *cobra.Command {
 					for _, ex := range rep.ExpiredExceptions {
 						fmt.Fprintf(out, "EXPIRED EXCEPTION: %s\n", ex)
 					}
+				}
+				for _, w := range rep.Warnings {
+					fmt.Fprintf(out, "WARNING: %s\n", w)
 				}
 			}
 
@@ -141,6 +145,7 @@ func runVerify(dir string, writeEvidence bool) (verifyReport, int, error) {
 		Conflicts:         resolved.View.Conflicts,
 		Drift:             drift,
 		ExpiredExceptions: expired,
+		Warnings:          resolved.View.Warnings,
 		Notes:             otherNotes,
 	}
 

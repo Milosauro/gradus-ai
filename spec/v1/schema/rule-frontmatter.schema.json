@@ -30,7 +30,8 @@
       "enum": ["draft", "active", "deprecated", "retired"],
       "default": "active"
     },
-    "review_by": { "type": "string" },
+    "review_by": { "type": "string", "format": "date" },
+    "expires": { "type": "string", "format": "date" },
     "checker": {
       "type": "object",
       "required": ["name"],

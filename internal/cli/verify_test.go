@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/Milosauro/gradus-ai/internal/cli"
@@ -77,5 +78,135 @@ targets: [claude-code, antigravity, agents-md]
 	stderr.Reset()
 	if code := cli.ExecuteCode([]string{"verify", "--dir", tmp}, &stdout, &stderr); code != cli.ExitError {
 		t.Fatalf("expected exit 2 on tampered locked level, got %d", code)
+	}
+}
+
+func TestCharterLifecycleAndBudgetCLI(t *testing.T) {
+	tmp := t.TempDir()
+	projDir := filepath.Join(tmp, ".gradus", "levels", "project")
+	projRules := filepath.Join(projDir, "rules")
+	if err := os.MkdirAll(projRules, 0o755); err != nil {
+		t.Fatal(err)
+	}
+
+	write := func(path, content string) {
+		t.Helper()
+		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	write(filepath.Join(tmp, "gradus.yaml"), `schema: gradus/v1
+levels:
+  - id: project
+    source: { path: .gradus/levels/project }
+targets: [agents-md]
+`)
+	write(filepath.Join(projDir, "level.yaml"), `schema: gradus/v1
+id: project
+charter:
+  purpose: Project rules only
+  includes: ["go"]
+  excludes: ["org security"]
+  allowed_severities: [SHOULD, MAY]
+context_budget:
+  max_rules: 2
+`)
+	write(filepath.Join(projRules, "PRJ-DEP.md"), `---
+id: PRJ-DEP
+title: Deprecated rule
+severity: SHOULD
+status: deprecated
+review_by: 2020-01-01
+---
+
+Deprecated guidance.
+`)
+	write(filepath.Join(projRules, "PRJ-DRAFT.md"), `---
+id: PRJ-DRAFT
+title: Draft hook rule
+severity: SHOULD
+enforcement: hook
+status: draft
+guard:
+  action: bash
+  pattern: "git status"
+  decision: deny
+---
+
+Draft hook must not be enforced.
+`)
+
+	var stdout, stderr bytes.Buffer
+	if code := cli.ExecuteCode([]string{"compile", "--dir", tmp}, &stdout, &stderr); code != cli.ExitPass {
+		t.Fatalf("compile failed (%d): %s\n%s", code, stdout.String(), stderr.String())
+	}
+
+	agentsData, err := os.ReadFile(filepath.Join(tmp, "AGENTS.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(agentsData), "PRJ-DEP") || strings.Contains(string(agentsData), "PRJ-DRAFT") {
+		t.Fatalf("expected PRJ-DEP compiled and PRJ-DRAFT excluded, got:\n%s", string(agentsData))
+	}
+
+	// Verify passes with warnings for deprecated and overdue review_by.
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"verify", "--dir", tmp, "--json"}, &stdout, &stderr); code != cli.ExitPass {
+		t.Fatalf("expected verify pass with warnings, got %d: %s\n%s", code, stdout.String(), stderr.String())
+	}
+	var vRep struct {
+		Verdict  string   `json:"verdict"`
+		Warnings []string `json:"warnings"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &vRep); err != nil {
+		t.Fatalf("invalid verify json: %v\n%s", err, stdout.String())
+	}
+	if len(vRep.Warnings) < 2 {
+		t.Fatalf("expected >=2 lifecycle warnings in verify --json, got %v", vRep.Warnings)
+	}
+
+	// Explain exposes level charter.
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"explain", "PRJ-DEP", "--dir", tmp, "--json"}, &stdout, &stderr); code != cli.ExitPass {
+		t.Fatalf("explain failed (%d): %s\n%s", code, stdout.String(), stderr.String())
+	}
+	var eRep struct {
+		Charter *struct {
+			Purpose string `json:"purpose"`
+		} `json:"charter"`
+	}
+	if err := json.Unmarshal(stdout.Bytes(), &eRep); err != nil {
+		t.Fatalf("invalid explain json: %v\n%s", err, stdout.String())
+	}
+	if eRep.Charter == nil || eRep.Charter.Purpose != "Project rules only" {
+		t.Fatalf("expected charter in explain --json, got %+v", eRep)
+	}
+
+	// Adding an expired MUST rule triggers charter, lifecycle, and budget conflicts (exit 1).
+	write(filepath.Join(projRules, "PRJ-BAD1.md"), `---
+id: PRJ-BAD1
+title: Expired MUST rule
+severity: MUST
+expires: 2020-01-01
+---
+
+Expired and forbidden severity.
+`)
+	write(filepath.Join(projRules, "PRJ-BAD2.md"), `---
+id: PRJ-BAD2
+title: Third active rule
+severity: SHOULD
+---
+
+Exceeds max_rules=2.
+`)
+	_ = cli.ExecuteCode([]string{"compile", "--dir", tmp}, &stdout, &stderr)
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"verify", "--dir", tmp, "--json"}, &stdout, &stderr); code != cli.ExitViolation {
+		t.Fatalf("expected exit 1 on charter/lifecycle/budget violations, got %d (%s)", code, stdout.String())
 	}
 }

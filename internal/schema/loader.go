@@ -8,9 +8,10 @@ import (
 	"strings"
 )
 
-// LocalPyramid holds the parsed gradus.yaml, loaded rules, and diagnostic notes.
+// LocalPyramid holds the parsed gradus.yaml, loaded level configs, rules, and diagnostic notes.
 type LocalPyramid struct {
 	Config PyramidConfig
+	Levels map[string]LevelConfig
 	Rules  []Rule
 	Notes  []string
 }
@@ -57,6 +58,10 @@ func LoadLocalPyramid(rootDir string) (LocalPyramid, error) {
 				return out, fmt.Errorf("level %q (%s): %w", lvl.ID, levelYAMLPath, parseErr)
 			}
 			out.Notes = append(out.Notes, lvlRes.Notes...)
+			if out.Levels == nil {
+				out.Levels = make(map[string]LevelConfig)
+			}
+			out.Levels[lvl.ID] = lvlRes.Value
 		} else if !os.IsNotExist(err) {
 			return out, fmt.Errorf("failed to read %s: %w", levelYAMLPath, err)
 		}
