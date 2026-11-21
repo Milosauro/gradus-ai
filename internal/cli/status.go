@@ -28,6 +28,7 @@ type statusReport struct {
 func newStatusCmd(jsonOutput *bool) *cobra.Command {
 	var dir string
 	var brief bool
+	var antigravityHook bool
 
 	cmd := &cobra.Command{
 		Use:   "status",
@@ -36,9 +37,39 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 			if dir == "" {
 				dir = "."
 			}
+			if antigravityHook {
+				// Antigravity executes hooks with CWD set to the directory containing hooks.json (.agents/).
+				if _, err := os.Stat(filepath.Join(dir, "gradus.yaml")); os.IsNotExist(err) {
+					if abs, aerr := filepath.Abs(dir); aerr == nil {
+						parent := filepath.Dir(abs)
+						if _, perr := os.Stat(filepath.Join(parent, "gradus.yaml")); perr == nil {
+							dir = parent
+						}
+					}
+				}
+			}
 			rep, exitCode, err := buildStatusReport(dir)
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
+			}
+
+			if antigravityHook {
+				msg := fmt.Sprintf("gradus: lock=%s conflicts=%d drift=%d lessons=%d",
+					rep.LockState, rep.Conflicts, rep.Drift, rep.PendingLessons)
+				envelope := map[string]any{
+					"injectSteps": []any{
+						map[string]any{
+							"systemMessage": map[string]any{
+								"systemMessage": msg,
+							},
+						},
+					},
+				}
+				enc := json.NewEncoder(cmd.OutOrStdout())
+				if err := enc.Encode(envelope); err != nil {
+					return &ExitErrorWithCode{Code: ExitError, Err: err}
+				}
+				return nil
 			}
 
 			if *jsonOutput {
@@ -73,6 +104,7 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 
 	cmd.Flags().StringVar(&dir, "dir", ".", "Target repository directory")
 	cmd.Flags().BoolVar(&brief, "brief", false, "Emit compact single-line summary")
+	cmd.Flags().BoolVar(&antigravityHook, "antigravity-hook", false, "Emit Antigravity SessionStart injectSteps JSON")
 	return cmd
 }
 

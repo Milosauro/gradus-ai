@@ -53,7 +53,7 @@ func newResolveCmd(jsonOutput *bool) *cobra.Command {
 					len(res.View.Rules), len(res.View.Levels), len(res.View.Overlays))
 				fmt.Fprintf(out, "View hash: %s\n", res.View.ViewHash)
 				if writeLock {
-					fmt.Fprintf(out, "Updated gradus.lock\n")
+					fmt.Fprintf(out, "Updated gradus.lock (run 'gradusctl compile' to update compiled agent files)\n")
 				}
 				for _, c := range res.View.Conflicts {
 					fmt.Fprintf(out, "CONFLICT [%s]: %s\n", c.Kind, c.Message)

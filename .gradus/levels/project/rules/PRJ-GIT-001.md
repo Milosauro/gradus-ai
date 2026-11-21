@@ -7,7 +7,7 @@ scope:
   - "**/*"
 guard:
   action: command
-  pattern: '\bgit\b(?:\s+(?:-[Cc]\s+\S+|-\S+))*\s+(commit|push)\b'
+  pattern: '\bgit\b(?:\s+(?:-[Cc]\s+\S+|-\S+))*\s+(commit|push)(?:\s|$)'
   decision: ask
 status: active
 ---
