@@ -62,7 +62,11 @@ func RunChecks(rootDir string, view resolve.ResolvedView, opts Options) (CheckRe
 	if err != nil {
 		return CheckResult{}, err
 	}
+	return RunChecksOnFiles(rootDir, view, files)
+}
 
+// RunChecksOnFiles executes all active, non-waived check rules against an explicit file list.
+func RunChecksOnFiles(rootDir string, view resolve.ResolvedView, files []string) (CheckResult, error) {
 	res := CheckResult{
 		Files:    files,
 		Findings: []evidence.Finding{},
@@ -82,6 +86,7 @@ func RunChecks(rootDir string, view resolve.ResolvedView, opts Options) (CheckRe
 		}
 
 		var findings []evidence.Finding
+		var err error
 		switch strings.ToLower(strings.TrimSpace(rule.Checker.Name)) {
 		case "pattern", "regex":
 			findings, err = RunBuiltinPatternCheck(rootDir, rule, matched)
