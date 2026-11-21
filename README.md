@@ -6,7 +6,7 @@
 
 **Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-[![Status: Phase 0 MVP v0.1.0](https://img.shields.io/badge/status-Phase%200%20MVP%20v0.1.0-brightgreen?style=flat-square)](docs/design/gradus-design.md)
+[![Status: Phase 0 MVP v0.1.4](https://img.shields.io/badge/status-Phase%200%20MVP%20v0.1.4-brightgreen?style=flat-square)](docs/design/gradus-design.md)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Agents: Claude Code · Antigravity · AGENTS.md](https://img.shields.io/badge/first%20targets-Claude%20Code%20·%20Antigravity%20·%20AGENTS.md-555?style=flat-square)](#which-agents)
 
@@ -22,7 +22,7 @@
 Install `gradusctl` with Go (or download a signed binary from [GitHub Releases](https://github.com/Milosauro/gradus-ai/releases)) and ensure `gradusctl` is on your `PATH` (agent `PreToolUse` and `SessionStart` hooks invoke `gradusctl` by name):
 
 ```bash
-go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.1.0
+go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.1.4
 ```
 
 Initialize Gradus in your repository, resolve your pyramid, compile target agent instructions/hooks/skills, and verify integrity:
@@ -44,6 +44,7 @@ gradusctl hooks install --native
 > [!TIP]
 > - **Restart or start a new agent session** after running `gradusctl compile` for the first time so Antigravity (`.agents/hooks.json`) and Claude Code (`.claude/settings.json`) load the newly generated `PreToolUse` and `SessionStart` hooks.
 > - **Enforcement scopes:** `hook` rules gate tool calls live at runtime (`gradusctl guard`); `check` rules scan repository files deterministically during `gradusctl check`, git pre-commit hooks, and CI (not on every file write); `review` rules are evaluated by `/gradus-review`.
+> - **Agent permission modes (`ask` vs `deny`):** On **Antigravity**, Gradus maps `ask` to `force_ask` so cached "Always Allow" approvals do not bypass confirmation guards. On **Claude Code**, `ask` decisions (including anti-tamper prompts) always prompt interactively in **`default`** permission mode; in **`auto`** mode, Claude Code delegates `ask` decisions to its background safety classifier (which may auto-approve non-destructive edits or commands), whereas **`deny`** rules always hard-block even in `auto` or `bypassPermissions` mode. Use `deny` for hard boundaries and git hooks / CI (`gradusctl verify` + `gradusctl check`) as the universal enforcement layer.
 
 ---
 
