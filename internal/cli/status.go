@@ -10,10 +10,12 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
+	"github.com/Milosauro/gradus-ai/internal/compile"
 	"github.com/Milosauro/gradus-ai/internal/lock"
 	"github.com/Milosauro/gradus-ai/internal/resolve"
 	"github.com/Milosauro/gradus-ai/internal/schema"
 	"github.com/Milosauro/gradus-ai/internal/state"
+	"github.com/Milosauro/gradus-ai/skills"
 )
 
 type statusReport struct {
@@ -95,9 +97,12 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 			}
 
 			if exitCode != ExitPass {
+				if *jsonOutput {
+					return &ExitErrorWithCode{Code: exitCode}
+				}
 				return &ExitErrorWithCode{
 					Code: exitCode,
-					Err:  fmt.Errorf("status check reported lock=%s conflicts=%d", rep.LockState, rep.Conflicts),
+					Err:  fmt.Errorf("status check reported lock=%s conflicts=%d drift=%d", rep.LockState, rep.Conflicts, rep.Drift),
 				}
 			}
 			return nil
@@ -163,6 +168,12 @@ func buildStatusReport(rootDir, userDir string) (statusReport, int, error) {
 	rep.Conflicts = countConfirmedFindings(filepath.Join(rootDir, ".gradus", "findings"))
 	if res, rerr := resolve.Resolve(rootDir, resolve.Options{OfflineOnly: true}); rerr == nil {
 		rep.Conflicts = len(res.View.Conflicts)
+		rep.ViewHash = res.View.ViewHash
+		if plan, perr := compile.PlanCompile(rootDir, res.View, cfgRes.Value.Targets, skills.FS); perr == nil {
+			if hasAnyCompiledTarget(rootDir, plan) {
+				rep.Drift = len(detectCompileDrift(rootDir, plan, cfgRes.Value.Targets))
+			}
+		}
 	}
 	rep.PendingLessons = countPendingLessons(rootDir)
 	rep.UserRules = loadUserRuleIDs(userDir)
@@ -247,4 +258,13 @@ func loadUserRuleIDs(userDir string) []string {
 		}
 	}
 	return ids
+}
+
+func hasAnyCompiledTarget(rootDir string, plan map[string][]byte) bool {
+	for rel := range plan {
+		if _, err := os.Stat(filepath.Join(rootDir, filepath.FromSlash(rel))); err == nil {
+			return true
+		}
+	}
+	return false
 }
