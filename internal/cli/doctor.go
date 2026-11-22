@@ -11,8 +11,11 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/Milosauro/gradus-ai/internal/compile"
 	"github.com/Milosauro/gradus-ai/internal/lock"
+	"github.com/Milosauro/gradus-ai/internal/resolve"
 	"github.com/Milosauro/gradus-ai/internal/schema"
+	"github.com/Milosauro/gradus-ai/skills"
 )
 
 type doctorCheck struct {
@@ -145,6 +148,11 @@ func runDoctor(dir string) doctorReport {
 		checks = append(checks, checkAntigravityHooks(agPath))
 	}
 
+	// 6. Compiled target drift (aligned with gradusctl verify)
+	if cfg != nil {
+		checks = append(checks, checkCompiledDrift(dir, cfg.Targets))
+	}
+
 	verdict := "pass"
 	for _, c := range checks {
 		if c.Status == "fail" {
@@ -262,5 +270,40 @@ func checkAntigravityHooks(path string) doctorCheck {
 		Name:    "antigravity_hooks",
 		Status:  "pass",
 		Message: ".agents/hooks.json is valid and registers `gradusctl guard`",
+	}
+}
+
+func checkCompiledDrift(dir string, targets []string) doctorCheck {
+	res, err := resolve.Resolve(dir, resolve.Options{OfflineOnly: true})
+	if err != nil {
+		return doctorCheck{
+			Name:    "compiled_drift",
+			Status:  "fail",
+			Message: fmt.Sprintf("cannot resolve pyramid for drift check: %v", err),
+			Fix:     "Run `gradusctl resolve --write` and fix any schema or lock errors.",
+		}
+	}
+	plan, err := compile.PlanCompile(dir, res.View, targets, skills.FS)
+	if err != nil {
+		return doctorCheck{
+			Name:    "compiled_drift",
+			Status:  "fail",
+			Message: fmt.Sprintf("cannot plan compiled targets: %v", err),
+			Fix:     "Check target configuration in gradus.yaml.",
+		}
+	}
+	drift := detectCompileDrift(dir, plan, targets)
+	if len(drift) > 0 {
+		return doctorCheck{
+			Name:    "compiled_drift",
+			Status:  "fail",
+			Message: fmt.Sprintf("%d compiled target file(s) out of date or modified", len(drift)),
+			Fix:     "Run `gradusctl compile` to synchronize compiled agent files.",
+		}
+	}
+	return doctorCheck{
+		Name:    "compiled_drift",
+		Status:  "pass",
+		Message: "compiled target files are up to date",
 	}
 }
