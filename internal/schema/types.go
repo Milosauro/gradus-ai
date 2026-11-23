@@ -36,6 +36,20 @@ type Binding struct {
 	Scope      []string          `yaml:"scope,omitempty" json:"scope,omitempty"`
 }
 
+// ToolchainItem declares a required, recommended, or forbidden skill, tool, MCP server, or plugin (§19).
+type ToolchainItem struct {
+	Type   string `yaml:"type" json:"type"` // skill | tool | mcp | plugin
+	ID     string `yaml:"id" json:"id"`
+	Reason string `yaml:"reason,omitempty" json:"reason,omitempty"`
+}
+
+// ToolchainConfig declares toolchain governance items for a level or pyramid (§19).
+type ToolchainConfig struct {
+	Required    []ToolchainItem `yaml:"required,omitempty" json:"required,omitempty"`
+	Recommended []ToolchainItem `yaml:"recommended,omitempty" json:"recommended,omitempty"`
+	Forbidden   []ToolchainItem `yaml:"forbidden,omitempty" json:"forbidden,omitempty"`
+}
+
 // PyramidConfig represents gradus.yaml.
 type PyramidConfig struct {
 	Schema      string            `yaml:"schema" json:"schema"`
@@ -49,6 +63,7 @@ type PyramidConfig struct {
 	Evidence    *EvidenceConfig   `yaml:"evidence,omitempty" json:"evidence,omitempty"`
 	Obligations []Obligation      `yaml:"obligations,omitempty" json:"obligations,omitempty"`
 	Bindings    []Binding         `yaml:"bindings,omitempty" json:"bindings,omitempty"`
+	Toolchain   *ToolchainConfig  `yaml:"toolchain,omitempty" json:"toolchain,omitempty"`
 }
 
 // LevelRef references a pyramid level in gradus.yaml.
@@ -133,6 +148,7 @@ type LevelConfig struct {
 	Exceptions      *ExceptionPolicy `yaml:"exceptions,omitempty" json:"exceptions,omitempty"`
 	Obligations     []Obligation     `yaml:"obligations,omitempty" json:"obligations,omitempty"`
 	Bindings        []Binding        `yaml:"bindings,omitempty" json:"bindings,omitempty"`
+	Toolchain       *ToolchainConfig `yaml:"toolchain,omitempty" json:"toolchain,omitempty"`
 }
 
 // ContextBudget defines optional per-level context limits (X-07).

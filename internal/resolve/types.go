@@ -18,8 +18,24 @@ type ResolvedView struct {
 	Budget        BudgetInfo           `json:"budget"`
 	Obligations   []ResolvedObligation `json:"obligations,omitempty"`
 	Bindings      []ResolvedBinding    `json:"bindings,omitempty"`
+	Toolchain     *ResolvedToolchain   `json:"toolchain,omitempty"`
 	Warnings      []string             `json:"warnings,omitempty"`
 	Notes         []string             `json:"notes,omitempty"`
+}
+
+// ResolvedToolchainItem represents a resolved required, recommended, or forbidden toolchain item (§19).
+type ResolvedToolchainItem struct {
+	Type   string `json:"type"`
+	ID     string `json:"id"`
+	Level  string `json:"level"`
+	Reason string `json:"reason,omitempty"`
+}
+
+// ResolvedToolchain holds the monotonically merged toolchain declarations across the pyramid (§19).
+type ResolvedToolchain struct {
+	Required    []ResolvedToolchainItem `json:"required,omitempty"`
+	Recommended []ResolvedToolchainItem `json:"recommended,omitempty"`
+	Forbidden   []ResolvedToolchainItem `json:"forbidden,omitempty"`
 }
 
 // ResolvedObligation describes a resolved process obligation and its matching bindings (§19).

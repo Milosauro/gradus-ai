@@ -421,6 +421,9 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 	resolvedObligations, resolvedBindings, obConflicts := resolveObligationsAndBindings(cfg, levelSteps)
 	conflicts = append(conflicts, obConflicts...)
 
+	resolvedToolchain, tcConflicts := resolveToolchain(cfg, levelSteps)
+	conflicts = append(conflicts, tcConflicts...)
+
 	charCount := 0
 	for _, r := range mergedRules {
 		charCount += ruleCharCount(r)
@@ -456,6 +459,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		},
 		Obligations: resolvedObligations,
 		Bindings:    resolvedBindings,
+		Toolchain:   resolvedToolchain,
 		Warnings:    lifecycleWarnings,
 		Notes:       notes,
 	}

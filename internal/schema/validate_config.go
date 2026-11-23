@@ -77,6 +77,9 @@ func ValidatePyramidConfig(cfg *PyramidConfig) error {
 	if err := validateObligationsAndBindings("gradus.yaml", cfg.Obligations, cfg.Bindings); err != nil {
 		return err
 	}
+	if err := validateToolchainConfig("gradus.yaml", cfg.Toolchain); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -114,6 +117,9 @@ func ValidateLevelConfig(cfg *LevelConfig) error {
 		}
 	}
 	if err := validateObligationsAndBindings("level.yaml", cfg.Obligations, cfg.Bindings); err != nil {
+		return err
+	}
+	if err := validateToolchainConfig("level.yaml", cfg.Toolchain); err != nil {
 		return err
 	}
 	return nil
@@ -177,4 +183,30 @@ func validateObligationsAndBindings(fileLabel string, obligations []Obligation, 
 		}
 	}
 	return nil
+}
+
+func validateToolchainConfig(fileLabel string, tc *ToolchainConfig) error {
+	if tc == nil {
+		return nil
+	}
+	checkList := func(section string, items []ToolchainItem) error {
+		for i, item := range items {
+			switch item.Type {
+			case "skill", "tool", "mcp", "plugin":
+			default:
+				return fmt.Errorf("%s: toolchain.%s[%d].type %q must be skill, tool, mcp, or plugin", fileLabel, section, i, item.Type)
+			}
+			if strings.TrimSpace(item.ID) == "" {
+				return fmt.Errorf("%s: toolchain.%s[%d].id is required", fileLabel, section, i)
+			}
+		}
+		return nil
+	}
+	if err := checkList("required", tc.Required); err != nil {
+		return err
+	}
+	if err := checkList("recommended", tc.Recommended); err != nil {
+		return err
+	}
+	return checkList("forbidden", tc.Forbidden)
 }

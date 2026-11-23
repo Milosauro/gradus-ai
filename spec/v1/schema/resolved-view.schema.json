@@ -28,6 +28,7 @@
     "budget": { "type": "object" },
     "obligations": { "type": "array" },
     "bindings": { "type": "array" },
+    "toolchain": { "type": "object" },
     "warnings": { "type": "array", "items": { "type": "string" } }
   }
 }
