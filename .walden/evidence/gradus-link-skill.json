@@ -6,16 +6,17 @@
       "task_fingerprint": "sha256:c41f9e95fe1b27784c00bb7c7295e0035b7c170a731666992ed2c2ad2c04d99e",
       "task_fingerprint_scheme": "walden/task-definition/v2",
       "execution": {
-        "origin": "complete",
-        "policy": "completion-post-state/v1",
+        "origin": "verify",
+        "policy": "verify-purity/v1",
         "assertion_result": "passed",
-        "integrity": "post-state",
-        "after_code_identity": "sha256:d152f1deffab6b4b73f7930f95461afaca0f249569060bac152dd19ca62e5fc2"
+        "integrity": "pure",
+        "before_code_identity": "sha256:4fc201cd5084f49b0aac45f5aa095e7e56d41a000cc09258b13fc5f19f413c56",
+        "after_code_identity": "sha256:4fc201cd5084f49b0aac45f5aa095e7e56d41a000cc09258b13fc5f19f413c56"
       },
       "requirements_fingerprint": "sha256:99b8a1ecbbbb196f0cf0cb3e218a990ac89f14ac65286269a4f2c79a9b5fff93",
       "design_fingerprint": "sha256:ce004bef05a1da6eeb2fa12236cc5662f3e11f6d1e707b95c3bb36c92cadf448",
       "tasks_fingerprint": "sha256:6395584bb40ccfdac22ebd71c2add07c8840cd2acd9b3ef47ca15e19fa94dc4f",
-      "code_identity": "sha256:d152f1deffab6b4b73f7930f95461afaca0f249569060bac152dd19ca62e5fc2",
+      "code_identity": "sha256:4fc201cd5084f49b0aac45f5aa095e7e56d41a000cc09258b13fc5f19f413c56",
       "profile": {
         "git": "git version 2.39.5 (Apple Git-154)",
         "go": "go version go1.27.4 darwin/amd64",
@@ -35,7 +36,7 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:859a4bb719dde672d3dc0549654c45d88947e35ef2c35031191811746d6751e2"
+          "output_digest": "sha256:7e2f8fad7869976671be1e423bc1faab677d6ad85b33cdbbf350a28a8192f881"
         },
         {
           "command": [
@@ -49,7 +50,7 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:0a3bf83ab6d85c8460997e9366a87b89516e2988f9226212b7b3a2c816fcaf31"
+          "output_digest": "sha256:2f3d0e5a1ad6035a6323d492133b485ae2fad0f2bf38fd99c31c6b13f6b3f333"
         },
         {
           "command": [
@@ -63,7 +64,7 @@
           ],
           "expected_exit": 0,
           "actual_exit": 0,
-          "output_digest": "sha256:478db248b49ed3207f0a6f7b60479c486821dfc1663598e8dd135e62005d5977"
+          "output_digest": "sha256:b824b70f8ea1275c7099232c0af6cc1ea6c2b3a64415d7b85342dbe00e811a40"
         },
         {
           "command": [
@@ -77,7 +78,7 @@
         }
       ],
       "result": "passed",
-      "verified_at": "2026-11-23T15:28:29Z"
+      "verified_at": "2026-11-23T16:21:50Z"
     }
   }
 }
