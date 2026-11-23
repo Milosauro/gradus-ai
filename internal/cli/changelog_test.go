@@ -60,7 +60,8 @@ func TestChangelogCommand(t *testing.T) {
 	if err := os.MkdirAll(consumer, 0o755); err != nil {
 		t.Fatal(err)
 	}
-	cfgV1 := fmt.Sprintf("schema: gradus/v1\nlevels:\n  - id: team\n    source: { git: %s, ref: v1.0.0 }\n    locked: true\n", remote)
+	remoteGit := filepath.ToSlash(remote)
+	cfgV1 := fmt.Sprintf("schema: gradus/v1\nlevels:\n  - id: team\n    source: { git: %s, ref: v1.0.0 }\n    locked: true\n", remoteGit)
 	if err := os.WriteFile(filepath.Join(consumer, "gradus.yaml"), []byte(cfgV1), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +72,7 @@ func TestChangelogCommand(t *testing.T) {
 	}
 
 	// Update gradus.yaml ref to v1.1.0 without re-locking yet, then run default changelog
-	cfgV2 := fmt.Sprintf("schema: gradus/v1\nlevels:\n  - id: team\n    source: { git: %s, ref: v1.1.0 }\n    locked: true\n", remote)
+	cfgV2 := fmt.Sprintf("schema: gradus/v1\nlevels:\n  - id: team\n    source: { git: %s, ref: v1.1.0 }\n    locked: true\n", remoteGit)
 	if err := os.WriteFile(filepath.Join(consumer, "gradus.yaml"), []byte(cfgV2), 0o644); err != nil {
 		t.Fatal(err)
 	}

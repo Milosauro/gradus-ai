@@ -31,7 +31,7 @@ func TestResolveRemoteSignaturesAndMinVersion(t *testing.T) {
 	}
 
 	globalGitCfg := filepath.Join(tmp, "gitconfig")
-	if err := os.WriteFile(globalGitCfg, []byte(fmt.Sprintf("[gpg]\n\tformat = ssh\n[gpg \"ssh\"]\n\tallowedSignersFile = %s\n", allowedSigners)), 0o644); err != nil {
+	if err := os.WriteFile(globalGitCfg, []byte(fmt.Sprintf("[gpg]\n\tformat = ssh\n[gpg \"ssh\"]\n\tallowedSignersFile = %s\n", filepath.ToSlash(allowedSigners))), 0o644); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("GIT_CONFIG_GLOBAL", globalGitCfg)
@@ -88,13 +88,15 @@ Follow team conventions.
 		t.Fatal(err)
 	}
 
+	remoteGit := filepath.ToSlash(remoteRepo)
+
 	// 1. Optional signature on unsigned tag v1.0.0 -> resolves with signature: none
 	cfgOptional := fmt.Sprintf(`schema: gradus/v1
 levels:
   - id: team
     source: { git: %s, ref: v1.0.0 }
     signature: optional
-`, remoteRepo)
+`, remoteGit)
 	if err := os.WriteFile(filepath.Join(projectDir, "gradus.yaml"), []byte(cfgOptional), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -112,7 +114,7 @@ levels:
   - id: team
     source: { git: %s, ref: v1.0.0 }
     signature: required
-`, remoteRepo)
+`, remoteGit)
 	if err := os.WriteFile(filepath.Join(projectDir, "gradus.yaml"), []byte(cfgReqFail), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +130,7 @@ levels:
     locked: true
     signature: required
     min_version: 1.1.0
-`, remoteRepo)
+`, remoteGit)
 	if err := os.WriteFile(filepath.Join(projectDir, "gradus.yaml"), []byte(cfgReqPass), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -147,7 +149,7 @@ levels:
     source: { git: %s, ref: v1.2.0 }
     signature: required
     min_version: 1.3.0
-`, remoteRepo)
+`, remoteGit)
 	if err := os.WriteFile(filepath.Join(projectDir, "gradus.yaml"), []byte(cfgMinVerFail), 0o644); err != nil {
 		t.Fatal(err)
 	}
