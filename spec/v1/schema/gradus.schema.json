@@ -117,6 +117,34 @@
           }
         }
       }
+    },
+    "obligations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "rule"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "rule": { "type": "string", "minLength": 1 },
+          "allowed_providers": { "type": "array", "items": { "type": "string" } },
+          "scope": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["obligation", "provider"],
+        "additionalProperties": true,
+        "properties": {
+          "obligation": { "type": "string", "minLength": 1 },
+          "provider": { "type": "string", "minLength": 1 },
+          "requires": { "type": "object", "additionalProperties": { "type": "string" } },
+          "scope": { "type": "array", "items": { "type": "string" } }
+        }
+      }
     }
   }
 }
