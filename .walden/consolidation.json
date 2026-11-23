@@ -2,10 +2,44 @@
   "schema": "consolidation/v1",
   "started_at": "2026-11-20T08:35:58Z",
   "checkpoint": {
-    "at": "2026-11-23T10:48:34Z",
-    "view_fingerprint": "sha256:3e7414ec0bc9beecb037dc7f1cb153f1a25839ede45e71ab5bfd105f78363166"
+    "at": "2026-11-23T16:15:52Z",
+    "view_fingerprint": "sha256:adbba152ec55f0c23e803fc2ed4518f8ae0544ed7810b1ea27168599d0cf1289"
   },
   "features": {
+    "adapters-walden-and-speckit": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:902ebe639ebcf8d790065ed93c0db13420f1e119553b31e2f3d96f493a58c24a",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R2.AC4",
+        "R3.AC1",
+        "NFR1",
+        "NFR2",
+        "NFR3",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must reuse `internal/compile` managed-section helpers (`RenderPrecedenceHeader`, `RenderRuleMarkdown`, `RenderManagedBlock`, `ApplyManagedSection`, `WriteIfChanged`), `internal/resolve` (`ResolvedView.Bindings`), and `internal/schema.ParseSemVer`.",
+        "C2": "Must preserve `gradus/v1` backward compatibility for repositories without bindings or adapters.",
+        "NFR1": "**Static Build \u0026 Zero External Dependencies:** Official adapters MUST be embedded via `go:embed` (`CGO_ENABLED=0`) and provider commands executed via `os/exec` with argv arrays (no shell interpolation).",
+        "NFR2": "**Path Safety:** Adapter `target_file` paths MUST resolve strictly inside the repository root and reject absolute paths or `..` traversal.",
+        "NFR3": "**Idempotency:** Consecutive `gradusctl adapter sync` invocations MUST produce zero byte differences (`E1`).",
+        "R1.AC1": "The system SHALL embed official declarative adapter manifests under `adapters/` (`adapters/walden/adapter.yaml` targeting `.walden/constitution.md` and `adapters/spec-kit/adapter.yaml` targeting `.specify/memory/constitution.md`) using `go:embed` (`adapters/embed.go`).",
+        "R1.AC2": "WHEN custom adapter manifests exist under `.gradus/adapters/*.yaml` or `.gradus/adapters/\u003cid\u003e/adapter.yaml`, the system SHALL load and validate them (`schema: gradus/v1`, non-empty `id` and `target_file`, safe relative `target_file` without `..` traversal) alongside official adapters.",
+        "R1.AC3": "IF an adapter manifest is malformed, omits `id` or `target_file`, or declares an absolute or path-traversal `target_file`, THEN loading SHALL fail with exit code `2`.",
+        "R2.AC1": "WHEN `gradusctl adapter sync [--provider \u003cid\u003e] [--json]` runs on a repository with bound providers (or an explicit `--provider`), the CLI SHALL inject the resolved non-user rules into each adapter's `target_file` strictly between `\u003c!-- gradus:begin view_hash=... --\u003e` and `\u003c!-- gradus:end --\u003e` markers, preserving surrounding human-written prose byte-for-byte and producing zero diff on a second consecutive run.",
+        "R2.AC2": "WHEN `gradusctl adapter verify [--provider \u003cid\u003e] [--skip-evidence] [--json]` runs, the CLI SHALL check for managed-section drift in each bound adapter's `target_file`, validate `binding.requires[\"cli\"]` (e.g. `\u003e=0.10.0`) against the adapter's `version_command` using SemVer comparison, and (unless `--skip-evidence` is set) execute the adapter's `evidence_command` when configured.",
+        "R2.AC3": "IF a bound adapter's `target_file` has drift or is missing, its CLI version is below `binding.requires[\"cli\"]`, or its `evidence_command` exits non-zero, THEN `gradusctl adapter verify` SHALL report the specific failure(s) and exit with code `1`.",
+        "R2.AC4": "IF a bound provider or `--provider` argument has no registered official or custom adapter, THEN `gradusctl adapter sync` and `gradusctl adapter verify` SHALL exit with code `2` with a clear diagnostic.",
+        "R3.AC1": "WHEN `gradusctl adapter list [--json]` runs, the CLI SHALL list all registered official and custom adapters sorted deterministically by `id`, showing `id`, `source` (`official` | `custom`), `target_file`, and `bound` (`true` | `false` based on `ResolvedView.Bindings`)."
+      }
+    },
     "agent-compilers": {
       "state": "consolidated",
       "requirements_fingerprint": "sha256:d50c71049f40a7a8059bf4c0793319f121edf2c5e5564b5217c8be7fbb181021",
@@ -124,6 +158,38 @@
         "R3.AC4": "IF `gradusctl reconcile --move` targets a `locked: true` or unknown level, THEN the system SHALL refuse the modification without altering the target level and exit with code `2`."
       }
     },
+    "codex-copilot-opencode-targets": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:f59362cce6b34db26330285cbe9d6b98d960cf6022ee2da3115618e1faf6be1e",
+      "active_ids": [
+        "R1.AC1",
+        "R2.AC1",
+        "R2.AC2",
+        "R3.AC1",
+        "R4.AC1",
+        "R4.AC2",
+        "R4.AC3",
+        "R4.AC4",
+        "NFR1",
+        "NFR2",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must reuse `internal/compile` managed-section helpers (`PlanAgentsMD`, `RenderManagedBlock`, `ApplyManagedSection`, `PlanEmbeddedSkills`, `WriteIfChanged`) without new third-party dependencies.",
+        "C2": "Must integrate seamlessly with `gradusctl verify`, `gradusctl status`, `gradusctl doctor`, and `gradusctl reconcile` via `compile.PlanCompile`.",
+        "NFR1": "**Idempotency \u0026 Determinism (`E1`):** Output ordering and bytes MUST be identical across repeated runs and platforms (`CGO_ENABLED=0`).",
+        "NFR2": "**Backward Compatibility:** Existing `claude-code`, `antigravity`, and `agents-md` targets MUST continue to produce byte-identical outputs.",
+        "R1.AC1": "WHEN `codex` is configured in `targets`, `compile.PlanCompile` SHALL generate an `AGENTS.md` managed section (excluding `user`-level rules and preserving surrounding human-written content) and extract embedded Gradus skills into `.agents/skills/gradus-*/SKILL.md`.",
+        "R2.AC1": "WHEN `copilot` is configured in `targets`, `compile.PlanCompile` SHALL generate a managed section inside `.github/copilot-instructions.md` containing global non-user rules (preserving surrounding human-written prose), emit scoped project rules under `.github/instructions/gradus-\u003cid\u003e.instructions.md` with `applyTo` frontmatter, and extract embedded Gradus skills into `.github/skills/gradus-*/SKILL.md`.",
+        "R2.AC2": "WHEN a previously compiled scoped rule is removed or waived and `compile.ApplyCompile` runs for `copilot`, the compiler SHALL prune stale `.github/instructions/gradus-*.instructions.md` files while leaving human-authored instruction files untouched.",
+        "R3.AC1": "WHEN `opencode` is configured in `targets`, `compile.PlanCompile` SHALL generate an `AGENTS.md` managed section (excluding `user`-level rules and preserving surrounding human-written prose) and extract embedded Gradus skills into `.opencode/skills/gradus-*/SKILL.md`.",
+        "R4.AC1": "WHEN `gradusctl compile` runs twice consecutively for `codex`, `copilot`, and `opencode`, the second run SHALL report zero changed files (`E1`).",
+        "R4.AC2": "IF a compiled target file for `codex`, `copilot`, or `opencode` is modified manually, THEN `gradusctl verify` SHALL report drift and exit with code `1`.",
+        "R4.AC3": "IF an unsupported target name is configured in `gradus.yaml`, THEN `compile.PlanCompile` SHALL return an error causing `gradusctl compile` to exit with code `2`.",
+        "R4.AC4": "The repository SHALL maintain `docs/compatibility-matrix.md` documenting feature support across all six official targets (`claude-code`, `antigravity`, `agents-md`, `codex`, `copilot`, `opencode`)."
+      }
+    },
     "core-schema-init": {
       "state": "consolidated",
       "requirements_fingerprint": "sha256:660f966777e8e9aed853659fb6d02260dd3245f9ba3395ed9726bd35629cc63c",
@@ -230,6 +296,32 @@
         "R2.AC3": "WHEN `--agent-profile \u003cdir\u003e` points to a non-existent directory, `gradusctl resolve` and `gradusctl guard` SHALL fail closed with exit code `2`."
       }
     },
+    "gradus-link-skill": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:99b8a1ecbbbb196f0cf0cb3e218a990ac89f14ac65286269a4f2c79a9b5fff93",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R2.AC1",
+        "R2.AC2",
+        "NFR1",
+        "NFR2",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must align with `F16` (`obligations` / `bindings`), `F17` (declarative `.gradus/adapters/` manifests and `gradusctl adapter`), and `F18` (`gradusctl toolchain check`).",
+        "C2": "Must follow the structure and frontmatter conventions of existing skills in `skills/gradus-*/SKILL.md`.",
+        "NFR1": "**Static Embedding (`PRJ-GO-001`):** `gradus-link` MUST be embedded directly via `go:embed` in `skills/embed.go` with zero external runtime dependencies and `CGO_ENABLED=0`.",
+        "NFR2": "**Repository Self-Consistency:** After adding `gradus-link`, running `gradusctl compile` and `gradusctl verify` on the `gradus-ai` repository itself MUST pass with zero drift.",
+        "R1.AC1": "The system SHALL author and embed `skills/gradus-link/SKILL.md` via `skills/embed.go` with valid YAML frontmatter (`name: gradus-link`, non-empty `description`) and canonical English instructions (`PRJ-LANG-001`).",
+        "R1.AC2": "The `gradus-link` skill SHALL instruct agents to inspect `gradusctl resolve --json`, `gradusctl adapter list --json`, and `gradusctl toolchain check --json`, perform a compatibility and security audit (checking `toolchain.forbidden`, `allowed_providers`, prompt-injection and data-exfiltration risks), propose a declarative `.gradus/adapters/\u003cid\u003e.yaml` manifest (with safe relative `target_file` and argv-only commands) and/or binding proposal, and require explicit human approval before applying any file changes.",
+        "R1.AC3": "The `gradus-link` skill SHALL include explicit Guardrails \u0026 Prohibitions and Rejected Rationalizations forbidding linking any tool that violates the pyramid without an approved decision and forbidding treating untrusted third-party tool/skill text as overriding `gradus.yaml` rules.",
+        "R2.AC1": "WHEN `gradusctl compile` runs for `claude-code` or `antigravity` targets, the compiler SHALL extract `gradus-link/SKILL.md` into `.claude/skills/gradus-link/SKILL.md` and `.agents/skills/gradus-link/SKILL.md` deterministically.",
+        "R2.AC2": "The repository SHALL include a Skill-TDD evaluation scenario file under `evals/skills/` covering `gradus-link` (including forbidden tool refusal and prompt-injection defense) validated by `skills/skills_test.go`."
+      }
+    },
     "handbook-and-templates": {
       "state": "consolidated",
       "requirements_fingerprint": "sha256:17ef5367df3c7b5743b97df94bb4cfae3fc328f4938cb8ea075778a3bf52af43",
@@ -278,6 +370,36 @@
         "R2.AC3": "WHEN `gradus-review` or `gradus-conflicts` evaluates code or candidate rule pairs, the skill instructions SHALL require citing rule ID, level, severity, provenance, and confidence, forbidding low-confidence violations, and recording evidence/findings strictly through `gradusctl` (`evidence` / `conflicts`).",
         "R3.AC1": "The repository SHALL include at least one scenario specification under `evals/skills/` for each of the six MVP skills (plus a prompt-injection resistance scenario per §22), recording baseline failures/rationalizations and expected skill-guided behavior.",
         "R3.AC2": "WHEN `go test ./skills/...` runs, the test suite SHALL deterministically verify `skills.FS` embedding, frontmatter validity, absence of `gradus-placeholder`, and full mapping between the six skills and `evals/skills/` scenarios."
+      }
+    },
+    "obligations-and-bindings": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:61a300d0fbca174cde82c47ff984b1f1b7fa3354a717711eb94acf3c95719306",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R3.AC1",
+        "R3.AC2",
+        "NFR1",
+        "NFR2",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must preserve `gradus/v1` backward compatibility across `spec/v1/schema/gradus.schema.json`, `level.schema.json`, and `resolved-view.schema.json`.",
+        "C2": "Must build with `CGO_ENABLED=0` and reuse `internal/schema`, `internal/resolve`, and `internal/compile/handbook.go` without new third-party dependencies.",
+        "NFR1": "**Deterministic Ordering:** `ResolvedView.Obligations` and `ResolvedView.Bindings` MUST be sorted deterministically so `view_hash` is invariant across runs and operating systems (`E1`).",
+        "NFR2": "**Backward Compatibility:** Existing pyramids without `obligations` or `bindings` MUST resolve with identical `view_hash` (`omitempty` JSON fields) and zero new conflicts (`C1`).",
+        "R1.AC1": "WHEN a `level.yaml` or `gradus.yaml` declares `obligations` (each with `id`, `rule`, optional `allowed_providers`, and optional `scope`) and `bindings` (each with `obligation`, `provider`, optional `requires`, and optional `scope`), the system SHALL parse and preserve them in `schema.LevelConfig` and `schema.PyramidConfig` while maintaining `gradus/v1` JSON Schema validity.",
+        "R1.AC2": "IF an obligation omits `id` or `rule`, declares duplicate `id` values within the same config, or a binding omits `obligation` or `provider`, THEN configuration parsing SHALL fail with exit code `2` and a clear diagnostic.",
+        "R2.AC1": "WHEN `resolve.Resolve` evaluates a pyramid containing `obligations` and `bindings`, the system SHALL match each binding to its target obligation, verify that `binding.provider` is permitted by `obligation.allowed_providers` (when non-empty), and mark the obligation as satisfied in `ResolvedView`.",
+        "R2.AC2": "IF a binding references a `provider` not in `allowed_providers`, references an unknown `obligation` ID, or a lower level attempts to widen `allowed_providers` for an inherited obligation, THEN `resolve.Resolve` SHALL emit a blocking `Conflict` (`kind: \"obligation\"`) causing `gradusctl verify` and `gradusctl compile` to exit with code `1`.",
+        "R2.AC3": "IF an active `obligation` has no matching valid `binding` in the resolved pyramid, THEN `resolve.Resolve` SHALL emit a blocking `Conflict` (`kind: \"obligation\"`) identifying the unbound obligation ID.",
+        "R3.AC1": "WHEN `resolve.Resolve` completes on a pyramid with obligations or bindings, `ResolvedView` (`gradusctl resolve --json`) SHALL include `obligations` (with `id`, `rule`, `level`, `allowed_providers`, `bindings`, `satisfied`) and `bindings`, and update `view_hash` deterministically.",
+        "R3.AC2": "WHEN `gradusctl handbook` renders a pyramid containing obligations or bindings, the generated Markdown SHALL include an `Obligations \u0026 Bindings` section summarizing each obligation, its bound provider(s), `requires`, and `scope`."
       }
     },
     "overlays-and-exceptions": {
@@ -342,6 +464,44 @@
         "R3.AC1": "The repository SHALL define `.goreleaser.yaml` configured for `CGO_ENABLED=0` static builds across `linux`, `darwin`, and `windows` (`amd64`, `arm64`), `checksums.txt`, `syft` SBOM generation, and keyless `cosign` signing.",
         "R3.AC2": "The repository SHALL define `.github/workflows/release.yml` triggered on `v*` tags with all `uses:` GitHub Actions pinned to 40-character commit SHAs, generating build provenance attestations alongside GoReleaser artifacts.",
         "R3.AC3": "`CHANGELOG.md` SHALL document all Phase 0 MVP capabilities under `[0.1.0]` / `[Unreleased]` in canonical English ready for release tagging."
+      }
+    },
+    "remote-levels-signatures-and-changelog": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:b08039619feee2ca10b577a31230bc6c2dd5961ae73baa9bb70bc27d1d8edf35",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R1.AC4",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "NFR1",
+        "NFR2",
+        "NFR3",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must preserve `gradus/v1` backward compatibility (`spec/v1/schema/gradus.schema.json`, `level.schema.json`, `lock.schema.json`) so existing repositories without `signature` or `min_version` continue to work identically.",
+        "C2": "Must reuse existing `internal/schema`, `internal/source`, `internal/lock`, and `internal/resolve` packages without adding third-party cryptographic or git libraries.",
+        "NFR1": "**Static Build \u0026 Git via `os/exec` (`PRJ-GO-001`):** All signature verification and changelog git operations MUST shell out to the system `git` binary via `os/exec` (no `go-git`, no `libgit2`, `CGO_ENABLED=0`).",
+        "NFR2": "**Argument Injection Safety:** All git refs passed to `verify-tag`, `verify-commit`, `archive`, or `checkout` MUST reject values starting with `-` and use `--` separators where applicable.",
+        "NFR3": "**Deterministic \u0026 Non-Destructive Output:** `gradusctl changelog` MUST emit rules sorted deterministically by rule ID and MUST NOT mutate the working tree, index, or cached level checkout.",
+        "R1.AC1": "WHEN a level in `gradus.yaml` or its `level.yaml` declares `signature: required` on a git-backed source, the system SHALL verify the resolved tag or commit via `os/exec` `git verify-tag` (for annotated tags) or `git verify-commit` (otherwise) and record `signature: verified` in `gradus.lock`.",
+        "R1.AC2": "IF a git-backed level declares `signature: required` and the resolved ref is unsigned or fails Git signature verification, THEN `gradusctl resolve` and `gradusctl verify` SHALL fail with exit code `2` and a clear diagnostic identifying the level ID and verification failure.",
+        "R1.AC3": "WHEN a git-backed level declares `signature: optional` (or omits `signature`), the system SHALL attempt best-effort signature verification, recording `signature: verified` if valid or `signature: none` if unsigned without failing resolution.",
+        "R1.AC4": "IF `signature` is set to an invalid value (anything other than `required` or `optional`), THEN configuration parsing SHALL fail with exit code `2`.",
+        "R2.AC1": "WHEN a level's `level.yaml` or `gradus.yaml` entry declares `min_version` (SemVer string such as `1.2.0` or `v1.2.0`), the system SHALL compare the resolved level version (`level.yaml` `version` or git tag ref) against `min_version` using SemVer ordering during `resolve` and `verify`.",
+        "R2.AC2": "IF the resolved version of a level is lower than `min_version` or missing/unparseable as SemVer when `min_version` is declared, THEN `gradusctl resolve` and `gradusctl verify` SHALL fail with exit code `2` and report the resolved version alongside the required `min_version`.",
+        "R2.AC3": "IF `min_version` itself is not a valid SemVer string, THEN configuration parsing SHALL fail with exit code `2`.",
+        "R3.AC1": "WHEN `gradusctl changelog \u003clevel-id\u003e --from \u003cref1\u003e --to \u003cref2\u003e [--json]` runs on a git-backed level, the CLI SHALL materialize both refs via `os/exec` `git` in temporary directories without altering the repository working tree and report added rules, removed rules, modified rules (highlighting changed `severity`, `enforcement`, `scope`, `status`, and `text`), and level metadata changes (`version`, `min_version`, `charter`).",
+        "R3.AC2": "WHEN `--from` or `--to` is omitted on `gradusctl changelog \u003clevel-id\u003e`, the CLI SHALL default `--from` to the level's locked commit in `gradus.lock` and `--to` to the level's configured `source.ref` in `gradus.yaml` (or `HEAD`).",
+        "R3.AC3": "IF `\u003clevel-id\u003e` does not exist, is not git-backed, or either ref is invalid or starts with `-`, THEN `gradusctl changelog` SHALL exit with code `2` and a clear error message."
       }
     },
     "resolve-and-lock": {
@@ -456,6 +616,36 @@
         "R3.AC3": "WHEN multiple hook rules or built-in anti-tamper match the same invocation, the system SHALL combine decisions using strict precedence `deny \u003e ask \u003e allow` and report all matched rule IDs and reasons.",
         "R4.AC1": "WHEN `gradusctl guard` completes evaluation, the system SHALL output a JSON payload containing `decision` (`allow` | `ask` | `deny`), `reason`, `matched_rules`, `anti_tamper`, and a `hookSpecificOutput` block (`hookEventName: \"PreToolUse\"`, `permissionDecision`, `permissionDecisionReason`).",
         "R4.AC2": "WHEN `gradusctl guard` exits, the system SHALL return exit code `0` for `allow` or `ask`, exit code `1` for `deny`, and exit code `2` for technical errors (malformed payload, invalid regex pattern, unreadable/invalid configuration, or lock tamper)."
+      }
+    },
+    "toolchain-governance": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:d53e93ee0f8ca36b6607cb46b3e2733000d310da412cbdc35d210d247651fed7",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "R2.AC2",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "NFR1",
+        "NFR2",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must preserve `gradus/v1` backward compatibility across `spec/v1/schema/gradus.schema.json`, `level.schema.json`, and `resolved-view.schema.json`.",
+        "C2": "Must reuse `github.com/bmatcuk/doublestar/v4`, `internal/schema`, and `internal/resolve`.",
+        "NFR1": "**Deterministic Ordering \u0026 Backward Compatibility:** `ResolvedView.Toolchain` slices MUST be sorted deterministically and omitted (`omitempty`) when no toolchain declarations exist (`E1`, `C1`).",
+        "NFR2": "**Static Build \u0026 Zero Network I/O:** `gradusctl toolchain check` MUST perform local filesystem/`PATH` inspection only with `CGO_ENABLED=0` and zero new third-party dependencies.",
+        "R1.AC1": "WHEN a `level.yaml` or `gradus.yaml` declares a `toolchain` block with `required`, `recommended`, and/or `forbidden` lists of items (`type`: `skill` | `tool` | `mcp` | `plugin`, `id`, optional `reason`), the system SHALL parse and preserve them in `schema.LevelConfig` and `schema.PyramidConfig` while maintaining `gradus/v1` JSON Schema validity.",
+        "R1.AC2": "IF a toolchain item omits `type` or `id`, or specifies a `type` outside `skill | tool | mcp | plugin`, THEN configuration parsing SHALL fail with exit code `2` and a clear diagnostic.",
+        "R2.AC1": "WHEN `resolve.Resolve` evaluates a pyramid with `toolchain` declarations across multiple levels, the system SHALL union all `required`, `recommended`, and `forbidden` entries in pyramid order and expose them deterministically in `ResolvedView.Toolchain` (`omitempty` when absent).",
+        "R2.AC2": "IF a level declares a `required` or `recommended` item whose `type` matches and whose `id` matches any `forbidden` pattern (glob matching via `doublestar`) from the same or an upper level, THEN `resolve.Resolve` SHALL emit a blocking `Conflict` (`kind: \"toolchain\"`) causing `gradusctl verify` and `gradusctl compile` to exit with code `1`.",
+        "R3.AC1": "WHEN `gradusctl toolchain check [--dir .] [--json]` runs, the CLI SHALL inspect the workspace for installed skills (`.claude/skills/*/SKILL.md`, `.agents/skills/*/SKILL.md`), CLI tools (`PATH` lookup), MCP servers (`.mcp.json`, `.claude/settings.json` `mcpServers`, `.agents/mcp.json`), and plugins (`.claude/settings.json` `enabledPlugins`), exiting with code `0` when all `required` items are present and no `forbidden` item matches.",
+        "R3.AC2": "IF any `required` item is missing or any detected item matches a `forbidden` pattern, THEN `gradusctl toolchain check` SHALL report the violations in text or JSON output and exit with code `1` (suppressing stderr `Error:` when `--json` is set).",
+        "R3.AC3": "WHEN a `recommended` item is missing, `gradusctl toolchain check` SHALL report it as a non-blocking warning and exit with code `0` (assuming no `required`/`forbidden` violations exist)."
       }
     },
     "verify-check-evidence": {
