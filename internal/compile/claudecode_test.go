@@ -23,7 +23,7 @@ func TestClaudeCodeCompiler(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(tmp, ".claude"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(filepath.Join(tmp, ".claude", "settings.json"), []byte(`{"theme": "dark"}`), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(tmp, ".claude", "settings.json"), []byte(`{"theme": "dark", "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "gradusctl status --brief"}]}]}}`), 0o644); err != nil {
 		t.Fatal(err)
 	}
 
@@ -88,6 +88,9 @@ func TestClaudeCodeCompiler(t *testing.T) {
 	if !strings.Contains(claudeMD, "Do not erase me.") || !strings.Contains(claudeMD, "PRJ-01") || strings.Contains(claudeMD, "USR-01") {
 		t.Fatalf("unexpected CLAUDE.md:\n%s", claudeMD)
 	}
+	if !strings.Contains(claudeMD, ".claude/rules/gradus-*.md") || !strings.Contains(claudeMD, "PRJ-API-01") {
+		t.Fatalf("expected scoped rules note referencing .claude/rules/gradus-*.md and PRJ-API-01 in CLAUDE.md:\n%s", claudeMD)
+	}
 
 	scopedRule := string(planned[".claude/rules/gradus-prj-api-01.md"])
 	if !strings.Contains(scopedRule, "services/api/**") || !strings.Contains(scopedRule, "API rule text.") {
@@ -107,8 +110,11 @@ func TestClaudeCodeCompiler(t *testing.T) {
 		t.Fatalf("expected existing settings key 'theme' to be preserved, got: %v", settings)
 	}
 	rawSettings := string(planned[".claude/settings.json"])
-	if !strings.Contains(rawSettings, "gradusctl guard") || !strings.Contains(rawSettings, "Bash(rm -rf:*)") {
-		t.Fatalf("expected static hook dispatcher and permission rule in .claude/settings.json, got:\n%s", rawSettings)
+	if !strings.Contains(rawSettings, "gradusctl guard") || !strings.Contains(rawSettings, "Bash(rm -rf:*)") || !strings.Contains(rawSettings, "gradusctl status --brief --hook") {
+		t.Fatalf("expected static hook dispatcher, SessionStart --hook, and permission rule in .claude/settings.json, got:\n%s", rawSettings)
+	}
+	if strings.Count(rawSettings, "gradusctl status --brief") != 1 {
+		t.Fatalf("expected legacy SessionStart command to be upgraded in place without duplication, got:\n%s", rawSettings)
 	}
 
 	if string(planned[".claude/skills/gradus-review/SKILL.md"]) == "" {

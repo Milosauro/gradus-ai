@@ -15,7 +15,7 @@
       {
         "hooks": [
           {
-            "command": "gradusctl status --brief",
+            "command": "gradusctl status --brief --hook",
             "type": "command"
           }
         ]

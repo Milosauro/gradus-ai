@@ -32,6 +32,7 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 	var dir string
 	var userDir string
 	var brief bool
+	var hookMode bool
 	var antigravityHook bool
 
 	cmd := &cobra.Command{
@@ -82,7 +83,7 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 				if err := enc.Encode(rep); err != nil {
 					return &ExitErrorWithCode{Code: ExitError, Err: err}
 				}
-			} else if brief {
+			} else if brief || hookMode {
 				fmt.Fprintf(cmd.OutOrStdout(), "gradus: lock=%s conflicts=%d drift=%d lessons=%d\n",
 					rep.LockState, rep.Conflicts, rep.Drift, rep.PendingLessons)
 			} else {
@@ -94,6 +95,10 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 				fmt.Fprintf(out, "Conflicts:       %d\n", rep.Conflicts)
 				fmt.Fprintf(out, "Drift items:     %d\n", rep.Drift)
 				fmt.Fprintf(out, "Pending lessons: %d\n", rep.PendingLessons)
+			}
+
+			if hookMode {
+				return nil
 			}
 
 			if exitCode != ExitPass {
@@ -112,6 +117,7 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 	cmd.Flags().StringVar(&dir, "dir", ".", "Target repository directory")
 	cmd.Flags().StringVar(&userDir, "user-dir", "", "Override user-level rules directory (defaults to ~/.gradus/levels/user)")
 	cmd.Flags().BoolVar(&brief, "brief", false, "Emit compact single-line summary")
+	cmd.Flags().BoolVar(&hookMode, "hook", false, "Exit 0 in SessionStart hook mode so harness injects banner even when drift or conflicts exist")
 	cmd.Flags().BoolVar(&antigravityHook, "antigravity-hook", false, "Emit Antigravity SessionStart injectSteps JSON")
 	return cmd
 }

@@ -22,6 +22,7 @@ func PlanClaudeCode(rootDir string, view resolve.ResolvedView, skillsFS fs.FS) (
 	var userBody strings.Builder
 	userBody.WriteString("# Gradus User Rules\n\n")
 	hasUserRules := false
+	var scopedRuleIDs []string
 
 	for _, r := range view.Rules {
 		if r.Waived {
@@ -35,6 +36,7 @@ func PlanClaudeCode(rootDir string, view resolve.ResolvedView, skillsFS fs.FS) (
 		if isGlobalScope(r.Scope) {
 			globalBody.WriteString(RenderRuleMarkdown(r))
 		} else {
+			scopedRuleIDs = append(scopedRuleIDs, r.ID)
 			// Scoped project rule -> .claude/rules/gradus-<id>.md with paths frontmatter.
 			var sb strings.Builder
 			sb.WriteString("---\npaths:\n")
@@ -46,6 +48,11 @@ func PlanClaudeCode(rootDir string, view resolve.ResolvedView, skillsFS fs.FS) (
 			ruleRel := filepath.ToSlash(filepath.Join(".claude", "rules", fmt.Sprintf("gradus-%s.md", strings.ToLower(r.ID))))
 			files[ruleRel] = []byte(sb.String())
 		}
+	}
+
+	if len(scopedRuleIDs) > 0 {
+		fmt.Fprintf(&globalBody, "> **Scoped rules:** %d path-scoped rule(s) (`%s`) are compiled into `.claude/rules/gradus-*.md` and loaded automatically when matching files are touched.\n",
+			len(scopedRuleIDs), strings.Join(scopedRuleIDs, "`, `"))
 	}
 
 	// CLAUDE.md managed section.
@@ -101,7 +108,7 @@ func mergeClaudeSettings(settingsPath string, view resolve.ResolvedView) ([]byte
 
 	hooksMap := ensureStringMap(settings, "hooks")
 	ensureHookDispatcher(hooksMap, "PreToolUse", "Bash|Edit|Write|MultiEdit", "gradusctl guard")
-	ensureHookDispatcher(hooksMap, "SessionStart", "", "gradusctl status --brief")
+	ensureHookDispatcher(hooksMap, "SessionStart", "", "gradusctl status --brief --hook")
 
 	// Merge permission rules.
 	var denyList, askList []string
@@ -152,7 +159,15 @@ func ensureHookDispatcher(hooksMap map[string]any, event, matcher, command strin
 		}
 		for _, ih := range innerHooks {
 			hm, ok := ih.(map[string]any)
-			if ok && hm["command"] == command {
+			if !ok {
+				continue
+			}
+			if hm["command"] == command {
+				return
+			}
+			// Upgrade legacy SessionStart command in place instead of duplicating.
+			if event == "SessionStart" && hm["command"] == "gradusctl status --brief" {
+				hm["command"] = command
 				return
 			}
 		}

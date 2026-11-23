@@ -15,4 +15,6 @@ AI coding agents MUST NOT run `git commit` or `git push` without explicit user c
 - **Level:** `project` | **Severity:** `MUST` | **Enforcement:** `prompt` | **Source:** `project@v0.1.0`
 
 All repository files (Go code, comments, CLI messages, documentation, `.walden/*`, `.gradus/*`, commit messages, and PR descriptions) MUST be written in canonical English.
+
+> **Scoped rules:** 2 path-scoped rule(s) (`PRJ-CI-001`, `PRJ-GO-001`) are compiled into `.claude/rules/gradus-*.md` and loaded automatically when matching files are touched.
 <!-- gradus:end -->
