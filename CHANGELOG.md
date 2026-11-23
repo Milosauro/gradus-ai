@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.2] - 2026-11-23
+
+### Fixed
+- **Non-failing `SessionStart` hook for Claude Code (`gradusctl status --brief --hook`):** Added `--hook` to `gradusctl status` and updated the Claude Code compiler to emit `gradusctl status --brief --hook` (upgrading legacy `gradusctl status --brief` entries in place), so Claude Code injects the `SessionStart` banner cleanly even when `drift > 0` or `conflicts > 0`.
+- **Scoped rules pointer in `CLAUDE.md`:** Added a summary note in compiled `CLAUDE.md` listing path-scoped rules compiled into `.claude/rules/gradus-*.md` so readers inspecting `CLAUDE.md` directly see that scoped rules are active.
+
 ## [0.2.1] - 2026-11-22
 
 ### Fixed
