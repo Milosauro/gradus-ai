@@ -1,0 +1,83 @@
+{
+  "schema_version": "v1alpha2",
+  "feature": "gradus-link-skill",
+  "tasks": {
+    "1.1": {
+      "task_fingerprint": "sha256:c41f9e95fe1b27784c00bb7c7295e0035b7c170a731666992ed2c2ad2c04d99e",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:d152f1deffab6b4b73f7930f95461afaca0f249569060bac152dd19ca62e5fc2"
+      },
+      "requirements_fingerprint": "sha256:99b8a1ecbbbb196f0cf0cb3e218a990ac89f14ac65286269a4f2c79a9b5fff93",
+      "design_fingerprint": "sha256:ce004bef05a1da6eeb2fa12236cc5662f3e11f6d1e707b95c3bb36c92cadf448",
+      "tasks_fingerprint": "sha256:6395584bb40ccfdac22ebd71c2add07c8840cd2acd9b3ef47ca15e19fa94dc4f",
+      "code_identity": "sha256:d152f1deffab6b4b73f7930f95461afaca0f249569060bac152dd19ca62e5fc2",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestEmbeddedSkills$",
+            "./skills"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:859a4bb719dde672d3dc0549654c45d88947e35ef2c35031191811746d6751e2"
+        },
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestSkillEvalScenarios$",
+            "./skills"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:0a3bf83ab6d85c8460997e9366a87b89516e2988f9226212b7b3a2c816fcaf31"
+        },
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestEmbeddedSkillsAndEvals$",
+            "./skills"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:478db248b49ed3207f0a6f7b60479c486821dfc1663598e8dd135e62005d5977"
+        },
+        {
+          "command": [
+            "sh",
+            "-c",
+            "CGO_ENABLED=0 go build -o /dev/null ./cmd/gradusctl"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-23T15:28:29Z"
+    }
+  }
+}
