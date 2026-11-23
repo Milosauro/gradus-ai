@@ -78,6 +78,19 @@ Keep clean.
 	if !strings.Contains(stdout.String(), ".agents/hooks.json") {
 		t.Fatalf("expected doctor output to cite .agents/hooks.json, got: %s", stdout.String())
 	}
+
+	// 4. Compiled drift on AGENTS.md -> doctor reports compiled_drift fail (exit 1)
+	_ = os.Remove(filepath.Join(tmp, ".agents", "hooks.json"))
+	_ = cli.ExecuteCode([]string{"compile", "--dir", tmp}, &stdout, &stderr)
+	_ = os.WriteFile(filepath.Join(tmp, "AGENTS.md"), []byte("drifted\n"), 0o644)
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"doctor", "--dir", tmp, "--json"}, &stdout, &stderr); code != cli.ExitViolation {
+		t.Fatalf("expected doctor exit 1 on compiled drift, got %d (%s)", code, stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "compiled_drift") {
+		t.Fatalf("expected compiled_drift in doctor output, got: %s", stdout.String())
+	}
 }
 
 func TestPruneAndStatusUserRules(t *testing.T) {

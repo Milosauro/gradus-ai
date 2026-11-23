@@ -37,7 +37,11 @@ func newTestCmd(jsonOutput *bool) *cobra.Command {
 				}
 			} else {
 				out := cmd.OutOrStdout()
-				fmt.Fprintf(out, "rule tests: %s (%d passed, %d failed)\n", rep.Verdict, rep.Passed, rep.Failed)
+				if rep.Passed == 0 && rep.Failed == 0 {
+					fmt.Fprintf(out, "rule tests: %s (0 passed, 0 failed — no rule examples found)\n", rep.Verdict)
+				} else {
+					fmt.Fprintf(out, "rule tests: %s (%d passed, %d failed)\n", rep.Verdict, rep.Passed, rep.Failed)
+				}
 				for _, c := range rep.Cases {
 					status := "PASS"
 					if !c.Passed {

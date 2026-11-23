@@ -71,4 +71,18 @@ func TestStatusCommand(t *testing.T) {
 	if code := cli.ExecuteCode([]string{"status", "--dir", tmp, "--brief"}, &stdout, &stderr); code != cli.ExitViolation {
 		t.Fatalf("expected exit 1 with confirmed finding, got %d", code)
 	}
+
+	// Drift detection after compile -> status reports drift=1 and exit 1
+	_ = os.Remove(filepath.Join(findDir, "F-1.yaml"))
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"compile", "--dir", tmp}, &stdout, &stderr); code != cli.ExitPass {
+		t.Fatalf("compile failed: %d %s", code, stderr.String())
+	}
+	_ = os.WriteFile(filepath.Join(tmp, "AGENTS.md"), []byte("hand edited\n"), 0o644)
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"status", "--dir", tmp, "--brief"}, &stdout, &stderr); code != cli.ExitViolation || !strings.Contains(stdout.String(), "drift=1") {
+		t.Fatalf("expected exit 1 with drift=1 after AGENTS.md edit, got code=%d out=%q", code, stdout.String())
+	}
 }

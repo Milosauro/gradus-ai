@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-11-22
+
+### Fixed
+- **Accurate drift reporting in `gradusctl status` and `SessionStart`:** `gradusctl status` now computes compiled target drift (`drift`) and live `view_hash` (when compiled targets exist on disk) so `status --brief` and `SessionStart` stay consistent with `gradusctl verify`, while suppressing stderr `Error:` text when `--json` is enabled.
+- **Upgrade drift check in `gradusctl doctor`:** Added a `compiled_drift` diagnostic to `gradusctl doctor` so out-of-date compiled files after upgrading `gradusctl` are surfaced with a `gradusctl compile` fix hint.
+- **Clearer empty output in `gradusctl test`:** Emit `(0 passed, 0 failed — no rule examples found)` in text output when no rules declare `### Compliant` / `### Non-compliant` examples.
+
 ## [0.2.0] - 2026-11-21
 
 ### Added
