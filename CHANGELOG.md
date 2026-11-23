@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-23
+
+### Security & Hardening
+- **Human-only governance guard & approver validation (`F21`):** `gradusctl guard` now intercepts human-only commands (`exception approve`, `exception break-glass`, `conflicts dismiss`, `lessons update`, `hooks install`) and `git commit --no-verify`/`-n` with `anti_tamper` (`ask` or `deny`), and `gradusctl exception approve --by` validates the approver against declared level `approvers`/`owners`.
+- **Extended anti-tamper coverage (`F21`):** Protect `.pre-commit-config.yaml`, `lefthook.yml`, `.lefthook.yml`, `.husky/**`, `.github/workflows/**`, `opencode.json`, and `.codex/config.toml`, and detect `install` as a mutating shell command.
+
+### Fixed
+- **Project-only `view_hash` (`F21`):** Exclude `user`-level rules and summaries from `ViewHash` so `gradus.lock` and compiled project markers remain invariant across developers' personal `~/.gradus/levels/user` rules.
+- **Controlled remote lock upgrades (`gradusctl resolve --update`):** Allow updating locked git levels only when `source.ref` in `gradus.yaml` changed relative to `gradus.lock`, while continuing to reject same-ref tampering.
+- **Stale Phase 0 notes & handbook numbering:** Remove `"is not active in Phase 0"` warnings for active Phase 1/2 keys (`obligations`, `bindings`, `toolchain`, `signature`, `min_version`), fix sequential section numbering in `gradusctl handbook`, and add runnable `gradusctl test` examples to `PRJ-GO-001`.
+- **Reproducible builds & GitHub Action:** Tidy `go.mod`, switch `.goreleaser.yaml` to `go mod tidy -diff` (preventing `+dirty` release binaries), and pin `.github/actions/gradus/action.yml` to `v0.3.1` with `go-version-file: go.mod` and `env:` inputs.
+
 ## [0.3.0] - 2026-11-23
 
 ### Added

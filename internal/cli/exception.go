@@ -3,6 +3,8 @@ package cli
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -88,6 +90,9 @@ func newExceptionApproveCmd(jsonOutput *bool) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if dir == "" {
 				dir = "."
+			}
+			if err := validateExceptionApprover(dir, args[0], approver); err != nil {
+				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
 			rec, err := state.ApproveException(dir, args[0], approver)
 			if err != nil {
@@ -278,4 +283,93 @@ func newExceptionExpireCmd(jsonOutput *bool) *cobra.Command {
 
 	cmd.Flags().StringVar(&dir, "dir", ".", "Target repository directory")
 	return cmd
+}
+
+func validateExceptionApprover(rootDir, exceptionID, approver string) error {
+	trimmed := strings.TrimSpace(approver)
+	if trimmed == "" {
+		return fmt.Errorf("--by approver cannot be empty")
+	}
+
+	exceptions, err := state.ListExceptions(rootDir, time.Now().UTC())
+	if err != nil {
+		return err
+	}
+	var ruleID string
+	for _, ex := range exceptions {
+		if ex.ID == exceptionID {
+			ruleID = ex.RuleID
+			break
+		}
+	}
+	if ruleID == "" {
+		return nil // Let state.ApproveException return the canonical not-found error.
+	}
+
+	res, err := resolve.Resolve(rootDir, resolve.Options{OfflineOnly: true, IncludeDraft: true})
+	if err != nil {
+		return err
+	}
+	var targetLevel string
+	for _, r := range append(res.View.Rules, res.View.InactiveRules...) {
+		if r.ID == ruleID {
+			targetLevel = r.Level
+			break
+		}
+	}
+	if targetLevel == "" {
+		return nil
+	}
+
+	cfgBytes, err := os.ReadFile(filepath.Join(rootDir, "gradus.yaml"))
+	if err != nil {
+		return err
+	}
+	cfgRes, err := schema.ParsePyramidConfig(cfgBytes)
+	if err != nil {
+		return err
+	}
+
+	allowed := make(map[string]bool)
+	for _, lvl := range cfgRes.Value.Levels {
+		if lvl.ID != targetLevel {
+			continue
+		}
+		for _, a := range lvl.Approvers {
+			allowed[strings.TrimSpace(a)] = true
+		}
+		var lvlDir string
+		if lvl.Source.Path != "" {
+			if filepath.IsAbs(lvl.Source.Path) {
+				lvlDir = lvl.Source.Path
+			} else {
+				lvlDir = filepath.Join(rootDir, filepath.FromSlash(lvl.Source.Path))
+			}
+		} else if lvl.Source.Git != "" {
+			lvlDir = filepath.Join(rootDir, ".gradus", "cache", lvl.ID, "repo")
+		}
+		if lvlDir != "" {
+			if lvlBytes, readErr := os.ReadFile(filepath.Join(lvlDir, "level.yaml")); readErr == nil {
+				if lcRes, parseErr := schema.ParseLevelConfig(lvlBytes); parseErr == nil {
+					for _, a := range lcRes.Value.Approvers {
+						allowed[strings.TrimSpace(a)] = true
+					}
+					for _, o := range lcRes.Value.Owners {
+						allowed[strings.TrimSpace(o)] = true
+					}
+					if lcRes.Value.Exceptions != nil {
+						for _, a := range lcRes.Value.Exceptions.Approvers {
+							allowed[strings.TrimSpace(a)] = true
+						}
+					}
+				}
+			}
+		}
+	}
+	delete(allowed, "")
+
+	if len(allowed) > 0 && !allowed[trimmed] {
+		return fmt.Errorf("approver %q is not authorized to approve exceptions for level %q", approver, targetLevel)
+	}
+	return nil
 }

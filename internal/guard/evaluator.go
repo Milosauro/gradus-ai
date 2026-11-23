@@ -204,10 +204,12 @@ func EvaluateWithOptions(action NormalizedAction, rules []resolve.ResolvedRule, 
 		res.AntiTamper = true
 		res.Decision = tamperDecision
 		reasons = append(reasons, fmt.Sprintf("anti-tamper: modifying protected governance file %q requires explicit human confirmation", action.Target))
-	} else if action.Action == ActionCommand && IsProtectedShellCommand(action.Target) {
-		res.AntiTamper = true
-		res.Decision = tamperDecision
-		reasons = append(reasons, "anti-tamper: shell command targets protected governance path and requires explicit human confirmation")
+	} else if action.Action == ActionCommand {
+		if matched, reason := AntiTamperShellReason(action.Target); matched {
+			res.AntiTamper = true
+			res.Decision = tamperDecision
+			reasons = append(reasons, reason)
+		}
 	}
 
 	for _, r := range rules {

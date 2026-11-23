@@ -4,5 +4,5 @@ entries:
     - kind: level
       id: project
       source: .gradus/levels/project
-      hash: sha256:1c4f742d77728c6755b38c2b35cbd1460dca45a7413e07fa163782bcaddc4efd
-view_hash: sha256:c5d93a389c2148e770a2db78ecfc6aa2b19fb9c30e6387b23fa0bf6556779777
+      hash: sha256:d2bb13d8759579d150c12759a28ebb04c7241e7e4123b2b16cc3361463a0b5ca
+view_hash: sha256:80c2ce01fbe33c1d0cfa5d78991a70ae03b54912fe770a59c4692d8f154d9543

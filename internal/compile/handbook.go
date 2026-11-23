@@ -45,8 +45,10 @@ func RenderHandbook(view resolve.ResolvedView) string {
 		sb.WriteString("\n")
 	}
 
+	sectionNum := 2
 	if len(view.Overlays) > 0 {
-		sb.WriteString("## 2. Overlays\n\n")
+		fmt.Fprintf(&sb, "## %d. Overlays\n\n", sectionNum)
+		sectionNum++
 		for _, ov := range view.Overlays {
 			state := "inactive"
 			if ov.Active {
@@ -57,7 +59,8 @@ func RenderHandbook(view resolve.ResolvedView) string {
 		sb.WriteString("\n")
 	}
 
-	sb.WriteString("## 3. Active Rules by Level\n\n")
+	fmt.Fprintf(&sb, "## %d. Active Rules by Level\n\n", sectionNum)
+	sectionNum++
 	rulesByLevel := make(map[string][]resolve.ResolvedRule)
 	var levelOrder []string
 	seenLevel := make(map[string]bool)
@@ -94,7 +97,8 @@ func RenderHandbook(view resolve.ResolvedView) string {
 	}
 
 	if len(view.Obligations) > 0 {
-		sb.WriteString("## Obligations & Bindings\n\n")
+		fmt.Fprintf(&sb, "## %d. Obligations & Bindings\n\n", sectionNum)
+		sectionNum++
 		for _, ob := range view.Obligations {
 			fmt.Fprintf(&sb, "### %s (level `%s`, satisfied: `%t`)\n", ob.ID, ob.Level, ob.Satisfied)
 			fmt.Fprintf(&sb, "- **Rule:** %s\n", ob.Rule)
@@ -124,7 +128,7 @@ func RenderHandbook(view resolve.ResolvedView) string {
 		}
 	}
 
-	sb.WriteString("## 4. Exceptions & Break-Glass Procedure\n\n")
+	fmt.Fprintf(&sb, "## %d. Exceptions & Break-Glass Procedure\n\n", sectionNum)
 	sb.WriteString("- Request a time-limited exception: `gradusctl exception request --rule <ID> --reason \"...\" --expires YYYY-MM-DD`\n")
 	sb.WriteString("- Approve a pending exception: `gradusctl exception approve <EXCEPTION_ID> --by <approver>`\n")
 	sb.WriteString("- Record an emergency break-glass waiver (when permitted by the level): `gradusctl exception break-glass --rule <ID> --reason \"...\" --expires YYYY-MM-DD --post-review-due YYYY-MM-DD --by <responder>`\n")

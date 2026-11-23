@@ -21,7 +21,9 @@ var pyramidFieldSpec = FieldSpec{
 						"ref":  {},
 					},
 				},
-				"locked": {},
+				"locked":         {},
+				"signature":      {},
+				"min_version":    {},
 				"offline": {
 					Allowed: map[string]FieldSpec{
 						"mode":    {},
@@ -86,16 +88,21 @@ var pyramidFieldSpec = FieldSpec{
 				},
 			},
 		},
+		"obligations": {},
+		"bindings":    {},
+		"toolchain":   {},
 	},
 }
 
 var levelFieldSpec = FieldSpec{
 	Allowed: map[string]FieldSpec{
-		"schema":    {},
-		"id":        {},
-		"version":   {},
-		"owners":    {},
-		"approvers": {},
+		"schema":      {},
+		"id":          {},
+		"version":     {},
+		"min_version": {},
+		"signature":   {},
+		"owners":      {},
+		"approvers":   {},
 		"charter": {
 			Allowed: map[string]FieldSpec{
 				"purpose":            {},
@@ -128,6 +135,9 @@ var levelFieldSpec = FieldSpec{
 				"break_glass":  {},
 			},
 		},
+		"obligations": {},
+		"bindings":    {},
+		"toolchain":   {},
 	},
 }
 

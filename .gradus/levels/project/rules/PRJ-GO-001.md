@@ -16,3 +16,15 @@ Gradus MUST compile as a static binary with `CGO_ENABLED=0` and execute Git oper
 
 ## Why
 Avoids CGO cross-compilation failures across Linux, macOS, and Windows and keeps the dependency tree minimal and auditable.
+
+## Examples
+
+### Compliant
+```go
+cmd := exec.Command("git", "rev-parse", "HEAD")
+```
+
+### Non-compliant
+```go
+import "github.com/go-git/go-git/v5"
+```

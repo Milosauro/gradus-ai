@@ -19,11 +19,12 @@ import (
 
 // Options configures pyramid resolution.
 type Options struct {
-	IncludeDraft bool
-	InCI         bool
-	OfflineOnly  bool
-	AgentProfile string
-	Now          time.Time
+	IncludeDraft    bool
+	InCI            bool
+	OfflineOnly     bool
+	AllowLockUpdate bool
+	AgentProfile    string
+	Now             time.Time
 }
 
 // ResolveResult returns both the ResolvedView and the computed Lockfile ready for --write.
@@ -139,8 +140,11 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		}
 
 		if lvl.Locked && lockEntry != nil {
-			if err := lock.VerifyLockedEntry(*lockEntry, resSrc.Hash); err != nil {
-				return out, err
+			refChanged := opts.AllowLockUpdate && lvl.Source.Git != "" && lockEntry.Ref != "" && lockEntry.Ref != resSrc.Ref
+			if !refChanged {
+				if err := lock.VerifyLockedEntry(*lockEntry, resSrc.Hash); err != nil {
+					return out, err
+				}
 			}
 		}
 
@@ -464,8 +468,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		Notes:       notes,
 	}
 
-	viewBytes, _ := json.Marshal(view)
-	view.ViewHash = lock.HashBytes(viewBytes)
+	view.ViewHash = computeProjectViewHash(view)
 
 	out.View = view
 	out.Lockfile = lock.Lockfile{
@@ -475,6 +478,44 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		ViewHash:       view.ViewHash,
 	}
 	return out, nil
+}
+
+// computeProjectViewHash computes a deterministic project-only hash excluding user-level
+// rules and level summaries so gradus.lock and compiled project markers never depend on ~/.gradus/levels/user (R2.AC1).
+func computeProjectViewHash(view ResolvedView) string {
+	proj := view
+	proj.ViewHash = ""
+	proj.LockHash = ""
+	proj.Scope.IncludesUserLevel = false
+
+	var projLevels []LevelSummary
+	for _, l := range view.Levels {
+		if l.ID != "user" {
+			projLevels = append(projLevels, l)
+		}
+	}
+	proj.Levels = projLevels
+
+	filterRules := func(in []ResolvedRule) []ResolvedRule {
+		var out []ResolvedRule
+		for _, r := range in {
+			if r.Level != "user" {
+				out = append(out, r)
+			}
+		}
+		return out
+	}
+	proj.Rules = filterRules(view.Rules)
+	proj.InactiveRules = filterRules(view.InactiveRules)
+
+	projChars := 0
+	for _, r := range proj.Rules {
+		projChars += ruleCharCount(r)
+	}
+	proj.Budget.Characters = projChars
+
+	b, _ := json.Marshal(proj)
+	return lock.HashBytes(b)
 }
 
 func ruleCharCount(r ResolvedRule) int {
