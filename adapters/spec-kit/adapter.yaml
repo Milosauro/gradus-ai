@@ -1,0 +1,6 @@
+schema: gradus/v1
+id: spec-kit
+name: Spec Kit
+description: Inject Gradus governance into .specify/memory/constitution.md for Spec Kit workflows.
+target_file: .specify/memory/constitution.md
+version_command: ["specify", "--version"]

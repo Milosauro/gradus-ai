@@ -1,0 +1,7 @@
+schema: gradus/v1
+id: walden
+name: Walden
+description: Inject Gradus governance into .walden/constitution.md and verify Walden release readiness.
+target_file: .walden/constitution.md
+version_command: ["walden", "version"]
+evidence_command: ["walden", "release", "check", "--json"]
