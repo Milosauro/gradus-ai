@@ -164,10 +164,37 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 
 		ver := ""
 		var charter *schema.Charter
+		lcSig := ""
+		lcMinVer := ""
 		if lc != nil {
 			ver = lc.Version
 			charter = lc.Charter
+			lcSig = lc.Signature
+			lcMinVer = lc.MinVersion
 		}
+
+		if err := enforceMinVersion(lvl.ID, lvl.MinVersion, lcMinVer, ver, resSrc.Ref); err != nil {
+			return out, err
+		}
+
+		sig := ""
+		if resSrc.Commit != "" {
+			sigPolicy := effectiveSignaturePolicy(lvl.Signature, lcSig)
+			if opts.OfflineOnly && lockEntry != nil && lockEntry.Signature == "verified" && lockEntry.Commit == resSrc.Commit {
+				sig = "verified"
+			} else {
+				verifiedSig, sigErr := source.VerifyGitSignature(resSrc.Dir, resSrc.Ref)
+				if sigErr != nil {
+					if sigPolicy == "required" {
+						return out, fmt.Errorf("level %q: signature verification failed: %w", lvl.ID, sigErr)
+					}
+					sig = "none"
+				} else {
+					sig = verifiedSig
+				}
+			}
+		}
+
 		levelSummaries = append(levelSummaries, LevelSummary{
 			ID:      lvl.ID,
 			Version: ver,
@@ -176,10 +203,6 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		})
 
 		if lvl.ID != "user" {
-			sig := ""
-			if resSrc.Commit != "" {
-				sig = "none"
-			}
 			lockEntries = append(lockEntries, lock.Entry{
 				Kind:      "level",
 				ID:        lvl.ID,
@@ -727,4 +750,50 @@ func loadConfirmedFindings(dir string) ([]Conflict, error) {
 		}
 	}
 	return conflicts, nil
+}
+
+func effectiveSignaturePolicy(cfgPolicy, levelPolicy string) string {
+	if cfgPolicy == "required" || levelPolicy == "required" {
+		return "required"
+	}
+	if cfgPolicy == "optional" || levelPolicy == "optional" {
+		return "optional"
+	}
+	return "optional"
+}
+
+func enforceMinVersion(levelID, cfgMinVer, levelMinVer, resolvedVer, ref string) error {
+	effectiveMin := cfgMinVer
+	if levelMinVer != "" {
+		if effectiveMin == "" {
+			effectiveMin = levelMinVer
+		} else {
+			a, errA := schema.ParseSemVer(effectiveMin)
+			b, errB := schema.ParseSemVer(levelMinVer)
+			if errA == nil && errB == nil && schema.CompareSemVer(b, a) > 0 {
+				effectiveMin = levelMinVer
+			}
+		}
+	}
+	if effectiveMin == "" {
+		return nil
+	}
+
+	minSV, err := schema.ParseSemVer(effectiveMin)
+	if err != nil {
+		return fmt.Errorf("level %q: invalid min_version %q: %w", levelID, effectiveMin, err)
+	}
+
+	candidate := strings.TrimSpace(resolvedVer)
+	if candidate == "" {
+		candidate = strings.TrimSpace(ref)
+	}
+	resolvedSV, err := schema.ParseSemVer(candidate)
+	if err != nil {
+		return fmt.Errorf("level %q: resolved version %q is not valid SemVer (required min_version %s): %w", levelID, candidate, effectiveMin, err)
+	}
+	if schema.CompareSemVer(resolvedSV, minSV) < 0 {
+		return fmt.Errorf("level %q: resolved version %s is below required min_version %s", levelID, candidate, effectiveMin)
+	}
+	return nil
 }

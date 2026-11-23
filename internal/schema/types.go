@@ -38,6 +38,8 @@ type LevelRef struct {
 	ID            string         `yaml:"id" json:"id"`
 	Source        SourceRef      `yaml:"source" json:"source"`
 	Locked        bool           `yaml:"locked,omitempty" json:"locked,omitempty"`
+	Signature     string         `yaml:"signature,omitempty" json:"signature,omitempty"`
+	MinVersion    string         `yaml:"min_version,omitempty" json:"min_version,omitempty"`
 	Offline       *OfflinePolicy `yaml:"offline,omitempty" json:"offline,omitempty"`
 	Approvers     []string       `yaml:"approvers,omitempty" json:"approvers,omitempty"`
 	EditableRules []string       `yaml:"editable_rules,omitempty" json:"editable_rules,omitempty"`
@@ -102,6 +104,8 @@ type LevelConfig struct {
 	Schema          string           `yaml:"schema" json:"schema"`
 	ID              string           `yaml:"id" json:"id"`
 	Version         string           `yaml:"version,omitempty" json:"version,omitempty"`
+	MinVersion      string           `yaml:"min_version,omitempty" json:"min_version,omitempty"`
+	Signature       string           `yaml:"signature,omitempty" json:"signature,omitempty"`
 	Owners          []string         `yaml:"owners,omitempty" json:"owners,omitempty"`
 	Approvers       []string         `yaml:"approvers,omitempty" json:"approvers,omitempty"`
 	Charter         *Charter         `yaml:"charter,omitempty" json:"charter,omitempty"`

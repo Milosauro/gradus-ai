@@ -35,6 +35,8 @@
             }
           },
           "locked": { "type": "boolean" },
+          "signature": { "type": "string", "enum": ["optional", "required"] },
+          "min_version": { "type": "string" },
           "offline": {
             "type": "object",
             "properties": {

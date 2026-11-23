@@ -9,6 +9,8 @@
     "schema": { "type": "string", "const": "gradus/v1" },
     "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
     "version": { "type": "string" },
+    "min_version": { "type": "string" },
+    "signature": { "type": "string", "enum": ["optional", "required"] },
     "owners": { "type": "array", "items": { "type": "string" } },
     "approvers": { "type": "array", "items": { "type": "string" } },
     "charter": {
