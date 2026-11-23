@@ -418,6 +418,9 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		mergedRules = []ResolvedRule{}
 	}
 
+	resolvedObligations, resolvedBindings, obConflicts := resolveObligationsAndBindings(cfg, levelSteps)
+	conflicts = append(conflicts, obConflicts...)
+
 	charCount := 0
 	for _, r := range mergedRules {
 		charCount += ruleCharCount(r)
@@ -451,8 +454,10 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 				"antigravity": {Limit: 12000},
 			},
 		},
-		Warnings: lifecycleWarnings,
-		Notes:    notes,
+		Obligations: resolvedObligations,
+		Bindings:    resolvedBindings,
+		Warnings:    lifecycleWarnings,
+		Notes:       notes,
 	}
 
 	viewBytes, _ := json.Marshal(view)

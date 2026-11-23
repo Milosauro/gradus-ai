@@ -3,6 +3,7 @@ package schema
 import (
 	"fmt"
 	"regexp"
+	"strings"
 )
 
 var levelIDPattern = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
@@ -73,6 +74,9 @@ func ValidatePyramidConfig(cfg *PyramidConfig) error {
 		}
 	}
 
+	if err := validateObligationsAndBindings("gradus.yaml", cfg.Obligations, cfg.Bindings); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -108,6 +112,9 @@ func ValidateLevelConfig(cfg *LevelConfig) error {
 		if cfg.ContextBudget.MaxChars != nil && *cfg.ContextBudget.MaxChars < 0 {
 			return fmt.Errorf("level.yaml: context_budget.max_chars must be >= 0, got %d", *cfg.ContextBudget.MaxChars)
 		}
+	}
+	if err := validateObligationsAndBindings("level.yaml", cfg.Obligations, cfg.Bindings); err != nil {
+		return err
 	}
 	return nil
 }
@@ -145,4 +152,29 @@ func validateSignaturePolicy(fileLabel, policy string) error {
 	default:
 		return fmt.Errorf("%s: invalid signature %q (expected optional or required)", fileLabel, policy)
 	}
+}
+
+func validateObligationsAndBindings(fileLabel string, obligations []Obligation, bindings []Binding) error {
+	seen := make(map[string]bool, len(obligations))
+	for i, o := range obligations {
+		if strings.TrimSpace(o.ID) == "" {
+			return fmt.Errorf("%s: obligations[%d].id is required", fileLabel, i)
+		}
+		if seen[o.ID] {
+			return fmt.Errorf("%s: duplicate obligation id %q", fileLabel, o.ID)
+		}
+		seen[o.ID] = true
+		if strings.TrimSpace(o.Rule) == "" {
+			return fmt.Errorf("%s: obligations[%d] (%s) rule is required", fileLabel, i, o.ID)
+		}
+	}
+	for i, b := range bindings {
+		if strings.TrimSpace(b.Obligation) == "" {
+			return fmt.Errorf("%s: bindings[%d].obligation is required", fileLabel, i)
+		}
+		if strings.TrimSpace(b.Provider) == "" {
+			return fmt.Errorf("%s: bindings[%d] (%s) provider is required", fileLabel, i, b.Obligation)
+		}
+	}
+	return nil
 }

@@ -15,9 +15,31 @@ type ResolvedView struct {
 	InactiveRules []ResolvedRule   `json:"inactive_rules,omitempty"`
 	Conflicts     []Conflict       `json:"conflicts"`
 	Exceptions    []ExceptionView  `json:"exceptions"`
-	Budget        BudgetInfo       `json:"budget"`
-	Warnings      []string         `json:"warnings,omitempty"`
-	Notes         []string         `json:"notes,omitempty"`
+	Budget        BudgetInfo           `json:"budget"`
+	Obligations   []ResolvedObligation `json:"obligations,omitempty"`
+	Bindings      []ResolvedBinding    `json:"bindings,omitempty"`
+	Warnings      []string             `json:"warnings,omitempty"`
+	Notes         []string             `json:"notes,omitempty"`
+}
+
+// ResolvedObligation describes a resolved process obligation and its matching bindings (§19).
+type ResolvedObligation struct {
+	ID               string            `json:"id"`
+	Rule             string            `json:"rule"`
+	Level            string            `json:"level"`
+	AllowedProviders []string          `json:"allowed_providers,omitempty"`
+	Scope            []string          `json:"scope,omitempty"`
+	Bindings         []ResolvedBinding `json:"bindings,omitempty"`
+	Satisfied        bool              `json:"satisfied"`
+}
+
+// ResolvedBinding describes a resolved provider binding for an obligation (§19).
+type ResolvedBinding struct {
+	Obligation string            `json:"obligation"`
+	Provider   string            `json:"provider"`
+	Level      string            `json:"level"`
+	Requires   map[string]string `json:"requires,omitempty"`
+	Scope      []string          `json:"scope,omitempty"`
 }
 
 // ViewScope describes the scope of a resolved view.

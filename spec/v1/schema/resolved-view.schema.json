@@ -26,6 +26,8 @@
     "conflicts": { "type": "array" },
     "exceptions": { "type": "array" },
     "budget": { "type": "object" },
+    "obligations": { "type": "array" },
+    "bindings": { "type": "array" },
     "warnings": { "type": "array", "items": { "type": "string" } }
   }
 }

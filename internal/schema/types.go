@@ -20,17 +20,35 @@ type AntiTamperConfig struct {
 	Mode string `yaml:"mode,omitempty" json:"mode,omitempty"`
 }
 
+// Obligation declares an abstract governance requirement satisfied by a provider binding (§19).
+type Obligation struct {
+	ID               string   `yaml:"id" json:"id"`
+	Rule             string   `yaml:"rule" json:"rule"`
+	AllowedProviders []string `yaml:"allowed_providers,omitempty" json:"allowed_providers,omitempty"`
+	Scope            []string `yaml:"scope,omitempty" json:"scope,omitempty"`
+}
+
+// Binding declares how an abstract obligation is satisfied in a scope (§19).
+type Binding struct {
+	Obligation string            `yaml:"obligation" json:"obligation"`
+	Provider   string            `yaml:"provider" json:"provider"`
+	Requires   map[string]string `yaml:"requires,omitempty" json:"requires,omitempty"`
+	Scope      []string          `yaml:"scope,omitempty" json:"scope,omitempty"`
+}
+
 // PyramidConfig represents gradus.yaml.
 type PyramidConfig struct {
-	Schema     string            `yaml:"schema" json:"schema"`
-	Extends    *string           `yaml:"extends,omitempty" json:"extends,omitempty"`
-	AntiTamper *AntiTamperConfig `yaml:"anti_tamper,omitempty" json:"anti_tamper,omitempty"`
-	Levels     []LevelRef        `yaml:"levels" json:"levels"`
-	Overlays   []OverlayRef      `yaml:"overlays,omitempty" json:"overlays,omitempty"`
-	Profile    *Profile          `yaml:"profile,omitempty" json:"profile,omitempty"`
-	Targets    []string          `yaml:"targets,omitempty" json:"targets,omitempty"`
-	Hooks      *HooksConfig      `yaml:"hooks,omitempty" json:"hooks,omitempty"`
-	Evidence   *EvidenceConfig   `yaml:"evidence,omitempty" json:"evidence,omitempty"`
+	Schema      string            `yaml:"schema" json:"schema"`
+	Extends     *string           `yaml:"extends,omitempty" json:"extends,omitempty"`
+	AntiTamper  *AntiTamperConfig `yaml:"anti_tamper,omitempty" json:"anti_tamper,omitempty"`
+	Levels      []LevelRef        `yaml:"levels" json:"levels"`
+	Overlays    []OverlayRef      `yaml:"overlays,omitempty" json:"overlays,omitempty"`
+	Profile     *Profile          `yaml:"profile,omitempty" json:"profile,omitempty"`
+	Targets     []string          `yaml:"targets,omitempty" json:"targets,omitempty"`
+	Hooks       *HooksConfig      `yaml:"hooks,omitempty" json:"hooks,omitempty"`
+	Evidence    *EvidenceConfig   `yaml:"evidence,omitempty" json:"evidence,omitempty"`
+	Obligations []Obligation      `yaml:"obligations,omitempty" json:"obligations,omitempty"`
+	Bindings    []Binding         `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 }
 
 // LevelRef references a pyramid level in gradus.yaml.
@@ -113,6 +131,8 @@ type LevelConfig struct {
 	Constraints     *Constraints     `yaml:"constraints,omitempty" json:"constraints,omitempty"`
 	ActivationRules []any            `yaml:"activation_rules,omitempty" json:"activation_rules,omitempty"`
 	Exceptions      *ExceptionPolicy `yaml:"exceptions,omitempty" json:"exceptions,omitempty"`
+	Obligations     []Obligation     `yaml:"obligations,omitempty" json:"obligations,omitempty"`
+	Bindings        []Binding        `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 }
 
 // ContextBudget defines optional per-level context limits (X-07).

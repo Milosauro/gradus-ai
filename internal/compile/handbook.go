@@ -2,6 +2,7 @@ package compile
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/Milosauro/gradus-ai/internal/resolve"
@@ -89,6 +90,37 @@ func RenderHandbook(view resolve.ResolvedView) string {
 			if r.Why != "" {
 				fmt.Fprintf(&sb, "_Why:_ %s\n\n", r.Why)
 			}
+		}
+	}
+
+	if len(view.Obligations) > 0 {
+		sb.WriteString("## Obligations & Bindings\n\n")
+		for _, ob := range view.Obligations {
+			fmt.Fprintf(&sb, "### %s (level `%s`, satisfied: `%t`)\n", ob.ID, ob.Level, ob.Satisfied)
+			fmt.Fprintf(&sb, "- **Rule:** %s\n", ob.Rule)
+			if len(ob.AllowedProviders) > 0 {
+				fmt.Fprintf(&sb, "- **Allowed providers:** `%s`\n", strings.Join(ob.AllowedProviders, "`, `"))
+			}
+			for _, b := range ob.Bindings {
+				fmt.Fprintf(&sb, "- **Binding:** provider `%s` (level `%s`)", b.Provider, b.Level)
+				if len(b.Requires) > 0 {
+					keys := make([]string, 0, len(b.Requires))
+					for k := range b.Requires {
+						keys = append(keys, k)
+					}
+					sort.Strings(keys)
+					var reqParts []string
+					for _, k := range keys {
+						reqParts = append(reqParts, fmt.Sprintf("%s=%s", k, b.Requires[k]))
+					}
+					fmt.Fprintf(&sb, " | requires: `%s`", strings.Join(reqParts, ", "))
+				}
+				if len(b.Scope) > 0 {
+					fmt.Fprintf(&sb, " | scope: `%s`", strings.Join(b.Scope, "`, `"))
+				}
+				sb.WriteString("\n")
+			}
+			sb.WriteString("\n")
 		}
 	}
 
