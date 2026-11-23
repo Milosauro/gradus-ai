@@ -82,6 +82,15 @@
           "scope": { "type": "array", "items": { "type": "string" } }
         }
       }
+    },
+    "toolchain": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "required": { "type": "array" },
+        "recommended": { "type": "array" },
+        "forbidden": { "type": "array" }
+      }
     }
   }
 }
