@@ -2,8 +2,8 @@
   "schema": "consolidation/v1",
   "started_at": "2026-11-20T08:35:58Z",
   "checkpoint": {
-    "at": "2026-11-20T14:32:13Z",
-    "view_fingerprint": "sha256:36e285a5f61f96f284df32e4742a0ab51e96055d939251ec8ee8a0954e932e5b"
+    "at": "2026-11-23T10:48:34Z",
+    "view_fingerprint": "sha256:3e7414ec0bc9beecb037dc7f1cb153f1a25839ede45e71ab5bfd105f78363166"
   },
   "features": {
     "agent-compilers": {
@@ -44,6 +44,44 @@
         "R4.AC1": "WHEN `gradusctl compile` runs on a conflict-free pyramid, the system SHALL write all target outputs deterministically such that a second consecutive run produces zero byte differences on disk (E1), and exit with code `0`.",
         "R4.AC2": "IF the resolved pyramid contains one or more blocking conflicts, THEN `gradusctl compile` SHALL leave existing target files untouched and exit with code `1`.",
         "R4.AC3": "IF configuration, lockfile verification, or source resolution fails, THEN `gradusctl compile` SHALL report the error to stderr and exit with code `2`."
+      }
+    },
+    "charters-and-lifecycle": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:7af31cde0430f1f78c61cc2f7b03abfbec4cba2f29cbf2fca727429f53808db2",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "R2.AC2",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "R4.AC1",
+        "R4.AC2",
+        "R4.AC3",
+        "NFR1",
+        "NFR2",
+        "NFR3",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "JSON Schemas in `spec/v1/schema/` (`level.schema.json`, `rule-frontmatter.schema.json`, `resolved-view.schema.json`) and Go structs in `internal/schema/types.go` / `internal/resolve/types.go` MUST stay synchronized and pass `spec/v1/schema_test.go`.",
+        "C2": "`gradusctl guard` and `gradusctl status --brief` MUST remain `\u003c 100ms` with zero network calls.",
+        "NFR1": "**Backward Compatibility:** All new fields (`expires` on rules, `context_budget` on levels) MUST be optional and additive to `gradus/v1` so all Phase 0 configurations and tests continue to pass unchanged.",
+        "NFR2": "**Deterministic Date Evaluation:** Lifecycle date comparisons (`review_by`, `expires`) MUST support an injectable clock in library code so unit tests remain deterministic across timezones and dates.",
+        "NFR3": "**Canonical English \u0026 Static Build:** All repository code, schema files, skill updates, and CLI messages MUST be written in canonical English (`PRJ-LANG-001`) and compile with `CGO_ENABLED=0` (`PRJ-GO-001`).",
+        "R1.AC1": "WHEN a level's `level.yaml` defines a non-empty `charter.allowed_severities` list and an active rule in that level declares a `severity` not present in `allowed_severities`, `gradusctl resolve` and `gradusctl verify` SHALL report a charter violation finding and exit with code `1`.",
+        "R1.AC2": "WHEN a level omits `charter` or omits `charter.allowed_severities`, the system SHALL allow all valid severities (`MUST`, `SHOULD`, `MAY`) for backward compatibility with Phase 0 pyramids.",
+        "R2.AC1": "WHEN `gradusctl resolve` builds the resolved view or `gradusctl explain \u003crule-id\u003e` inspects a rule whose level defines a `charter`, the JSON and human-readable outputs SHALL include the level's charter metadata.",
+        "R2.AC2": "WHEN `gradus-author` or `gradus-review` is packaged in `skills/`, its instructions SHALL reference `charter.includes`, `charter.excludes`, `charter.examples_in`, `charter.examples_out`, and `charter.allowed_severities` when classifying or reviewing rule placement.",
+        "R3.AC1": "WHEN a rule has `status: draft` or `status: retired`, `gradusctl compile`, `gradusctl check`, and `gradusctl guard` SHALL exclude it from active enforcement and compiled agent instructions while `gradusctl resolve` retains it in lifecycle metadata.",
+        "R3.AC2": "WHEN a rule has `status: deprecated`, `gradusctl compile` and `gradusctl verify` SHALL keep it active (unless expired) and emit a non-fatal deprecation warning in `verify` output.",
+        "R3.AC3": "WHEN a rule declares `review_by` or `expires`, the system SHALL validate `YYYY-MM-DD` format during schema validation (exit `2` on invalid date), emit a warning in `gradusctl verify` when `review_by` is in the past, and fail `gradusctl verify` with exit `1` when an active rule's `expires` date has passed.",
+        "R4.AC1": "WHEN `level.yaml` specifies `context_budget.max_rules` and the number of active rules in that level exceeds `max_rules`, `gradusctl resolve` and `gradusctl verify` SHALL report a budget violation and exit with code `1`.",
+        "R4.AC2": "WHEN `level.yaml` specifies `context_budget.max_chars` and the total rendered character count of active rules in that level exceeds `max_chars`, `gradusctl resolve` and `gradusctl verify` SHALL report a budget violation and exit with code `1`.",
+        "R4.AC3": "WHEN `context_budget` is omitted from `level.yaml`, no budget limit SHALL be imposed on that level."
       }
     },
     "cli-lifecycle-state": {
@@ -136,6 +174,82 @@
         "R5.AC3": "IF `\u003cid\u003e` is not found in any configured local level OR the repository configuration is missing/invalid, THEN `gradusctl explain \u003cid\u003e` SHALL print a diagnostic error to stderr and exit with code `2`."
       }
     },
+    "doctor-and-guard-hardening": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:8acc43f9c9b49df9e244047cfa070141d351e282fa3388ce3be7d8688a0f105d",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "NFR1",
+        "NFR2",
+        "C1"
+      ],
+      "statements": {
+        "C1": "`spec/v1/schema/gradus.schema.json` and `internal/schema/parse_config.go` MUST accept `anti_tamper.mode` (`ask | deny`) without emitting unknown-key notes.",
+        "NFR1": "**Backward Compatibility:** `anti_tamper` is optional in `gradus.yaml` and defaults to `ask`; all existing Phase 0 and F9–F10 tests MUST continue to pass unchanged.",
+        "NFR2": "**Performance \u0026 Static Build:** `gradusctl guard` and `gradusctl status --brief` MUST remain `\u003c 100ms` offline; all code MUST be canonical English (`PRJ-LANG-001`) and build with `CGO_ENABLED=0` (`PRJ-GO-001`).",
+        "R1.AC1": "WHEN `gradusctl doctor [--json]` runs on a healthy repository with valid `gradus.yaml`, `gradus.lock`, `.claude/settings.json`, and `.agents/hooks.json`, the command SHALL report all checks passing and exit with code `0`.",
+        "R1.AC2": "WHEN `.claude/settings.json` contains malformed JSON or an invalid hook `type` (not in `command | prompt | agent | http | mcp_tool`) or is missing the `gradusctl guard` hook entry, `gradusctl doctor` SHALL report a failing diagnostic with a fix hint and exit with code `1`.",
+        "R1.AC3": "WHEN `.agents/hooks.json` contains malformed JSON or is missing the `gradusctl guard` PreToolUse hook entry, `gradusctl doctor` SHALL report a failing diagnostic with a fix hint and exit with code `1`.",
+        "R2.AC1": "WHEN `gradus.yaml` omits `anti_tamper` or sets `anti_tamper.mode: ask`, `gradusctl guard` SHALL preserve the default `ask` anti-tamper decision on protected governance paths and shell mutations.",
+        "R2.AC2": "WHEN `gradus.yaml` sets `anti_tamper.mode: deny`, `gradusctl guard` SHALL return `deny` (`anti_tamper: true`) for writes or mutating shell commands targeting protected governance paths, emitting `permissionDecision: \"deny\"` (exit `0`) for native Claude Code payloads and `decision: \"deny\"` (exit `0`) for native Antigravity payloads.",
+        "R2.AC3": "WHEN `gradus.yaml` sets an invalid `anti_tamper.mode` (anything other than `ask` or `deny`), schema validation SHALL fail closed with exit code `2`.",
+        "R3.AC1": "WHEN `gradusctl evidence prune [--before \u003cYYYY-MM-DD\u003e | --all]` is invoked, the CLI SHALL remove matching local JSON records under `.gradus/evidence/` and report the removed count.",
+        "R3.AC2": "WHEN `gradusctl lessons prune [--dismissed | --all]` is invoked, the CLI SHALL remove matching lesson JSON files from the lessons store and report the removed count.",
+        "R3.AC3": "WHEN `gradusctl status --json` runs in a repository with personal `~/.gradus/levels/user` rules present, the JSON output SHALL include a `user_rules` summary count and IDs without increasing `status --brief` latency beyond `100ms`."
+      }
+    },
+    "github-action-and-ci-agents": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:fd5c17b9ab5cc823f467c3d525cbea6d73b80aad8081ca7bc78e3dcf2b48605e",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "NFR1",
+        "NFR2",
+        "C1"
+      ],
+      "statements": {
+        "C1": "Agent profiles MUST follow the existing `level.yaml` + `rules/*.md` directory layout so teams can version and review them like any other level.",
+        "NFR1": "**Supply-Chain \u0026 Static Build:** Every `uses:` in `.github/actions/gradus/action.yml` MUST use a 40-character commit SHA (`PRJ-CI-001`), and all Go code MUST compile with `CGO_ENABLED=0` (`PRJ-GO-001`) in canonical English (`PRJ-LANG-001`).",
+        "NFR2": "**Backward Compatibility:** Omitting `--agent-profile` / `GRADUS_AGENT_PROFILE` MUST preserve exact Phase 0–F12 resolution and guard behavior.",
+        "R1.AC1": "WHEN `.github/actions/gradus/action.yml` is inspected, the composite action SHALL declare inputs (`version`, `working-directory`, `base-ref`, `write-evidence`, `upload-evidence`), run `gradusctl verify --json` and `gradusctl check --json`, write a Markdown summary to `$GITHUB_STEP_SUMMARY`, and preserve exit codes `0`/`1`/`2`.",
+        "R1.AC2": "WHEN `.github/actions/gradus/action.yml` references any external GitHub Action via `uses:`, every `uses:` reference SHALL be pinned to an immutable 40-character commit SHA with an accompanying version comment (`PRJ-CI-001`, Threat Model T3).",
+        "R2.AC1": "WHEN `--agent-profile \u003cdir\u003e` (or `GRADUS_AGENT_PROFILE=\u003cdir\u003e`) is supplied to `gradusctl resolve` or `gradusctl compile`, the resolver SHALL load rules from `\u003cdir\u003e` as an `agent-profile` level at the bottom of the pyramid (skipping any personal `~/...` `user` level) and include those rules in `ResolvedView.Rules`.",
+        "R2.AC2": "WHEN `--agent-profile \u003cdir\u003e` (or `GRADUS_AGENT_PROFILE=\u003cdir\u003e`) is supplied to `gradusctl guard`, the guard evaluator SHALL load hook rules from `\u003cdir\u003e` instead of `~/.gradus/levels/user` and enforce them deterministically.",
+        "R2.AC3": "WHEN `--agent-profile \u003cdir\u003e` points to a non-existent directory, `gradusctl resolve` and `gradusctl guard` SHALL fail closed with exit code `2`."
+      }
+    },
+    "handbook-and-templates": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:17ef5367df3c7b5743b97df94bb4cfae3fc328f4938cb8ea075778a3bf52af43",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "NFR1",
+        "NFR2",
+        "C1"
+      ],
+      "statements": {
+        "C1": "Starter templates in `examples/` MUST be explicitly marked as non-prescriptive starting points (per README and `gradus-design.md` X-11).",
+        "NFR1": "**Canonical English \u0026 Static Build:** All handbook output, template files, and Go code MUST be in canonical English (`PRJ-LANG-001`) and build with `CGO_ENABLED=0` (`PRJ-GO-001`).",
+        "NFR2": "**Deterministic Output:** Running `gradusctl handbook` twice on the same pyramid MUST produce byte-identical Markdown output.",
+        "R1.AC1": "WHEN `gradusctl handbook [--dir \u003cpath\u003e]` is invoked, the CLI SHALL render a deterministic Markdown handbook to stdout (or to `--output \u003cfile\u003e` when specified) containing the pyramid hierarchy, level charters (`purpose`, `includes`, `excludes`, `allowed_severities`), active overlays, active rules grouped by level with provenance/enforcement/severity, and exception/break-glass instructions.",
+        "R1.AC2": "WHEN `gradusctl handbook --json` is invoked, the CLI SHALL output structured JSON containing `view_hash`, `markdown`, `levels`, `rules_count`, and optional `output_path`.",
+        "R2.AC1": "WHEN the repository is inspected under `examples/`, it SHALL provide `examples/personal/`, `examples/team/`, and `examples/regulated-fintech/`, each containing a valid `gradus.yaml`, `level.yaml` with a charter, and sample `rules/*.md` files with `### Compliant` and `### Non-compliant` examples."
+      }
+    },
     "mvp-skills": {
       "state": "consolidated",
       "requirements_fingerprint": "sha256:aeab029fe780e698ea5f3fe3535ed21c4903b8a93e728dbd1225cb30816fb90d",
@@ -164,6 +278,70 @@
         "R2.AC3": "WHEN `gradus-review` or `gradus-conflicts` evaluates code or candidate rule pairs, the skill instructions SHALL require citing rule ID, level, severity, provenance, and confidence, forbidding low-confidence violations, and recording evidence/findings strictly through `gradusctl` (`evidence` / `conflicts`).",
         "R3.AC1": "The repository SHALL include at least one scenario specification under `evals/skills/` for each of the six MVP skills (plus a prompt-injection resistance scenario per §22), recording baseline failures/rationalizations and expected skill-guided behavior.",
         "R3.AC2": "WHEN `go test ./skills/...` runs, the test suite SHALL deterministically verify `skills.FS` embedding, frontmatter validity, absence of `gradus-placeholder`, and full mapping between the six skills and `evals/skills/` scenarios."
+      }
+    },
+    "overlays-and-exceptions": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:b38dc9c305e3413c41af2617d6819b1074f1558d2b69b69cee8f02bdaab4da0e",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "R3.AC4",
+        "NFR1",
+        "NFR2",
+        "C1"
+      ],
+      "statements": {
+        "C1": "Exception records MUST conform to `spec/v1/schema/exception.schema.json` and `overlay` activation values MUST stay aligned with `internal/schema/validate_config.go` and `spec/v1/schema/overlay.schema.json`.",
+        "NFR1": "**Backward Compatibility:** Existing Phase 0 exception YAML records with `approved_by` populated and `kind: exception` MUST continue to work unchanged.",
+        "NFR2": "**Canonical English \u0026 Static Build:** All code, schemas, and CLI messages MUST be written in canonical English (`PRJ-LANG-001`) and build with `CGO_ENABLED=0` (`PRJ-GO-001`).",
+        "R1.AC1": "WHEN an overlay in `gradus.yaml` sets `activation: explicit` (or `always` or omitted), `gradusctl resolve` SHALL mark it `active: true`, merge its rules at its declared `strength`, and enforce `constraints.allowed_overlays` from upper levels (reporting a conflict and exit code `1` if disallowed).",
+        "R1.AC2": "WHEN an overlay in `gradus.yaml` sets `activation: disabled` (or `activation: profile` without matching profile rules), `gradusctl resolve` SHALL record it in `ResolvedView.Overlays` with `active: false` and exclude its rules from `ResolvedView.Rules`.",
+        "R2.AC1": "WHEN an exception in `.gradus/exceptions/*.yaml` has an empty `approved_by` list and `kind: exception`, `gradusctl resolve` SHALL treat it as pending without waiving the target rule.",
+        "R2.AC2": "WHEN an exception targets a rule whose level defines `exceptions.max_duration` and the exception's span (`expires - created`) exceeds `max_duration`, `gradusctl resolve` and `gradusctl verify` SHALL report an exception policy conflict and exit with code `1`.",
+        "R2.AC3": "WHEN an exception has `kind: break-glass`, `gradusctl resolve` and `gradusctl verify` SHALL report a blocking conflict (exit `1`) if `reason` is empty, `post_review_due` is missing/invalid/overdue, or the target level sets `exceptions.break_glass: false` or `offline.mode: fail-closed`.",
+        "R3.AC1": "WHEN `gradusctl exception request --rule \u003cid\u003e --reason \u003ctext\u003e --expires \u003cYYYY-MM-DD\u003e` is invoked, the CLI SHALL write a valid pending exception YAML file under `.gradus/exceptions/` with `kind: exception` and `approved_by: []`.",
+        "R3.AC2": "WHEN `gradusctl exception approve \u003cid\u003e --by \u003capprover\u003e` is invoked, the CLI SHALL append the approver to `approved_by` in `.gradus/exceptions/\u003cid\u003e.yaml`.",
+        "R3.AC3": "WHEN `gradusctl exception break-glass --rule \u003cid\u003e --reason \u003ctext\u003e --expires \u003cYYYY-MM-DD\u003e --post-review-due \u003cYYYY-MM-DD\u003e --by \u003cactor\u003e` is invoked, the CLI SHALL validate the target level's `exceptions` policy and write a `kind: break-glass` record (or refuse with exit `1` when disallowed).",
+        "R3.AC4": "WHEN `gradusctl exception list [--json]` or `gradusctl exception expire \u003cid\u003e` is invoked, the CLI SHALL report all exceptions with their computed state (`pending`, `active`, `expired`) or set `expires` to a past date to immediately revoke an exception."
+      }
+    },
+    "phase0-eval-release": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:f1f2c1f207e2b9ddbe89a960096756eaeb40d1ea239565f6eecf3ba52304fb4d",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R2.AC1",
+        "R2.AC2",
+        "R3.AC1",
+        "R3.AC2",
+        "R3.AC3",
+        "NFR1",
+        "NFR2",
+        "C1",
+        "C2"
+      ],
+      "statements": {
+        "C1": "Must satisfy `gradus-design.md` §23, §24.3 (`E1`–`E10`), §26 (Decision Gate `O-2`), and Threat Model `T3`.",
+        "C2": "Must reuse existing `internal/cli`, `internal/compile`, `internal/resolve`, `internal/guard`, `internal/state`, and `internal/hooks` packages.",
+        "NFR1": "**Supply-Chain Integrity (T3):** Every GitHub Action in `.github/workflows/release.yml` MUST be pinned to an immutable 40-character commit SHA.",
+        "NFR2": "**Reproducibility:** `go test -v -count=1 ./evals/benchmark` MUST run deterministically offline without requiring external LLM API keys or network access.",
+        "R1.AC1": "WHEN `go test -v -count=1 ./evals/benchmark` executes `TestComparativeBenchmark`, the harness SHALL run at least 10 scenarios across both `claude-code` and `antigravity` targets comparing Gradus against a plain instruction-file baseline.",
+        "R1.AC2": "WHEN comparing Gradus against the plain instruction-file baseline on each benchmark scenario, Gradus compliance SHALL be at least equal to the baseline on every scenario and strictly higher on deterministic enforcement scenarios (`hook`, `check`, `verify`, `lock`, `redaction`).",
+        "R1.AC3": "The repository SHALL publish the benchmark scenarios, methodology, and committed results under `evals/benchmark/RESULTS.md` and `evals/benchmark/scenarios.yaml`.",
+        "R2.AC1": "WHEN `TestPhase0ExitCriteria` runs in `evals/benchmark`, the test SHALL construct a three-level pyramid (simulated `team` git repo `locked: true`, `project`, and `user`) with \u003e= 10 rules covering `hook`, `check`, `prompt`, scoped rules, valid overrides, and invalid overrides, verifying `E1`–`E8`.",
+        "R2.AC2": "WHEN a fresh repository is initialized following the documented commands in `README.md` (`E10`), `gradusctl resolve --write`, `gradusctl compile`, and `gradusctl verify` SHALL succeed with exit code `0`.",
+        "R3.AC1": "The repository SHALL define `.goreleaser.yaml` configured for `CGO_ENABLED=0` static builds across `linux`, `darwin`, and `windows` (`amd64`, `arm64`), `checksums.txt`, `syft` SBOM generation, and keyless `cosign` signing.",
+        "R3.AC2": "The repository SHALL define `.github/workflows/release.yml` triggered on `v*` tags with all `uses:` GitHub Actions pinned to 40-character commit SHAs, generating build provenance attestations alongside GoReleaser artifacts.",
+        "R3.AC3": "`CHANGELOG.md` SHALL document all Phase 0 MVP capabilities under `[0.1.0]` / `[Unreleased]` in canonical English ready for release tagging."
       }
     },
     "resolve-and-lock": {
@@ -212,6 +390,32 @@
         "R4.AC1": "WHEN `gradusctl resolve` runs on a conflict-free pyramid, the system SHALL emit the resolved view (including `view_hash`, `lock_hash`, `levels`, `overlays`, `rules`, `conflicts`, `exceptions`, and `budget`) as text or `--json` and exit with code `0`.",
         "R4.AC2": "WHEN `gradusctl resolve` detects one or more blocking conflicts, the system SHALL still emit the resolved view with `conflicts` populated and exit with code `1`.",
         "R4.AC3": "WHEN `gradusctl status` or `gradusctl status --brief` runs in a Gradus repository, the system SHALL report lock state, conflict count, and pending lesson count in text or `--json` without making network calls."
+      }
+    },
+    "rule-tests-and-impact": {
+      "state": "consolidated",
+      "requirements_fingerprint": "sha256:f1088bc7dddb875b988151b31fa76947d57a135c8efd437390770cecc15aa4f1",
+      "active_ids": [
+        "R1.AC1",
+        "R1.AC2",
+        "R1.AC3",
+        "R2.AC1",
+        "R2.AC2",
+        "R2.AC3",
+        "NFR1",
+        "NFR2",
+        "C1"
+      ],
+      "statements": {
+        "C1": "Must reuse `schema.Rule.Examples` (`ExamplePair`), `internal/check`, and `internal/guard` without introducing new third-party dependencies.",
+        "NFR1": "**Git via `os/exec` \u0026 Static Build:** All git history queries in `simulate` MUST shell out to `git` via `os/exec` (`PRJ-GO-001`) with `CGO_ENABLED=0` and reject refs starting with `-`.",
+        "NFR2": "**Non-Destructive Execution:** `gradusctl test` and `gradusctl simulate` MUST NOT modify the repository working tree, index, or HEAD (using temporary directories for example/blob materialization).",
+        "R1.AC1": "WHEN `gradusctl test [--json]` runs on a `check` rule (`checker.name: pattern` or external checker) containing `### Compliant` and `### Non-compliant` code blocks, the CLI SHALL assert that every `Compliant` example produces zero findings and every `Non-compliant` example produces at least one finding, exiting with `0` on full pass or `1` on any mismatch.",
+        "R1.AC2": "WHEN `gradusctl test [--json]` runs on a `hook` rule (`guard` configured) containing `### Compliant` and `### Non-compliant` examples, the CLI SHALL evaluate each example against `guard.Evaluate` and assert that `Compliant` examples return `allow` while `Non-compliant` examples return `ask` or `deny`.",
+        "R1.AC3": "WHEN `--rule \u003cid\u003e` is specified on `gradusctl test`, the CLI SHALL execute tests only for that rule ID (or exit `2` if the rule ID does not exist).",
+        "R2.AC1": "WHEN `gradusctl simulate --commits \u003cN\u003e [--json]` runs in a git repository, the CLI SHALL inspect the last `N` commits via `os/exec` `git` and report the total commits scanned, affected commits, and per-rule finding counts without modifying the working tree.",
+        "R2.AC2": "WHEN `--since \u003cref\u003e` is specified on `gradusctl simulate`, the CLI SHALL inspect all commits in `\u003cref\u003e..HEAD` (or fail with exit `2` if `\u003cref\u003e` is invalid or starts with `-`).",
+        "R2.AC3": "WHEN `gradusctl simulate` completes successfully, the CLI SHALL exit with code `0` (impact reporting is informational, not a gate failure) while reporting all simulated findings in JSON and text output."
       }
     },
     "runtime-guard": {
