@@ -6,13 +6,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ReservedTopLevelKeys lists gradus/v1 keys reserved for Phase 2+ (§9.11).
+// ReservedTopLevelKeys lists gradus/v1 keys reserved for Phase 3+ (§9.11).
 var ReservedTopLevelKeys = map[string]bool{
-	"obligations": true,
-	"bindings":    true,
-	"toolchain":   true,
-	"models":      true,
-	"adapters":    true,
+	"models":   true,
+	"adapters": true,
 }
 
 // FieldSpec describes allowed keys and optional nested mapping specs for a YAML object.

@@ -77,7 +77,7 @@ targets: [agents-md]
 		t.Fatalf("handbook failed: %d %s", code, stderr.String())
 	}
 	hb := stdout.String()
-	if !strings.Contains(hb, "## Obligations & Bindings") || !strings.Contains(hb, "OBL-SDD-01") || !strings.Contains(hb, "walden") || !strings.Contains(hb, "cli=>=1.4") {
+	if !strings.Contains(hb, "Obligations & Bindings") || !strings.Contains(hb, "OBL-SDD-01") || !strings.Contains(hb, "walden") || !strings.Contains(hb, "cli=>=1.4") {
 		t.Fatalf("expected Obligations & Bindings details in handbook, got:\n%s", hb)
 	}
 

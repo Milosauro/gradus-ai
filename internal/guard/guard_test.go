@@ -3,6 +3,7 @@ package guard_test
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -363,5 +364,79 @@ Ask before committing or pushing.
 	}
 	if _, err := guard.Evaluate(guard.NormalizedAction{Action: guard.ActionCommand, Target: "ls"}, badRules); err == nil {
 		t.Fatalf("expected invalid guard regex to return error")
+	}
+}
+
+func TestAntiTamperHardeningV031(t *testing.T) {
+	// R1.AC1: human-only gradusctl subcommands must trigger anti_tamper (ask by default, deny in strict mode)
+	humanCmds := []string{
+		"gradusctl exception approve EX-1 --by me",
+		"gradusctl exception break-glass --rule PRJ-01 --reason urgent",
+		"gradusctl conflicts dismiss F-1",
+		"gradusctl lessons update L-1 --status promoted",
+		"gradusctl hooks install --native",
+	}
+	for _, cmd := range humanCmds {
+		resAsk, err := guard.Evaluate(guard.NormalizedAction{Action: guard.ActionCommand, Target: cmd}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !resAsk.AntiTamper || resAsk.Decision != guard.DecisionAsk {
+			t.Fatalf("expected anti_tamper ask for %q, got %+v", cmd, resAsk)
+		}
+		resDeny, err := guard.EvaluateWithOptions(guard.NormalizedAction{Action: guard.ActionCommand, Target: cmd}, nil, guard.EvaluateOptions{AntiTamperMode: guard.DecisionDeny})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !resDeny.AntiTamper || resDeny.Decision != guard.DecisionDeny {
+			t.Fatalf("expected anti_tamper deny for %q, got %+v", cmd, resDeny)
+		}
+	}
+
+	// R3.AC1: new protected paths and `install` mutating verb
+	protectedPaths := []string{
+		".pre-commit-config.yaml",
+		"lefthook.yml",
+		".lefthook.yml",
+		".husky/pre-commit",
+		".github/workflows/ci.yml",
+		"opencode.json",
+		".codex/config.toml",
+	}
+	for _, p := range protectedPaths {
+		res, err := guard.Evaluate(guard.NormalizedAction{Action: guard.ActionWrite, Target: p}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.AntiTamper || res.Decision != guard.DecisionAsk {
+			t.Fatalf("expected anti_tamper on write to %q, got %+v", p, res)
+		}
+	}
+
+	shellBypassCmds := []string{
+		"install -m644 /dev/null gradus.yaml",
+		"rm .pre-commit-config.yaml",
+		"sed -i '' 's/a/b/' .github/workflows/ci.yml",
+		"touch opencode.json",
+	}
+	for _, cmd := range shellBypassCmds {
+		res, err := guard.Evaluate(guard.NormalizedAction{Action: guard.ActionCommand, Target: cmd}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.AntiTamper {
+			t.Fatalf("expected anti_tamper on shell command %q, got %+v", cmd, res)
+		}
+	}
+
+	// R3.AC2: git commit --no-verify / -n
+	for _, cmd := range []string{`git commit --no-verify -m "skip"`, `git commit -n -m "skip"`} {
+		res, err := guard.Evaluate(guard.NormalizedAction{Action: guard.ActionCommand, Target: cmd}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.AntiTamper || !strings.Contains(res.Reason, "--no-verify") {
+			t.Fatalf("expected anti_tamper citing --no-verify for %q, got %+v", cmd, res)
+		}
 	}
 }

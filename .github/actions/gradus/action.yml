@@ -3,9 +3,9 @@ description: 'Run deterministic gradusctl verify and gradusctl check in CI with 
 
 inputs:
   version:
-    description: 'gradusctl module version or tag to install (e.g. v0.2.0 or latest)'
+    description: 'gradusctl module version or tag to install (e.g. v0.3.1)'
     required: false
-    default: 'latest'
+    default: 'v0.3.1'
   working-directory:
     description: 'Repository directory containing gradus.yaml'
     required: false
@@ -37,28 +37,33 @@ runs:
     - name: Set up Go
       uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
       with:
-        go-version: '1.24'
+        go-version-file: 'go.mod'
 
     - name: Install gradusctl (static CGO_ENABLED=0)
       shell: bash
+      env:
+        GRADUS_VERSION: ${{ inputs.version }}
       run: |
         set -euo pipefail
-        CGO_ENABLED=0 go install "github.com/Milosauro/gradus-ai/cmd/gradusctl@${{ inputs.version }}"
+        CGO_ENABLED=0 go install "github.com/Milosauro/gradus-ai/cmd/gradusctl@${GRADUS_VERSION}"
 
     - name: Run gradusctl verify and check
       id: run-gradus
       shell: bash
       working-directory: ${{ inputs.working-directory }}
+      env:
+        GRADUS_WRITE_EVIDENCE: ${{ inputs.write-evidence }}
+        GRADUS_BASE_REF: ${{ inputs.base-ref }}
       run: |
         set +e
         VERIFY_ARGS=(verify --json)
         CHECK_ARGS=(check --json)
-        if [ "${{ inputs.write-evidence }}" = "true" ]; then
+        if [ "${GRADUS_WRITE_EVIDENCE}" = "true" ]; then
           VERIFY_ARGS+=(--write-evidence)
           CHECK_ARGS+=(--write-evidence)
         fi
-        if [ -n "${{ inputs.base-ref }}" ]; then
-          CHECK_ARGS+=(--base "${{ inputs.base-ref }}")
+        if [ -n "${GRADUS_BASE_REF}" ]; then
+          CHECK_ARGS+=(--base "${GRADUS_BASE_REF}")
         fi
 
         gradusctl "${VERIFY_ARGS[@]}" > gradus-verify.json

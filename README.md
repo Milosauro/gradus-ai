@@ -6,23 +6,23 @@
 
 **Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-[![Status: Phase 1 Team v0.2.0](https://img.shields.io/badge/status-Phase%201%20Team%20v0.2.0-brightgreen?style=flat-square)](docs/design/gradus-design.md)
+[![Status: Phase 2 Business Unit v0.3.1](https://img.shields.io/badge/status-Phase%202%20Business%20Unit%20v0.3.1-brightgreen?style=flat-square)](docs/design/gradus-design.md)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
-[![Agents: Claude Code · Antigravity · AGENTS.md](https://img.shields.io/badge/first%20targets-Claude%20Code%20·%20Antigravity%20·%20AGENTS.md-555?style=flat-square)](#which-agents)
+[![Targets: Claude Code · Antigravity · Codex · Copilot · OpenCode](https://img.shields.io/badge/targets-Claude%20Code%20·%20Antigravity%20·%20Codex%20·%20Copilot%20·%20OpenCode-555?style=flat-square)](#which-agents)
 
 [Quick start](#quick-start-personal-setup) · [The problem](#the-monday-morning-problem) · [The idea](#the-idea-a-pyramid-of-rules) · [Before / after](#before--after) · [What we believe](#what-we-believe) · [How it works](#how-it-works) · [Status](#status-and-roadmap) · [FAQ](#faq) · [Design](docs/design/gradus-design.md)
 
 </div>
 
 > [!NOTE]
-> **Phase 1 Team (`v0.2.0`) is available.** Install `gradusctl` as a single static binary and govern personal or team repositories with Claude Code, Antigravity, `AGENTS.md`, charters, overlays, exceptions/break-glass, `doctor`, rule tests, historical impact simulation, CI GitHub Action, and onboarding handbooks. The full design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+> **Phase 2 Business Unit (`v0.3.1`) is available.** Install `gradusctl` as a single static binary and govern repositories across Claude Code, Antigravity, Codex, GitHub Copilot, and OpenCode with locked/signed remote levels, obligations and bindings (`walden`, `spec-kit`), declared toolchains, charters, overlays, exceptions/break-glass, `doctor`, `changelog`, rule tests, historical impact simulation, CI GitHub Action, and onboarding handbooks. The full design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
 
 ## Quick Start (Personal Setup)
 
 Install `gradusctl` with Go (or download a signed binary from [GitHub Releases](https://github.com/Milosauro/gradus-ai/releases)) and ensure `gradusctl` is on your `PATH` (agent `PreToolUse` and `SessionStart` hooks invoke `gradusctl` by name):
 
 ```bash
-go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.2.0
+go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.3.1
 ```
 
 Initialize Gradus in your repository, resolve your pyramid, compile target agent instructions/hooks/skills, and verify integrity:
@@ -208,7 +208,7 @@ Corrections stay on your machine. Only an approved rule enters a level.
 
 ## Which agents?
 
-The first targets are **Claude Code** and **Antigravity**, with full in-session guards, plus **`AGENTS.md`** so that every other agent that reads it gets the rules from day one. Codex, GitHub Copilot and OpenCode follow. Gradus is built on open formats — [Agent Skills](https://agentskills.io), [AGENTS.md](https://agents.md) and [MCP](https://modelcontextprotocol.io) — so that no team is forced to change agent to follow the rules.
+The first targets are **Claude Code** and **Antigravity**, with full in-session guards, plus **Codex**, **GitHub Copilot**, **OpenCode**, and **`AGENTS.md`** so that every other agent that reads it gets the rules from day one. Gradus is built on open formats — [Agent Skills](https://agentskills.io), [AGENTS.md](https://agents.md) and [MCP](https://modelcontextprotocol.io) — so that no team is forced to change agent to follow the rules.
 
 ## Status and roadmap
 
@@ -219,7 +219,7 @@ The first targets are **Claude Code** and **Antigravity**, with full in-session 
 | **2 · Business unit** | Locked remote levels across teams | Obligations, bindings to Walden and spec-kit, toolchain, readable changelogs |
 | **3 · Organization** | Company-wide policies | Conditional overlays, framework mapping, model policy, chat agents and MCP |
 
-**Today:** Phase 1 ("Team", `v0.2.0`) is implemented and certified across all 14 Walden features (`F1`–`F14`), with signed static binaries, deterministic CLI enforcement, team charters/overlays/exceptions, `doctor`, `test`, `simulate`, `handbook`, starter templates in `examples/`, and a SHA-pinned composite GitHub Action.
+**Today:** Phase 2 ("Business unit", `v0.3.1`) is implemented across features `F1`–`F21`, with signed static binaries, locked/signed remote levels (`resolve --update`, `changelog`), obligations & bindings (`walden`, `spec-kit`), declared toolchain governance (`toolchain check`), multi-target compilation (`claude`, `antigravity`, `agents`, `codex`, `copilot`, `opencode`), and hardened anti-tamper and exception approver enforcement. Live session and CLI workflows are validated on **Claude Code** and **Antigravity**; Codex, GitHub Copilot, and OpenCode targets are verified via automated tests and sandboxed CLI runs.
 
 ## CLI interface
 
@@ -230,6 +230,9 @@ gradusctl compile     # generate instructions, skills and hooks for your agents
 gradusctl verify      # integrity, versions, charters, lifecycle, conflicts, drift
 gradusctl check       # deterministic checks, e.g. on staged changes or in CI
 gradusctl doctor      # diagnose config, lockfile, PATH, and agent hook files
+gradusctl changelog   # show versioned rule diffs between locked refs
+gradusctl adapter     # list, sync, and verify obligation provider bindings
+gradusctl toolchain   # check required, recommended, and forbidden tools/MCPs
 gradusctl exception   # request, approve, list, expire exceptions and break-glass
 gradusctl test        # run rule tests from Compliant / Non-compliant examples
 gradusctl simulate    # simulate check rule impact across recent git commits
@@ -245,6 +248,7 @@ gradusctl explain ID  # where a rule comes from, its charter, who owns it, and w
 | `gradus-learn` | Turns repeated corrections into lessons, and lessons into proposed rules |
 | `gradus-reconcile` | Explains drift and offers the fixes your permissions allow |
 | `gradus-conflicts` | Flags rules that may contradict each other, for a human to decide |
+| `gradus-link` | Audits third-party skills, tools, and MCP servers against the resolved pyramid |
 
 ## FAQ
 

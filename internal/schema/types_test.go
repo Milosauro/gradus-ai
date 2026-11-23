@@ -37,8 +37,8 @@ func TestOverridableAndUnknownKeys(t *testing.T) {
 	yamlText := `
 schema: gradus/v1
 future_flag: true
-obligations:
-  - id: OBL-1
+models:
+  default: sonnet
 levels:
   - id: project
     extra_level_key: 123
@@ -64,8 +64,8 @@ levels:
 	if !slices.ContainsFunc(notes, func(s string) bool { return strings.Contains(s, "future_flag") }) {
 		t.Fatalf("expected note for unknown key 'future_flag', got %v", notes)
 	}
-	if !slices.ContainsFunc(notes, func(s string) bool { return strings.Contains(s, "reserved key \"obligations\"") }) {
-		t.Fatalf("expected note for reserved key 'obligations', got %v", notes)
+	if !slices.ContainsFunc(notes, func(s string) bool { return strings.Contains(s, "reserved key \"models\"") }) {
+		t.Fatalf("expected note for reserved key 'models', got %v", notes)
 	}
 	if !slices.ContainsFunc(notes, func(s string) bool { return strings.Contains(s, "levels[0].extra_level_key") }) {
 		t.Fatalf("expected note for nested unknown key 'levels[0].extra_level_key', got %v", notes)
