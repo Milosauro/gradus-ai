@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-23
+
+### Added
+- **Remote Level Signatures, `min_version` & `gradusctl changelog` (`F15`):** Verify GPG/SSH signatures via `os/exec` `git verify-tag`/`verify-commit` (`signature: optional | required` recorded in `gradus.lock`), enforce strict SemVer 2.0.0 `min_version` constraints, and generate non-destructive Markdown/JSON level diffs via `gradusctl changelog <level-id>`.
+- **Obligations & Bindings (`F16`):** Declare abstract `obligations` (`allowed_providers`, `scope`) and concrete `bindings` (`provider`, `requires`, `scope`) in `gradus.yaml`/`level.yaml`, enforce narrowing and binding coverage in `resolve`/`verify`, and render an `Obligations & Bindings` section in `gradusctl handbook`.
+- **Declarative Provider Adapters (`F17`):** Embed official `walden` (`.walden/constitution.md`) and `spec-kit` (`.specify/memory/constitution.md`) adapters under `adapters/`, load custom `.gradus/adapters/` manifests with strict path containment, and add `gradusctl adapter list | sync | verify`.
+- **Monotonic Toolchain Governance (`F18`):** Declare `required`, `recommended`, and `forbidden` skills, tools, MCP servers, and plugins in `gradus.yaml`/`level.yaml` with `doublestar` conflict detection in `resolve`, plus offline `gradusctl toolchain check [--json]`.
+- **`gradus-link` Agent Skill (`F19`):** Add and embed `skills/gradus-link/SKILL.md` (with Skill-TDD scenario `SKILL-07`) for compatibility/security auditing of third-party tools and drafting declarative adapter manifests or bindings with explicit approval.
+- **Codex, GitHub Copilot & OpenCode Targets (`F20`):** Add `codex` (`AGENTS.md` + `.agents/skills/`), `copilot` (`.github/copilot-instructions.md`, scoped `.github/instructions/gradus-*.instructions.md` with pruning, `.github/skills/`), and `opencode` (`AGENTS.md` + `.opencode/skills/`) compilers plus `docs/compatibility-matrix.md`.
+
 ## [0.2.2] - 2026-11-23
 
 ### Fixed

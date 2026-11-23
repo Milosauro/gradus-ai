@@ -1,9 +1,9 @@
 ---
 walden_schema_version: v1alpha1
 status: approved
-approved_at: 2026-11-23T10:48:34Z
-last_modified: 2026-11-23T10:48:34Z
-approved_fingerprint: sha256:3e7414ec0bc9beecb037dc7f1cb153f1a25839ede45e71ab5bfd105f78363166
+approved_at: 2026-11-23T16:15:52Z
+last_modified: 2026-11-23T16:15:52Z
+approved_fingerprint: sha256:adbba152ec55f0c23e803fc2ed4518f8ae0544ed7810b1ea27168599d0cf1289
 ---
 
 # Current Contracts
@@ -120,25 +120,70 @@ Reserved: none
 Sources: docs/design/gradus-design.md
 Related: charters-and-lifecycle (renders level charters in handbook), resolve-and-lock (consumes ResolvedView)
 
+## remote-levels-signatures-and-changelog
+
+Purpose: Adds `os/exec` Git signature verification (`signature: optional | required` recorded in `gradus.lock`), strict SemVer `min_version` enforcement for remote levels, and non-destructive `gradusctl changelog` diffs via `git archive` + `archive/tar`.
+Active: R1.AC1, R1.AC2, R1.AC3, R1.AC4, R2.AC1, R2.AC2, R2.AC3, R3.AC1, R3.AC2, R3.AC3, NFR1, NFR2, NFR3, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: core-schema-init (adds SemVer and signature/min_version fields), resolve-and-lock (enforces signature and min_version during Resolve)
+
+## obligations-and-bindings
+
+Purpose: Adds abstract `obligations` and concrete `bindings` schemas (`gradus.yaml`, `level.yaml`), enforces `allowed_providers` narrowing and binding coverage in `resolve.Resolve`, and renders an `Obligations & Bindings` section in `gradusctl handbook`.
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2, R2.AC3, R3.AC1, R3.AC2, NFR1, NFR2, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: core-schema-init (extends config schemas), resolve-and-lock (emits obligation conflicts and ResolvedView fields), handbook-and-templates (renders Obligations & Bindings)
+
+## adapters-walden-and-speckit
+
+Purpose: Embeds official declarative `walden` and `spec-kit` adapter manifests (`adapters/`), loads custom `.gradus/adapters/` manifests with path-containment validation, and provides `gradusctl adapter list | sync | verify` for managed-section injection, CLI SemVer checks, and evidence verification.
+Active: R1.AC1, R1.AC2, R1.AC3, R2.AC1, R2.AC2, R2.AC3, R2.AC4, R3.AC1, NFR1, NFR2, NFR3, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: obligations-and-bindings (consumes ResolvedView.Bindings), agent-compilers (reuses PlanAgentsMD and WriteIfChanged)
+
+## toolchain-governance
+
+Purpose: Declares `required`, `recommended`, and `forbidden` skills, tools, MCP servers, and plugins in `gradus.yaml`/`level.yaml`, enforces monotonic pyramid resolution via `doublestar` glob matching, and provides offline `gradusctl toolchain check [--json]`.
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2, R3.AC1, R3.AC2, R3.AC3, NFR1, NFR2, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: core-schema-init (extends config schemas), resolve-and-lock (emits toolchain conflicts), agent-compilers (inspects .claude/skills and .agents/skills)
+
+## gradus-link-skill
+
+Purpose: Authors and embeds the seventh official Agent Skill (`skills/gradus-link/SKILL.md`) for auditing third-party skills, tools, MCP servers, and workflow providers against the pyramid and drafting declarative adapter manifests or binding proposals with explicit approval, backed by Skill-TDD scenario `SKILL-07`.
+Active: R1.AC1, R1.AC2, R1.AC3, R2.AC1, R2.AC2, NFR1, NFR2, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: mvp-skills (extends embedded skills and Skill-TDD suite), adapters-walden-and-speckit (drafts .gradus/adapters/ manifests), toolchain-governance (audits against toolchain.forbidden)
+
+## codex-copilot-opencode-targets
+
+Purpose: Adds deterministic `codex`, `copilot` (`.github/copilot-instructions.md` + `.github/instructions/gradus-*.instructions.md` with pruning), and `opencode` compilers to `internal/compile` alongside `docs/compatibility-matrix.md`.
+Active: R1.AC1, R2.AC1, R2.AC2, R3.AC1, R4.AC1, R4.AC2, R4.AC3, R4.AC4, NFR1, NFR2, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: agent-compilers (extends PlanCompile/ApplyCompile and reuses managed-section helpers), verify-check-evidence (automatic drift detection via PlanCompile)
+
 ## Coherence Review
 
-### charters-and-lifecycle
-Consistent with `core-schema-init#R1.AC1`, `resolve-and-lock#R3.AC1`, and `mvp-skills#R2.AC1`. `charters-and-lifecycle` extends level/rule frontmatter and `resolve.Resolve` without altering existing exit-code or lock semantics, and surfaces charters in `gradus-author` and `gradus-review`. No inconsistencies found.
+### adapters-walden-and-speckit
+Consistent with `obligations-and-bindings#R2.AC1`, `core-schema-init#R1.AC1`, `remote-levels-signatures-and-changelog#R2.AC1`, `toolchain-governance#R1.AC1`, `gradus-link-skill#R1.AC2`, and `codex-copilot-opencode-targets#R4.AC1`. `adapters-walden-and-speckit` consumes `ResolvedView.Bindings` and reuses `compile.PlanAgentsMD` and `schema.ParseSemVer` without altering existing schemas or exit codes. No inconsistencies found.
 
-### doctor-and-guard-hardening
-Consistent with `agent-compilers#R2.AC2`, `agent-compilers#R3.AC3`, `runtime-guard#R2.AC1`, `runtime-guard#R2.AC2`, `runtime-guard#R3.AC3`, and `runtime-guard#C3`. `doctor-and-guard-hardening#R1.AC2` validates the exact `.claude/settings.json` and `.agents/hooks.json` static hook dispatchers generated by `agent-compilers`, and `doctor-and-guard-hardening#R2.AC1`–`R2.AC3` refine anti-tamper decision strictness (`ask` default, optional `deny`) while preserving `runtime-guard` `deny > ask > allow` precedence and ADR 0003 static dispatchers. No inconsistencies found.
+### codex-copilot-opencode-targets
+Consistent with `core-schema-init#R1.AC1`, `adapters-walden-and-speckit#R2.AC1`, `gradus-link-skill#R2.AC1`, `obligations-and-bindings#R3.AC1`, `remote-levels-signatures-and-changelog#R1.AC1`, and `toolchain-governance#R3.AC1`. `codex`, `copilot`, and `opencode` extend `compile.PlanCompile` and `ApplyCompile` while preserving byte-identical output for `claude-code`, `antigravity`, and `agents-md`. No inconsistencies found.
 
-### github-action-and-ci-agents
-Consistent with `resolve-and-lock#R4.AC1`, `agent-compilers#R4.AC1`, and `runtime-guard#R3.AC1`. `--agent-profile` cleanly substitutes the optional `user` level in CI/background agents without weakening upper levels or lock verification, and `.github/actions/gradus/action.yml` pins all actions to 40-char SHAs (T3). No inconsistencies found.
+### gradus-link-skill
+Consistent with `mvp-skills#R1.AC1`, `agent-compilers#R2.AC3`, `agent-compilers#R3.AC3`, `adapters-walden-and-speckit#R1.AC2`, `obligations-and-bindings#R2.AC1`, and `toolchain-governance#R3.AC1`. `skills/gradus-link/SKILL.md` embeds cleanly via `skills/embed.go` and delegates all verification to `gradusctl`. No inconsistencies found.
 
-### handbook-and-templates
-Consistent with `charters-and-lifecycle#R1.AC1` and `resolve-and-lock#R4.AC1`. `gradusctl handbook` deterministically renders the resolved pyramid and charters read-only unless `--output` is passed, and all starter templates under `examples/` pass `resolve` and `verify`. No inconsistencies found.
+### obligations-and-bindings
+Consistent with `core-schema-init#R1.AC1`, `doctor-and-guard-hardening#R1.AC1`, `adapters-walden-and-speckit#R2.AC1`, and `toolchain-governance#R2.AC1`. `obligations` and `bindings` use `omitempty` JSON fields in `ResolvedView`, preserving `view_hash` for existing repositories without obligations. No inconsistencies found.
 
-### overlays-and-exceptions
-Consistent with `core-schema-init#R1.AC1` and `resolve-and-lock#R3.AC1`. Explicit overlay `activation` modes and `exceptions` (`max_duration`, `break-glass`, `fail-closed`) extend `resolve.Resolve` while preserving the P2 restriction invariant and deterministic `gradus.lock` verification. No inconsistencies found.
+### remote-levels-signatures-and-changelog
+Consistent with `core-schema-init#R1.AC1`, `doctor-and-guard-hardening#R2.AC1`, `obligations-and-bindings#R1.AC1`, and `adapters-walden-and-speckit#R2.AC2`. Reuses `lock.Entry.Signature` and `os/exec` `git` (`PRJ-GO-001`) with non-destructive `git archive` materialization. No inconsistencies found.
 
-### phase0-eval-release
-Consistent with `agent-compilers#R4.AC1`, `runtime-guard#R2.AC1`, and `verify-check-evidence#R1.AC1`. The offline benchmark suite and release workflows verify existing Phase 0 guarantees (`E1`–`E10`, `T3`) without modifying runtime contracts. No inconsistencies found.
-
-### rule-tests-and-impact
-Consistent with `verify-check-evidence#R2.AC1` and `runtime-guard#R3.AC2`. `gradusctl test` and `gradusctl simulate` reuse `internal/check` and `internal/guard.Evaluate` non-destructively via temporary directories and `os/exec` `git` (`PRJ-GO-001`). No inconsistencies found.
+### toolchain-governance
+Consistent with `core-schema-init#R1.AC1`, `agent-compilers#R2.AC2`, `runtime-guard#C3`, `doctor-and-guard-hardening#R1.AC2`, `gradus-link-skill#R1.AC2`, and `obligations-and-bindings#R2.AC1`. `ResolvedView.Toolchain` is omitted when unused and enforces monotonic restriction via `doublestar` matching. No inconsistencies found.
