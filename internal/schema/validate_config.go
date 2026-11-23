@@ -43,6 +43,14 @@ func ValidatePyramidConfig(cfg *PyramidConfig) error {
 				return fmt.Errorf("gradus.yaml: levels[%d] (%s) invalid offline.mode %q", i, lvl.ID, lvl.Offline.Mode)
 			}
 		}
+		if err := validateSignaturePolicy(fmt.Sprintf("gradus.yaml: levels[%d] (%s)", i, lvl.ID), lvl.Signature); err != nil {
+			return err
+		}
+		if lvl.MinVersion != "" {
+			if _, err := ParseSemVer(lvl.MinVersion); err != nil {
+				return fmt.Errorf("gradus.yaml: levels[%d] (%s) min_version: %w", i, lvl.ID, err)
+			}
+		}
 	}
 
 	seenOverlays := make(map[string]bool, len(cfg.Overlays))
@@ -75,6 +83,14 @@ func ValidateLevelConfig(cfg *LevelConfig) error {
 	}
 	if !levelIDPattern.MatchString(cfg.ID) {
 		return fmt.Errorf("level.yaml: id %q must match ^[a-z][a-z0-9-]*$", cfg.ID)
+	}
+	if err := validateSignaturePolicy("level.yaml", cfg.Signature); err != nil {
+		return err
+	}
+	if cfg.MinVersion != "" {
+		if _, err := ParseSemVer(cfg.MinVersion); err != nil {
+			return fmt.Errorf("level.yaml: min_version: %w", err)
+		}
 	}
 	if cfg.Charter != nil {
 		for _, sev := range cfg.Charter.AllowedSeverities {
@@ -119,5 +135,14 @@ func validateOverlayActivation(fileLabel, activation string) error {
 		return nil
 	default:
 		return fmt.Errorf("%s: invalid activation %q (expected always, explicit, disabled, or profile)", fileLabel, activation)
+	}
+}
+
+func validateSignaturePolicy(fileLabel, policy string) error {
+	switch policy {
+	case "", "optional", "required":
+		return nil
+	default:
+		return fmt.Errorf("%s: invalid signature %q (expected optional or required)", fileLabel, policy)
 	}
 }
