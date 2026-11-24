@@ -5,6 +5,8 @@ import "regexp"
 var redactionPatterns = []*regexp.Regexp{
 	// PEM private key blocks (multiline)
 	regexp.MustCompile(`-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z0-9 ]*PRIVATE KEY-----`),
+	// Truncated PEM private key blocks without a closing END footer
+	regexp.MustCompile(`-----BEGIN [A-Z0-9 ]*PRIVATE KEY-----[\s\S]*`),
 	// GitHub tokens (ghp_, gho_, ghu_, ghs_, ghr_, github_pat_)
 	regexp.MustCompile(`\b(?:gh[pousr]_[A-Za-z0-9_]{12,}|github_pat_[A-Za-z0-9_]{16,})\b`),
 	// OpenAI / Anthropic / generic sk- secret keys
@@ -27,6 +29,8 @@ var redactionPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`\+\d{1,3}[\s.-]?\d{2,4}[\s.-]?\d{3,4}(?:[\s.-]?\d{3,4})\b`),
 	// Dashed or parenthesized local phone numbers (avoids false positives on plain space-separated numbers)
 	regexp.MustCompile(`(?:\(\d{2,4}\)[\s.-]?\d{3,4}[-.]\d{3,4}|\b\d{3}[-.]\d{3}[-.]\d{4})\b`),
+	// Unspaced 10-digit Italian mobile numbers (e.g. 3331234567)
+	regexp.MustCompile(`\b3\d{9}\b`),
 }
 
 // RedactText replaces secrets, tokens, keys, and PII with [REDACTED] (Threat Model T4).

@@ -10,7 +10,7 @@ import (
 	"unicode"
 
 	"github.com/bmatcuk/doublestar/v4"
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 
 	"github.com/Milosauro/gradus-ai/internal/resolve"
 	"github.com/Milosauro/gradus-ai/internal/schema"

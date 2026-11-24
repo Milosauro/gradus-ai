@@ -19,10 +19,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: go.mod
 
@@ -48,10 +48,10 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: go.mod
           cache: true
@@ -93,10 +93,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Go
-        uses: actions/setup-go@41dfa10bad2bb2ae585af6ee5bb4d7d973ad74ed # v5.1.0
+        uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
         with:
           go-version-file: go.mod
           cache: true
@@ -117,8 +117,63 @@ jobs:
 
       - name: Upload Gradus Evidence Artifacts
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: gradus-evidence
           path: .gradus/ci-artifacts/
           if-no-files-found: ignore
+
+  test-action-non-go:
+    name: Smoke Test Composite Action (Non-Go Repo)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout action repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: gradus-action-src
+
+      - name: Create non-Go consumer repository without go.mod
+        run: |
+          set -euo pipefail
+          mkdir -p consumer-python/.gradus/levels/project/rules
+          cat << 'EOF' > consumer-python/app.py
+          print("hello world")
+          EOF
+          cat << 'EOF' > consumer-python/.gradus/levels/project/level.yaml
+          schema: gradus/v1
+          id: project
+          EOF
+          cat << 'EOF' > consumer-python/.gradus/levels/project/rules/PY-001.md
+          ---
+          id: PY-001
+          title: No eval in Python
+          severity: MUST
+          enforcement: check
+          scope: ["**/*.py"]
+          checker:
+            name: regex
+            pattern: '\beval\('
+          ---
+          Do not call eval().
+          EOF
+          cat << 'EOF' > consumer-python/gradus.yaml
+          schema: gradus/v1
+          levels:
+            - id: project
+              source: { path: .gradus/levels/project }
+          targets: [agents-md]
+          EOF
+          cd consumer-python
+          git init
+          git config user.name "CI Test"
+          git config user.email "ci@gradus.local"
+          git add .
+          git commit -m "init non-go repo"
+
+      - name: Run Gradus Composite Action against non-Go repository
+        uses: ./gradus-action-src/.github/actions/gradus
+        with:
+          version: 'v0.3.1'
+          working-directory: consumer-python
+          write-evidence: 'false'
+          upload-evidence: 'false'

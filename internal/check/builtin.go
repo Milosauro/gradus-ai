@@ -2,7 +2,9 @@ package check
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -11,6 +13,20 @@ import (
 	"github.com/Milosauro/gradus-ai/internal/evidence"
 	"github.com/Milosauro/gradus-ai/internal/resolve"
 )
+
+const maxScanLineBytes = 4 * 1024 * 1024 // 4 MiB max line length for large/minified text files
+
+func isBinaryFile(f *os.File) (bool, error) {
+	var probe [8192]byte
+	n, err := f.Read(probe[:])
+	if err != nil && err != io.EOF {
+		return false, err
+	}
+	if _, seekErr := f.Seek(0, io.SeekStart); seekErr != nil {
+		return false, seekErr
+	}
+	return bytes.IndexByte(probe[:n], 0) >= 0, nil
+}
 
 // RunBuiltinPatternCheck scans matchedFiles line-by-line against the rule's regex/pattern.
 func RunBuiltinPatternCheck(rootDir string, rule resolve.ResolvedRule, matchedFiles []string) ([]evidence.Finding, error) {
@@ -37,8 +53,18 @@ func RunBuiltinPatternCheck(rootDir string, rule resolve.ResolvedRule, matchedFi
 		if err != nil {
 			return nil, fmt.Errorf("rule %s: failed to open %s: %w", rule.ID, rel, err)
 		}
+		bin, binErr := isBinaryFile(f)
+		if binErr != nil {
+			_ = f.Close()
+			return nil, fmt.Errorf("rule %s: failed to inspect %s: %w", rule.ID, rel, binErr)
+		}
+		if bin {
+			_ = f.Close()
+			continue
+		}
 
 		scanner := bufio.NewScanner(f)
+		scanner.Buffer(make([]byte, 0, 64*1024), maxScanLineBytes)
 		lineNum := 0
 		for scanner.Scan() {
 			lineNum++

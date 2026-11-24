@@ -251,3 +251,136 @@ bindings:
 		t.Fatalf("expected at least 1 passing rule test and 0 failures, got %+v", testOut)
 	}
 }
+
+func TestExceptionRequestMaxDurationV032(t *testing.T) {
+	tmp := t.TempDir()
+	_ = os.MkdirAll(filepath.Join(tmp, ".gradus", "levels", "company", "rules"), 0o755)
+	_ = os.WriteFile(filepath.Join(tmp, ".gradus", "levels", "company", "level.yaml"), []byte(`schema: gradus/v1
+id: company
+exceptions:
+  allowed: true
+  max_duration: 14d
+  approvers: [security-team]
+`), 0o644)
+	_ = os.WriteFile(filepath.Join(tmp, ".gradus", "levels", "company", "rules", "CMP-01.md"), []byte("---\nid: CMP-01\ntitle: No plaintext\nseverity: MUST\nenforcement: prompt\n---\n\nNever store plaintext.\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(tmp, "gradus.yaml"), []byte(`schema: gradus/v1
+levels:
+  - id: company
+    source: { path: .gradus/levels/company }
+`), 0o644)
+
+	tooLong := time.Now().UTC().AddDate(0, 6, 0).Format("2006-01-02")
+	var stdout, stderr bytes.Buffer
+	code := cli.ExecuteCode([]string{"exception", "request", "--dir", tmp, "--rule", "CMP-01", "--reason", "six months", "--expires", tooLong}, &stdout, &stderr)
+	if code != cli.ExitError {
+		t.Fatalf("expected exit 2 when exception duration exceeds max_duration (14d), got %d (stdout=%s stderr=%s)", code, stdout.String(), stderr.String())
+	}
+	if !strings.Contains(stderr.String(), "14d") {
+		t.Fatalf("expected error message to cite max_duration 14d, got %q", stderr.String())
+	}
+	// Ensure no exception file was created
+	entries, _ := os.ReadDir(filepath.Join(tmp, ".gradus", "exceptions"))
+	if len(entries) != 0 {
+		t.Fatalf("expected no exception file created on rejected request, found %d", len(entries))
+	}
+
+	// Within limit (7d) succeeds
+	within := time.Now().UTC().AddDate(0, 0, 7).Format("2006-01-02")
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"exception", "request", "--dir", tmp, "--rule", "CMP-01", "--reason", "one week", "--expires", within}, &stdout, &stderr); code != cli.ExitPass {
+		t.Fatalf("expected exit 0 for valid 7d duration, got %d (%s)", code, stderr.String())
+	}
+}
+
+func TestPRJCI001CheckAndActionV032(t *testing.T) {
+	// 1. Verify composite action points setup-go to github.action_path rather than consumer go.mod
+	actionBytes, err := os.ReadFile(filepath.Join("..", "..", ".github", "actions", "gradus", "action.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	actionText := string(actionBytes)
+	if !strings.Contains(actionText, "${{ github.action_path }}/../../../go.mod") {
+		t.Fatalf("expected action.yml to reference github.action_path go.mod, got:\n%s", actionText)
+	}
+
+	// 2. Verify CI workflow exercises the composite action against a non-Go repository
+	ciBytes, err := os.ReadFile(filepath.Join("..", "..", ".github", "workflows", "ci.yml"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(ciBytes), "test-action-non-go:") {
+		t.Fatalf("expected ci.yml to contain test-action-non-go job")
+	}
+
+	// 3. Verify go.mod uses go.yaml.in/yaml/v3 instead of gopkg.in/yaml.v3
+	goModBytes, err := os.ReadFile(filepath.Join("..", "..", "go.mod"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(goModBytes), "go.yaml.in/yaml/v3") {
+		t.Fatalf("expected go.mod to require go.yaml.in/yaml/v3")
+	}
+
+	// 4. Verify gradusctl test passes for PRJ-CI-001 and PRJ-GO-001 (>= 4 cases) and gradusctl check passes
+	var stdout, stderr bytes.Buffer
+	if code := cli.ExecuteCode([]string{"test", "--dir", "../..", "--json"}, &stdout, &stderr); code != cli.ExitPass {
+		t.Fatalf("gradusctl test failed: %d %s\n%s", code, stderr.String(), stdout.String())
+	}
+	if !strings.Contains(stdout.String(), "PRJ-CI-001") {
+		t.Fatalf("expected PRJ-CI-001 check test cases in gradusctl test output:\n%s", stdout.String())
+	}
+
+	stdout.Reset()
+	stderr.Reset()
+	if code := cli.ExecuteCode([]string{"check", "--dir", "../..", "--json"}, &stdout, &stderr); code != cli.ExitPass {
+		t.Fatalf("gradusctl check failed on repository workflows: %d %s\n%s", code, stderr.String(), stdout.String())
+	}
+}
+
+func TestDesign11AndSpecAlignmentV032(t *testing.T) {
+	designBytes, err := os.ReadFile(filepath.Join("..", "..", "docs", "design", "gradus-design.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	design := string(designBytes)
+	if strings.Contains(design, "Implementation has not started") {
+		t.Fatalf("Design 1.1 must not contain 'Implementation has not started'")
+	}
+	for _, want := range []string{"| Document version | 1.1 |", "### Normative precedence", "D-75", "D-83"} {
+		if !strings.Contains(design, want) {
+			t.Fatalf("Design 1.1 missing expected section/decision %q", want)
+		}
+	}
+
+	specBytes, err := os.ReadFile(filepath.Join("..", "..", "spec", "v1", "SPEC.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(specBytes), "## 1. Normative Precedence") {
+		t.Fatalf("spec/v1/SPEC.md missing Normative Precedence section")
+	}
+
+	if _, err := os.Stat(filepath.Join("..", "..", "docs", "plan", "phase-2-plan.md")); err != nil {
+		t.Fatalf("expected docs/plan/phase-2-plan.md to exist: %v", err)
+	}
+
+	readmeBytes, err := os.ReadFile(filepath.Join("..", "..", "README.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	readme := string(readmeBytes)
+	for _, want := range []string{"v0.3.2", "CODEOWNERS", "Validation status (transparent)", "gradus:begin/end"} {
+		if !strings.Contains(readme, want) {
+			t.Fatalf("README.md missing expected transparency/security note %q", want)
+		}
+	}
+
+	changelogBytes, err := os.ReadFile(filepath.Join("..", "..", "CHANGELOG.md"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(changelogBytes), "## [0.3.2]") {
+		t.Fatalf("CHANGELOG.md missing [0.3.2] section")
+	}
+}

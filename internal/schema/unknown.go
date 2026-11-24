@@ -3,7 +3,7 @@ package schema
 import (
 	"fmt"
 
-	"gopkg.in/yaml.v3"
+	"go.yaml.in/yaml/v3"
 )
 
 // ReservedTopLevelKeys lists gradus/v1 keys reserved for Phase 3+ (§9.11).

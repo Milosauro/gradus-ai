@@ -3,15 +3,23 @@
 | Field | Value |
 |---|---|
 | Project | **Gradus** — layered, governed rules for AI coding agents |
-| Document version | 1.0.2 |
-| Date | 19 November 2026 |
-| Status | Design baseline. Implementation has not started. |
+| Document version | 1.1 |
+| Date | 24 November 2026 |
+| Status | Living design specification. See `README.md` and `CHANGELOG.md` for current release and implementation status. |
 | Repository | https://github.com/Milosauro/gradus-ai |
 | License | Apache-2.0 |
-| Spec version described | `gradus/v1` (draft) |
+| Spec version described | `gradus/v1` |
 | Language | English (canonical). A personal Italian translation exists and is non-normative. |
 
 ## How to read this document
+
+### Normative precedence
+
+When specification sources appear to overlap, precedence is resolved in this order (D-75):
+
+1. **`spec/v1/schema/*.json`** — normative for file formats, field names, and structural validation.
+2. **`docs/design/gradus-design.md` and accepted ADRs (`docs/adr/`)** — normative for semantics (level precedence, invariants, enforcement behavior, exit codes, and governance workflows).
+3. **`spec/v1/SPEC.md`** — descriptive guide summarizing the schemas and conventions.
 
 Every section carries one of these labels:
 
@@ -431,7 +439,7 @@ Frontmatter fields:
 
 | Field | Required | Values and meaning |
 |---|---|---|
-| `id` | yes | Unique in the resolved view; pattern `^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$`. Convention: `<LEVEL>-<AREA>-<NNN>`. |
+| `id` | yes | Unique opaque identifier in the resolved view; pattern `^[A-Z][A-Z0-9]*(-[A-Z0-9]+)+$`. `<LEVEL>-<AREA>-<NNN>` is a naming convention only — a rule's effective `level` is strictly derived from its containing level container (ADR 0004). |
 | `title` | yes | Short human-readable title. |
 | `severity` | yes | `MUST`, `SHOULD`, `MAY`. |
 | `enforcement` | no (default `prompt`) | `prompt` (instruction only), `review` (checked by `gradus-review`), `check` (deterministic check by the CLI or an external checker, in git hooks and CI), `hook` (blocked or confirmed in the agent session), `permission` (compiled into agent permissions). |
@@ -492,16 +500,16 @@ The `user` level is never written to the lockfile; it is resolved locally.
   "profile": { "data": "internal" },
   "rules": [
     {
-      "id": "ORG-SEC-004",
+      "id": "TEAM-SEC-004",
       "title": "No real personal data in tests",
-      "level": "org",
+      "level": "team",
       "severity": "MUST",
       "enforcement": "check",
       "scope": ["**/*"],
       "text": "Test fixtures, logs and examples must never contain real personal data.",
       "rationalizations": ["..."],
       "overrides": null,
-      "provenance": { "source": "team@v1.2.0", "path": "rules/ORG-SEC-004.md", "hash": "sha256:..." }
+      "provenance": { "source": "team@v1.2.0", "path": "rules/TEAM-SEC-004.md", "hash": "sha256:..." }
     }
   ],
   "conflicts": [],
@@ -510,22 +518,27 @@ The `user` level is never written to the lockfile; it is resolved locally.
 }
 ```
 
+`view_hash` is computed deterministically over shared/project levels only, excluding the personal `user` level and `lock_hash` so `gradus.lock` and compiled project markers remain invariant across developers (D-80).
+
 ### 9.8 Lesson record
 
-Stored as YAML under `~/.gradus/lessons/<project-key>/`.
+Stored as JSON under `~/.gradus/lessons/<project-key>/` (normative schema: `spec/v1/schema/lesson.schema.json`).
 
-```yaml
-schema: gradus/v1
-id: L-2026-11-19-001
-created: 2026-11-19T10:12:00Z
-kind: correction                # correction | repeated-mistake | preference | frustration
-statement: "Do not commit without an explicit request."
-evidence:
-  - { session: "local", excerpt: "please, don't commit on your own again", at: 2026-11-19T10:11:40Z }
-occurrences: 2
-suggested_level: user           # classification proposed by gradus-learn
-suggested_enforcement: hook
-status: proposed                # open | proposed | promoted | dismissed
+```json
+{
+  "schema": "gradus/v1",
+  "id": "L-2026-11-19-001",
+  "created": "2026-11-19T10:12:00Z",
+  "kind": "correction",
+  "statement": "Do not commit without an explicit request.",
+  "evidence": [
+    { "session": "local", "excerpt": "please, don't commit on your own again", "at": "2026-11-19T10:11:40Z" }
+  ],
+  "occurrences": 2,
+  "suggested_level": "user",
+  "suggested_enforcement": "hook",
+  "status": "proposed"
+}
 ```
 
 Excerpts are redacted (§22) and kept local.
@@ -568,9 +581,9 @@ kind: exception                 # exception | break-glass
 post_review_due: null           # mandatory date for break-glass
 ```
 
-### 9.11 Reserved fields *(later)*
+### 9.11 Active Phase 2 and reserved Phase 3 fields
 
-`obligations`, `bindings`, `toolchain`, `models`, `adapters` are reserved top-level keys in `gradus.yaml` and `level.yaml` (§19–§21).
+`obligations`, `bindings`, and `toolchain` are active in `gradus/v1` (§19). `models` and `adapters` remain reserved top-level keys for Phase 3 (§20–§21) and emit informational notes when encountered.
 
 ---
 
@@ -790,11 +803,11 @@ Loading the pyramid at session start is not a skill: it is done by the compiled 
 
 **Drift.** Someone edits a generated file or a locked level → `verify` or the `SessionStart` hook reports it → `gradus-reconcile` explains the options → the CLI applies the chosen one.
 
-## 19. Obligations, bindings, adapters and toolchain **[Decided; Deferred to Phase 2]**
+## 19. Obligations, bindings, adapters and toolchain **[Decided; Specified]**
 
 - **Obligations** are declared by a level in abstract form, optionally with `allowed_providers`.
 - **Bindings** are declared by a lower level and say how the obligation is satisfied in a scope (Walden, spec-kit, an internal process).
-- **Adapters** inject the resolved view into the provider's files inside a managed section (e.g. `.walden/constitution.md`, `.specify/memory/constitution.md`), verify the provider's evidence (e.g. Walden's release check verdict), check required versions and detect direct edits to generated content. Official adapters are maintained by the project; custom ones are declarative manifests generated by `gradus-link`; community adapters can be contributed back.
+- **Adapters** inject the resolved view into the provider's files inside a managed `<!-- gradus:begin/end -->` section (e.g. `.walden/constitution.md`, `.specify/memory/constitution.md`), verify the provider's evidence (e.g. Walden's release check verdict), check required versions, and detect drift inside the managed section while preserving custom user content outside the markers (D-83). Official adapters are maintained by the project; custom ones are declarative manifests generated by `gradus-link`; community adapters can be contributed back.
 - **Toolchain**: a level may declare skills, tools, MCP servers and plugins as `required`, `recommended` or `forbidden`. Lower levels may add, never remove a `required` item or enable a `forbidden` one. Where possible the declaration is translated into native mechanisms (managed settings, organization-provisioned skills); elsewhere it is checked by the CLI.
 
 ```yaml
@@ -814,12 +827,12 @@ toolchain:
     - { type: mcp, id: "*-public-pastebin" }
 ```
 
-## 20. Other agents, chat agents and MCP **[Deferred]**
+## 20. Other agents, chat agents and MCP **[Partially Specified; Chat/MCP Deferred to Phase 3]**
 
-- **Other coding agents** after the MVP, in this order: Codex, GitHub Copilot, OpenCode (all already read AGENTS.md and SKILL.md, so level 1 works from the start). A compatibility matrix (agent × feature) is maintained and tested by the eval suite.
-- **Chat agents.** Skills packaged as ZIP files can be imported in chat products that support skills; on claude.ai, Team and Enterprise owners can provision skills organization-wide, and Enterprise can scope them to groups through plugins.
-- **MCP server** (`gradusctl serve --mcp`, on-premise or internal service with SSO): tools such as `resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, `get_toolchain`. In chat there are no git hooks or CI, so enforcement is weaker; the value is consistent, up-to-date rules beyond software development.
-- **Background and CI agents** (Phase 1): compiled project files are committed; a setup step runs `resolve` with service credentials; an **agent profile** defined by the team replaces the user level (e.g. "open draft pull requests only, never merge"); their pull requests pass the same CI checks; subagents inherit the resolved view.
+- **Other coding agents** (Phase 2): Codex, GitHub Copilot, and OpenCode targets compile `AGENTS.md`, native instructions, and skills. A compatibility matrix (`docs/compatibility-matrix.md`) tracks agent × feature support.
+- **Chat agents** (Phase 3): Skills packaged as ZIP files can be imported in chat products that support skills; on claude.ai, Team and Enterprise owners can provision skills organization-wide, and Enterprise can scope them to groups through plugins.
+- **MCP server** (Phase 3, `gradusctl serve --mcp`, on-premise or internal service with SSO): tools such as `resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, `get_toolchain`. In chat there are no git hooks or CI, so enforcement is weaker; the value is consistent, up-to-date rules beyond software development.
+- **Background and CI agents** (Specified, D-81): compiled project files are committed; `--agent-profile <dir>` (or `GRADUS_AGENT_PROFILE`) replaces the personal `user` level with a team-defined profile (e.g. "open draft pull requests only, never merge"); their pull requests pass the same CI checks; subagents inherit the resolved view.
 
 ## 21. Model policy **[Decided in principle; Deferred]**
 
@@ -864,14 +877,14 @@ Each phase adds capabilities without redoing earlier work: the personal pyramid 
 # gradus.yaml — personal use
 schema: gradus/v1
 levels:
-  - id: user
-    source: { path: ~/.gradus/levels/user }
   - id: project
     source: { path: .gradus/levels/project }
+  - id: user
+    source: { path: ~/.gradus/levels/user }
 targets: [claude-code, antigravity, agents-md]
 ```
 
-Note that in this minimal setup `user` is listed before `project`, so project rules are the more specific ones. Organizations usually place `user` last; both orders are valid and the invariant applies in either case.
+Per ADR 0001, `user` is always the most specific (lowest) level in the pyramid so that committed repository levels (`org`, `team`, `project`) never depend on or override rules that exist only in a developer's personal `~/.gradus/levels/user` directory, and CI can cleanly omit `user` without breaking override chains.
 
 ### 24.3 Phase 0 exit criteria **[Proposed — to be agreed with the author]**
 
@@ -1021,6 +1034,15 @@ IDs are stable across document versions; superseded decisions are marked.
 | D-72 | Integration with existing git hook managers; native hooks only as fallback with consent | Decided |
 | D-73 | Exit codes 0/1/2; an error is never a pass | Decided |
 | D-74 | Design document in English (canonical) with a non-normative Italian translation | Decided |
+| D-75 | Normative precedence: `spec/v1/schema/*.json` for formats, `gradus-design.md` + ADRs for semantics, `spec/v1/SPEC.md` as descriptive guide | Decided |
+| D-76 | Anti-tamper supports `ask` (default) and `deny` modes, protecting governance files, git hook configs (`lefthook*.yml`, `.pre-commit-config.yaml`, `.husky/**`), CI workflows, agent configs (`opencode.json`, `.codex/config.toml`), and hook-bypass flags/env vars (`--no-verify`, `core.hooksPath`, `HUSKY=0`, `LEFTHOOK=0`, `SKIP=...`) | Decided |
+| D-77 | Human-only governance commands (`exception approve`, `exception break-glass`, `conflicts dismiss`, `lessons update`, `hooks install`) are gated by anti-tamper | Decided |
+| D-78 | Exception `approvers` are checked locally against level policy and `max_duration` is validated at request time; PR review + `CODEOWNERS` on `.gradus/exceptions/` provides the authoritative identity boundary | Decided |
+| D-79 | `gradusctl resolve --update` permits intentional locked-ref upgrades on `source.ref` changes while still failing (exit `2`) on content tampering under an unchanged `ref` | Decided |
+| D-80 | `view_hash` excludes the personal `user` level and `lock_hash` so `gradus.lock` and compiled project markers stay invariant across developers | Decided |
+| D-81 | `--agent-profile` / `GRADUS_AGENT_PROFILE` substitutes a team-defined profile for the personal `user` level in background and CI agent runs | Decided |
+| D-82 | `gradusctl status --hook` (`SessionStart`) is non-blocking (always exits `0`) and emits a fast summary banner of lock, conflict, drift, and lesson counts | Decided |
+| D-83 | `gradusctl adapter verify` inspects only the managed `<!-- gradus:begin/end -->` block in provider files, preserving custom user sections outside the markers | Decided |
 
 ## 29. Glossary (English – Italian)
 

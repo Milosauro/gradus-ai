@@ -20,16 +20,20 @@ var protectedGovernanceGlobs = []string{
 	".pre-commit-config.yaml",
 	"lefthook.yml",
 	".lefthook.yml",
+	"lefthook-local.yml",
+	".lefthook-local.yml",
 	".husky/**",
 	".github/workflows/**",
 	"opencode.json",
 	".codex/config.toml",
 }
 
-var protectedShellTargetsRe = regexp.MustCompile(`(?i)(?:^|[\s"'=/\\><|;&])(?:gradus(?:\.yaml|\.lock|\.[a-z0-9*?\[\]]+)|\.gradus(?:[/\\*?\s"']|$)|\.walden(?:[/\\*?\s"']|$)|\.agents[/\\]hooks\.json|\.claude[/\\]settings(?:\.local)?\.json|\.git[/\\]hooks(?:[/\\\s"']|$)|\.githooks(?:[/\\\s"']|$)|\.pre-commit-config\.yaml|\.?lefthook\.yml|\.husky(?:[/\\\s"']|$)|\.github[/\\]workflows(?:[/\\\s"']|$)|opencode\.json|\.codex[/\\]config\.toml)`)
+var protectedShellTargetsRe = regexp.MustCompile(`(?i)(?:^|[\s"'=/\\><|;&])(?:gradus(?:\.yaml|\.lock|\.[a-z0-9*?\[\]]+)|\.gradus(?:[/\\*?\s"']|$)|\.walden(?:[/\\*?\s"']|$)|\.agents[/\\]hooks\.json|\.claude[/\\]settings(?:\.local)?\.json|\.git[/\\]hooks(?:[/\\\s"']|$)|\.githooks(?:[/\\\s"']|$)|\.pre-commit-config\.yaml|\.?lefthook(?:-local)?\.yml|\.husky(?:[/\\\s"']|$)|\.github[/\\]workflows(?:[/\\\s"']|$)|opencode\.json|\.codex[/\\]config\.toml)`)
 var mutatingShellVerbRe = regexp.MustCompile(`(?i)(?:\b(?:rm|mv|cp|sed|awk|perl|python3?|ruby|tee|truncate|chmod|chown|touch|dd|ln|unlink|install|del|erase|ren|rename|move|copy|remove-item|set-content|add-content|out-file|clear-content)\b|\bfind\b[^\n]*-delete\b|\bgit\s+(?:rm|mv|checkout|restore|reset)\b|>{1,2})`)
-var gitHooksPathConfigRe = regexp.MustCompile(`(?i)\bgit\b[^\n]*\bconfig\b[^\n]*\bcore\.hooksPath\b`)
+var gitHooksPathConfigRe = regexp.MustCompile(`(?i)\bgit\b[^\n]*(?:\bconfig\b[^\n]*\bcore\.hooksPath\b|\s-c\s+["']?core\.hooksPath=)`)
 var gitCommitNoVerifyRe = regexp.MustCompile(`(?i)\bgit\b[^\n]*\bcommit\b[^\n]*(?:--no-verify\b|(?:^|\s)-n(?:\s|$))`)
+var gitPushNoVerifyRe = regexp.MustCompile(`(?i)\bgit\b[^\n]*\bpush\b[^\n]*--no-verify\b`)
+var hookBypassEnvRe = regexp.MustCompile(`(?:^|[\s;&|])(?:HUSKY=0|LEFTHOOK=0|SKIP=[^\s;&|]+)`)
 var humanOnlyGradusCmdRe = regexp.MustCompile(`(?i)\bgradusctl\b[^\n]*(?:\bexception\s+(?:approve|break-glass)\b|\bconflicts\s+dismiss\b|\blessons\s+update\b|\bhooks\s+install\b)`)
 
 // IsProtectedGovernancePath reports whether relPath targets a Gradus/Walden governance
@@ -64,8 +68,11 @@ func AntiTamperShellReason(command string) (bool, string) {
 	if humanOnlyGradusCmdRe.MatchString(command) {
 		return true, "anti-tamper: human-only governance command requires explicit human confirmation"
 	}
-	if gitCommitNoVerifyRe.MatchString(command) {
-		return true, "anti-tamper: git commit --no-verify/-n bypasses git hooks and requires explicit human confirmation"
+	if gitCommitNoVerifyRe.MatchString(command) || gitPushNoVerifyRe.MatchString(command) {
+		return true, "anti-tamper: git --no-verify bypasses git hooks and requires explicit human confirmation"
+	}
+	if hookBypassEnvRe.MatchString(command) {
+		return true, "anti-tamper: hook-bypass environment variable (HUSKY=0/LEFTHOOK=0/SKIP) requires explicit human confirmation"
 	}
 	if gitHooksPathConfigRe.MatchString(command) || (protectedShellTargetsRe.MatchString(command) && mutatingShellVerbRe.MatchString(command)) {
 		return true, "anti-tamper: shell command targets protected governance path and requires explicit human confirmation"
