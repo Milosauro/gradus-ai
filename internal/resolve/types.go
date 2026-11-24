@@ -78,6 +78,7 @@ type OverlaySummary struct {
 	ID       string `json:"id"`
 	Strength string `json:"strength"`
 	Active   bool   `json:"active"`
+	Reason   string `json:"reason,omitempty"`
 }
 
 // RuleProvenance records the source file and hash of a resolved rule (§9.7).

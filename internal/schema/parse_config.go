@@ -127,7 +127,14 @@ var levelFieldSpec = FieldSpec{
 				"allowed_overlays": {},
 			},
 		},
-		"activation_rules": {},
+		"activation_rules": {
+			IsSeq: true,
+			Allowed: map[string]FieldSpec{
+				"overlay":  {},
+				"when":     {},
+				"required": {},
+			},
+		},
 		"exceptions": {
 			Allowed: map[string]FieldSpec{
 				"max_duration": {},
@@ -150,6 +157,7 @@ var overlayFieldSpec = FieldSpec{
 		"owners":     {},
 		"approvers":  {},
 		"activation": {},
+		"when":       {},
 	},
 }
 

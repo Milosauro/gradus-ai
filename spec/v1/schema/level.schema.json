@@ -46,7 +46,19 @@
         "allowed_overlays": { "type": "array", "items": { "type": "string" } }
       }
     },
-    "activation_rules": { "type": "array" },
+    "activation_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["overlay", "when"],
+        "additionalProperties": true,
+        "properties": {
+          "overlay": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+          "when": { "type": "object", "minProperties": 1, "additionalProperties": true },
+          "required": { "type": "boolean" }
+        }
+      }
+    },
     "exceptions": {
       "type": "object",
       "properties": {
