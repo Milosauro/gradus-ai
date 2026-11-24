@@ -106,6 +106,7 @@ type ResolvedRule struct {
 	Status           string                `json:"status,omitempty"`
 	ReviewBy         string                `json:"review_by,omitempty"`
 	Expires          string                `json:"expires,omitempty"`
+	Controls         []string              `json:"controls,omitempty"`
 	Waived           bool                  `json:"waived,omitempty"`
 	WaiverIDs        []string              `json:"waiver_ids,omitempty"`
 	Provenance       RuleProvenance        `json:"provenance"`

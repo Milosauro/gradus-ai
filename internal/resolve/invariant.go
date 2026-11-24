@@ -59,6 +59,11 @@ func MergeAndCheckRules(orderedRules []ResolvedRule, levelMeta map[string]LevelM
 				conflicts = append(conflicts, invConflicts...)
 			}
 
+			// Inherit parent compliance controls monotonically (X-02).
+			if len(target.Controls) > 0 {
+				r.Controls = mergeControls(target.Controls, r.Controls)
+			}
+
 			// D-56: Between two active overlays overriding the same ID, keep the more restrictive structural rule.
 			if r.IsOverlay {
 				if prevOv, dupOv := overlayOverrides[targetID]; dupOv {
@@ -100,6 +105,20 @@ func MergeAndCheckRules(orderedRules []ResolvedRule, levelMeta map[string]LevelM
 		out = append(out, byID[id])
 	}
 	return out, conflicts, nil
+}
+
+func mergeControls(parent, child []string) []string {
+	seen := make(map[string]bool, len(parent)+len(child))
+	out := make([]string, 0, len(parent)+len(child))
+	for _, c := range append(append([]string{}, parent...), child...) {
+		trimmed := strings.TrimSpace(c)
+		if trimmed == "" || seen[trimmed] {
+			continue
+		}
+		seen[trimmed] = true
+		out = append(out, trimmed)
+	}
+	return out
 }
 
 // CheckRestrictionInvariant verifies that child does not relax parent unless parent is overridable (P2).
