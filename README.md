@@ -6,7 +6,7 @@
 
 **Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-[![Status: Phase 2 Business Unit v0.3.1](https://img.shields.io/badge/status-Phase%202%20Business%20Unit%20v0.3.1-brightgreen?style=flat-square)](docs/design/gradus-design.md)
+[![Status: Phase 2 Business Unit v0.3.2](https://img.shields.io/badge/status-Phase%202%20Business%20Unit%20v0.3.2-brightgreen?style=flat-square)](docs/design/gradus-design.md)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Targets: Claude Code · Antigravity · Codex · Copilot · OpenCode](https://img.shields.io/badge/targets-Claude%20Code%20·%20Antigravity%20·%20Codex%20·%20Copilot%20·%20OpenCode-555?style=flat-square)](#which-agents)
 
@@ -15,14 +15,14 @@
 </div>
 
 > [!NOTE]
-> **Phase 2 Business Unit (`v0.3.1`) is available.** Install `gradusctl` as a single static binary and govern repositories across Claude Code, Antigravity, Codex, GitHub Copilot, and OpenCode with locked/signed remote levels, obligations and bindings (`walden`, `spec-kit`), declared toolchains, charters, overlays, exceptions/break-glass, `doctor`, `changelog`, rule tests, historical impact simulation, CI GitHub Action, and onboarding handbooks. The full design lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+> **Phase 2 Business Unit (`v0.3.2`) is available.** Install `gradusctl` as a single static binary and govern repositories across Claude Code, Antigravity, Codex, GitHub Copilot, and OpenCode with locked/signed remote levels, obligations and bindings (`walden`, `spec-kit`), declared toolchains, charters, overlays, exceptions/break-glass, `doctor`, `changelog`, rule tests, historical impact simulation, CI GitHub Action, and onboarding handbooks. The living design specification (Design 1.1) lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
 
 ## Quick Start (Personal Setup)
 
 Install `gradusctl` with Go (or download a signed binary from [GitHub Releases](https://github.com/Milosauro/gradus-ai/releases)) and ensure `gradusctl` is on your `PATH` (agent `PreToolUse` and `SessionStart` hooks invoke `gradusctl` by name):
 
 ```bash
-go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.3.1
+go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.3.2
 ```
 
 Initialize Gradus in your repository, resolve your pyramid, compile target agent instructions/hooks/skills, and verify integrity:
@@ -219,7 +219,13 @@ The first targets are **Claude Code** and **Antigravity**, with full in-session 
 | **2 · Business unit** | Locked remote levels across teams | Obligations, bindings to Walden and spec-kit, toolchain, readable changelogs |
 | **3 · Organization** | Company-wide policies | Conditional overlays, framework mapping, model policy, chat agents and MCP |
 
-**Today:** Phase 2 ("Business unit", `v0.3.1`) is implemented across features `F1`–`F21`, with signed static binaries, locked/signed remote levels (`resolve --update`, `changelog`), obligations & bindings (`walden`, `spec-kit`), declared toolchain governance (`toolchain check`), multi-target compilation (`claude`, `antigravity`, `agents`, `codex`, `copilot`, `opencode`), and hardened anti-tamper and exception approver enforcement. Live session and CLI workflows are validated on **Claude Code** and **Antigravity**; Codex, GitHub Copilot, and OpenCode targets are verified via automated tests and sandboxed CLI runs.
+**Today:** Phase 2 ("Business unit", `v0.3.2`) is implemented across features `F1`–`F22`, with signed static binaries, locked/signed remote levels (`resolve --update`, `changelog`), obligations & bindings (`walden`, `spec-kit`), declared toolchain governance (`toolchain check`), multi-target compilation (`claude`, `antigravity`, `agents`, `codex`, `copilot`, `opencode`), and hardened anti-tamper and exception validation.
+
+**Validation status (transparent):**
+- **Validated live on real repositories** (`gradus-ai` dogfooding + `wallet-tracker` trials): `SessionStart` hooks, `PreToolUse` guards, `resolve`/`compile`/`verify`/`doctor`/`check`/`test`, `changelog`, `adapter`, and `toolchain` CLI workflows on **Claude Code** and **Antigravity**.
+- **Validated via automated Go tests and sandboxed CLI runs only (not yet live-tested inside their IDEs):** **Codex**, **GitHub Copilot**, and **OpenCode** compiled outputs, and the published benchmark suite (`evals/benchmark`) remains deterministic/offline rather than a live multi-model LLM benchmark.
+- **Security boundaries to keep in mind:** `gradusctl exception approve --by <approver>` validates `<approver>` against the level's `approvers`/`owners` list, but `--by` is self-declared locally — authoritative identity verification comes from pull-request review and `CODEOWNERS` on `.gradus/exceptions/`. Similarly, `gradusctl adapter verify` inspects only the managed `<!-- gradus:begin/end -->` section of provider files so user-authored sections outside the markers are preserved.
+- **Upgrading from `v0.3.0` to `v0.3.1+`:** Because `view_hash` now excludes the personal `user` level (D-80), run `gradusctl resolve --write && gradusctl compile` once after upgrading to refresh `gradus.lock` and compiled markers.
 
 ## CLI interface
 

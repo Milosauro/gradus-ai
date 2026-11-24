@@ -224,3 +224,24 @@ func TestReconcileState(t *testing.T) {
 		t.Fatalf("unexpected destination path: %q", destRel)
 	}
 }
+
+func TestRedactionGapsV032(t *testing.T) {
+	// Unspaced 10-digit Italian mobile number
+	phoneOut := state.RedactText("Call me at 3331234567 before release.")
+	if strings.Contains(phoneOut, "3331234567") || !strings.Contains(phoneOut, "[REDACTED]") {
+		t.Fatalf("expected unspaced mobile number to be redacted, got %q", phoneOut)
+	}
+
+	// Benign non-mobile number (e.g. timestamp) should not be redacted
+	tsOut := state.RedactText("Timestamp 1732450000 recorded.")
+	if !strings.Contains(tsOut, "1732450000") {
+		t.Fatalf("expected unix timestamp not to be redacted, got %q", tsOut)
+	}
+
+	// Truncated PEM private key without END footer
+	truncPEM := "Leaked key:\n-----BEGIN RSA PRIVATE KEY-----\nMIIEpAIBAAKCAQEA7V5x..."
+	pemOut := state.RedactText(truncPEM)
+	if strings.Contains(pemOut, "MIIEpAIBAAKCAQEA") || !strings.Contains(pemOut, "[REDACTED]") {
+		t.Fatalf("expected truncated PEM private key to be redacted, got %q", pemOut)
+	}
+}

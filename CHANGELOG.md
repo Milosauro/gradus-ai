@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-11-24
+
+### Fixed
+- **Non-Go GitHub Action support (`F22`):** Point `.github/actions/gradus/action.yml` `setup-go` to `${{ github.action_path }}/../../../go.mod` instead of the consumer repository's `go.mod`, and add a `test-action-non-go` CI job exercising the composite action against a Python repository without `go.mod`.
+- **Residual git-hook anti-tamper bypasses (`F22`):** Block/prompt `git -c core.hooksPath=...`, `git push --no-verify`, hook-disabling env vars (`HUSKY=0`, `LEFTHOOK=0`, `SKIP=...`), and writes to `lefthook-local.yml` / `.lefthook-local.yml`.
+- **Early exception duration validation (`F22`):** Reject `gradusctl exception request` with exit code `2` when `--expires` exceeds the owning level's `exceptions.max_duration` instead of waiting until post-approval `verify`.
+- **Check engine binary & large-file handling (`F22`):** Skip NUL-byte binary files cleanly, raise the built-in pattern scanner buffer to 4 MiB for large/minified files, and add edge-case tests in `internal/check` covering binary files, large lines, complex globs, and exit-2 external checkers.
+- **Redaction gaps (`F22`):** Redact unspaced 10-digit Italian mobile numbers (`3331234567`) and truncated PEM private key blocks without a closing `-----END ...-----` footer in `internal/state/redact.go`.
+
+### Changed & Documentation
+- **Maintenance & dogfooding (`F22`):** Migrate `gopkg.in/yaml.v3` to `go.yaml.in/yaml/v3`, upgrade pinned GitHub Actions SHAs across workflows and the composite action to current Node-24-ready releases, and promote `PRJ-CI-001` from `prompt` to a deterministic `check` rule with `Compliant` / `Non-compliant` examples.
+- **Design 1.1 & Specification Precedence (`F22`):** Update `docs/design/gradus-design.md` to Version `1.1` (removing `"Implementation has not started"`, aligning with ADR 0001, ADR 0004, JSON lessons in §9.8, active Phase 2 sections §9.11/§19, and adding decisions `D-75`–`D-83`), align `spec/v1/SPEC.md` with the normative precedence rule, add `docs/plan/phase-2-plan.md`, and clarify validation scope, `--by` + `CODEOWNERS`, `adapter verify` managed-block scope, and `v0.3.0` → `v0.3.1+` upgrade notes in `README.md`.
+
 ## [0.3.1] - 2026-11-23
 
 ### Security & Hardening

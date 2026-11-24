@@ -5,7 +5,7 @@ go 1.27.4
 require (
 	github.com/bmatcuk/doublestar/v4 v4.8.1
 	github.com/spf13/cobra v1.10.2
-	gopkg.in/yaml.v3 v3.0.1
+	go.yaml.in/yaml/v3 v3.0.6
 )
 
 require (

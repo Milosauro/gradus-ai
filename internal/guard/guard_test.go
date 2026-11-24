@@ -440,3 +440,41 @@ func TestAntiTamperHardeningV031(t *testing.T) {
 		}
 	}
 }
+
+func TestAntiTamperHardeningV032(t *testing.T) {
+	// R1.AC1: residual git hook bypasses
+	cmds := []string{
+		`git -c core.hooksPath=/dev/null commit -m "bypass"`,
+		`git -c "core.hooksPath=/tmp/empty" commit -m "bypass"`,
+		`git push --no-verify origin main`,
+		`HUSKY=0 git commit -m "bypass"`,
+		`LEFTHOOK=0 git commit -m "bypass"`,
+		`SKIP=gradus-verify,gradus-check git commit -m "bypass"`,
+	}
+	for _, cmd := range cmds {
+		res, err := guard.EvaluateWithOptions(guard.NormalizedAction{
+			Action: guard.ActionCommand,
+			Target: cmd,
+		}, nil, guard.EvaluateOptions{AntiTamperMode: guard.DecisionDeny})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.AntiTamper || res.Decision != guard.DecisionDeny {
+			t.Fatalf("expected anti_tamper deny for %q, got %+v", cmd, res)
+		}
+	}
+
+	// R1.AC2: lefthook-local.yml / .lefthook-local.yml writes
+	for _, path := range []string{"lefthook-local.yml", ".lefthook-local.yml"} {
+		res, err := guard.Evaluate(guard.NormalizedAction{
+			Action: guard.ActionWrite,
+			Target: path,
+		}, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.AntiTamper || res.Decision != guard.DecisionAsk {
+			t.Fatalf("expected anti_tamper ask on write to %q, got %+v", path, res)
+		}
+	}
+}

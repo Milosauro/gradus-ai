@@ -66,11 +66,12 @@ Team rule.
 	var stdout, stderr bytes.Buffer
 
 	// 1. Request pending exception.
+	reqExpires := time.Now().UTC().AddDate(0, 0, 14).Format("2006-01-02")
 	if code := cli.ExecuteCode([]string{
 		"exception", "request",
 		"--rule", "TEAM-01",
 		"--reason", "Legacy migration",
-		"--expires", "2099-01-10",
+		"--expires", reqExpires,
 		"--dir", tmp,
 		"--json",
 	}, &stdout, &stderr); code != cli.ExitPass {

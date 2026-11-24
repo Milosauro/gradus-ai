@@ -44,6 +44,9 @@ func newExceptionRequestCmd(jsonOutput *bool) *cobra.Command {
 				return &ExitErrorWithCode{Code: ExitError, Err: fmt.Errorf("invalid --expires date %q (expected YYYY-MM-DD)", expires)}
 			}
 			now := time.Now().UTC()
+			if err := validateExceptionDuration(dir, ruleID, expires, now); err != nil {
+				return &ExitErrorWithCode{Code: ExitError, Err: err}
+			}
 			rec := state.ExceptionRecord{
 				Schema:     schema.SchemaVersion,
 				ID:         state.NewExceptionID("exception", now),
@@ -147,6 +150,9 @@ func newExceptionBreakGlassCmd(jsonOutput *bool) *cobra.Command {
 			}
 
 			now := time.Now().UTC()
+			if err := validateExceptionDuration(dir, ruleID, expires, now); err != nil {
+				return &ExitErrorWithCode{Code: ExitError, Err: err}
+			}
 			rec := state.ExceptionRecord{
 				Schema:        schema.SchemaVersion,
 				ID:            state.NewExceptionID("break-glass", now),
@@ -370,6 +376,80 @@ func validateExceptionApprover(rootDir, exceptionID, approver string) error {
 
 	if len(allowed) > 0 && !allowed[trimmed] {
 		return fmt.Errorf("approver %q is not authorized to approve exceptions for level %q", approver, targetLevel)
+	}
+	return nil
+}
+
+func validateExceptionDuration(rootDir, ruleID, expires string, now time.Time) error {
+	expTime, err := time.Parse("2006-01-02", strings.TrimSpace(expires))
+	if err != nil {
+		return fmt.Errorf("invalid --expires date %q (expected YYYY-MM-DD)", expires)
+	}
+	createdDay, _ := time.Parse("2006-01-02", now.UTC().Format("2006-01-02"))
+	if expTime.Before(createdDay) {
+		return fmt.Errorf("--expires date %q cannot be in the past", expires)
+	}
+
+	var targetLevel string
+	if res, rerr := resolve.Resolve(rootDir, resolve.Options{OfflineOnly: true, IncludeDraft: true}); rerr == nil {
+		for _, r := range append(res.View.Rules, res.View.InactiveRules...) {
+			if r.ID == ruleID {
+				targetLevel = r.Level
+				break
+			}
+		}
+	} else if pyramid, perr := schema.LoadLocalPyramid(rootDir); perr == nil {
+		for _, r := range pyramid.Rules {
+			if r.ID == ruleID {
+				targetLevel = r.Level
+				break
+			}
+		}
+	}
+	if targetLevel == "" {
+		return nil
+	}
+
+	cfgBytes, err := os.ReadFile(filepath.Join(rootDir, "gradus.yaml"))
+	if err != nil {
+		return nil
+	}
+	cfgRes, err := schema.ParsePyramidConfig(cfgBytes)
+	if err != nil {
+		return nil
+	}
+	for _, lvl := range cfgRes.Value.Levels {
+		if lvl.ID != targetLevel {
+			continue
+		}
+		var lvlDir string
+		if lvl.Source.Path != "" {
+			if filepath.IsAbs(lvl.Source.Path) {
+				lvlDir = lvl.Source.Path
+			} else {
+				lvlDir = filepath.Join(rootDir, filepath.FromSlash(lvl.Source.Path))
+			}
+		} else if lvl.Source.Git != "" {
+			lvlDir = filepath.Join(rootDir, ".gradus", "cache", lvl.ID, "repo")
+		}
+		if lvlDir == "" {
+			continue
+		}
+		lvlBytes, readErr := os.ReadFile(filepath.Join(lvlDir, "level.yaml"))
+		if readErr != nil {
+			continue
+		}
+		lcRes, parseErr := schema.ParseLevelConfig(lvlBytes)
+		if parseErr != nil || lcRes.Value.Exceptions == nil || strings.TrimSpace(lcRes.Value.Exceptions.MaxDuration) == "" {
+			continue
+		}
+		maxDur, durErr := resolve.ParseDurationSpan(lcRes.Value.Exceptions.MaxDuration)
+		if durErr != nil {
+			continue
+		}
+		if expTime.Sub(createdDay) > maxDur {
+			return fmt.Errorf("requested exception duration (%s) exceeds level %q maximum allowed duration (%s)", expires, targetLevel, lcRes.Value.Exceptions.MaxDuration)
+		}
 	}
 	return nil
 }
