@@ -122,6 +122,14 @@ func ValidateLevelConfig(cfg *LevelConfig) error {
 	if err := validateToolchainConfig("level.yaml", cfg.Toolchain); err != nil {
 		return err
 	}
+	for i, ar := range cfg.ActivationRules {
+		if !levelIDPattern.MatchString(ar.Overlay) {
+			return fmt.Errorf("level.yaml: activation_rules[%d].overlay %q must match ^[a-z][a-z0-9-]*$", i, ar.Overlay)
+		}
+		if len(ar.When) == 0 {
+			return fmt.Errorf("level.yaml: activation_rules[%d].when must declare at least one profile predicate", i)
+		}
+	}
 	return nil
 }
 

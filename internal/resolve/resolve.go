@@ -239,6 +239,19 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 		})
 	}
 
+	// Collect level-declared activation_rules in pyramid order.
+	var activationRules []LevelActivationRule
+	for _, step := range levelSteps {
+		if step.LevelConfig != nil {
+			for _, ar := range step.LevelConfig.ActivationRules {
+				activationRules = append(activationRules, LevelActivationRule{
+					LevelID: step.ID,
+					Rule:    ar,
+				})
+			}
+		}
+	}
+
 	// Resolve overlays.
 	for _, ov := range cfg.Overlays {
 		var lockEntry *lock.Entry
@@ -257,6 +270,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 			continue
 		}
 
+		var ovCfg *schema.OverlayConfig
 		ovYAMLPath := filepath.Join(resSrc.Dir, "overlay.yaml")
 		if ovBytes, err := os.ReadFile(ovYAMLPath); err == nil {
 			parsed, parseErr := schema.ParseOverlayConfig(ovBytes)
@@ -264,13 +278,15 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 				return out, fmt.Errorf("overlay %q (%s): %w", ov.ID, ovYAMLPath, parseErr)
 			}
 			notes = append(notes, parsed.Notes...)
+			ovCfg = &parsed.Value
 		}
 
-		active := ov.Activation == "" || ov.Activation == "always" || ov.Activation == "explicit"
+		active, reason := EvaluateOverlayActivation(ov, ovCfg, cfg.Profile, activationRules)
 		overlaySummaries = append(overlaySummaries, OverlaySummary{
 			ID:       ov.ID,
 			Strength: ov.Strength,
 			Active:   active,
+			Reason:   reason,
 		})
 
 		lockEntries = append(lockEntries, lock.Entry{
@@ -295,6 +311,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 
 	var conflicts []Conflict
 	conflicts = append(conflicts, CheckInheritedConstraints(cfg, levelConfigs)...)
+	conflicts = append(conflicts, CheckMandatoryOverlays(cfg.Profile, activationRules, overlaySummaries)...)
 
 	orderedSteps, ordConflicts := OrderPyramidSteps(levelSteps, overlaySteps)
 	conflicts = append(conflicts, ordConflicts...)

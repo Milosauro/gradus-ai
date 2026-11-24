@@ -69,7 +69,7 @@
           "id": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
           "source": { "type": "object" },
           "strength": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
-          "activation": { "type": "string", "enum": ["always", "profile"] }
+          "activation": { "type": "string", "enum": ["always", "explicit", "disabled", "profile"] }
         }
       }
     },

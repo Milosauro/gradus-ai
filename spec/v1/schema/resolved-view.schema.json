@@ -19,7 +19,20 @@
       }
     },
     "levels": { "type": "array" },
-    "overlays": { "type": "array" },
+    "overlays": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "strength", "active"],
+        "additionalProperties": true,
+        "properties": {
+          "id": { "type": "string" },
+          "strength": { "type": "string" },
+          "active": { "type": "boolean" },
+          "reason": { "type": "string" }
+        }
+      }
+    },
     "profile": { "type": "object" },
     "rules": { "type": "array" },
     "inactive_rules": { "type": "array" },

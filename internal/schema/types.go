@@ -1,7 +1,9 @@
 package schema
 
 import (
+	"encoding/json"
 	"fmt"
+	"strings"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -100,12 +102,152 @@ type OverlayRef struct {
 	Activation string    `yaml:"activation,omitempty" json:"activation,omitempty"`
 }
 
-// Profile declares project applicability facts for conditional overlays.
+// Profile declares project applicability facts for conditional overlays (D-62).
 type Profile struct {
-	Data     string   `yaml:"data,omitempty" json:"data,omitempty"`
-	Exposure string   `yaml:"exposure,omitempty" json:"exposure,omitempty"`
-	Domain   []string `yaml:"domain,omitempty" json:"domain,omitempty"`
-	Client   []string `yaml:"client,omitempty" json:"client,omitempty"`
+	Data     string         `yaml:"data,omitempty" json:"data,omitempty"`
+	Exposure string         `yaml:"exposure,omitempty" json:"exposure,omitempty"`
+	Domain   []string       `yaml:"domain,omitempty" json:"domain,omitempty"`
+	Client   []string       `yaml:"client,omitempty" json:"client,omitempty"`
+	Extra    map[string]any `yaml:",inline" json:"-"`
+}
+
+// MarshalJSON flattens standard and custom Extra fields into a single JSON object.
+func (p Profile) MarshalJSON() ([]byte, error) {
+	m := make(map[string]any, len(p.Extra)+4)
+	for k, v := range p.Extra {
+		m[k] = v
+	}
+	if p.Data != "" {
+		m["data"] = p.Data
+	}
+	if p.Exposure != "" {
+		m["exposure"] = p.Exposure
+	}
+	if len(p.Domain) > 0 {
+		m["domain"] = p.Domain
+	}
+	if len(p.Client) > 0 {
+		m["client"] = p.Client
+	}
+	return json.Marshal(m)
+}
+
+// UnmarshalJSON decodes standard fields and preserves unknown keys in Extra.
+func (p *Profile) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+	p.Extra = nil
+	for k, v := range raw {
+		switch k {
+		case "data":
+			if err := json.Unmarshal(v, &p.Data); err != nil {
+				return err
+			}
+		case "exposure":
+			if err := json.Unmarshal(v, &p.Exposure); err != nil {
+				return err
+			}
+		case "domain":
+			if err := json.Unmarshal(v, &p.Domain); err != nil {
+				return err
+			}
+		case "client":
+			if err := json.Unmarshal(v, &p.Client); err != nil {
+				return err
+			}
+		default:
+			var val any
+			if err := json.Unmarshal(v, &val); err != nil {
+				return err
+			}
+			if p.Extra == nil {
+				p.Extra = make(map[string]any)
+			}
+			p.Extra[k] = val
+		}
+	}
+	return nil
+}
+
+// Lookup returns normalized string values for a standard or custom profile attribute.
+func (p *Profile) Lookup(key string) ([]string, bool) {
+	if p == nil {
+		return nil, false
+	}
+	switch strings.ToLower(strings.TrimSpace(key)) {
+	case "data":
+		if strings.TrimSpace(p.Data) == "" {
+			return nil, false
+		}
+		return []string{strings.TrimSpace(p.Data)}, true
+	case "exposure":
+		if strings.TrimSpace(p.Exposure) == "" {
+			return nil, false
+		}
+		return []string{strings.TrimSpace(p.Exposure)}, true
+	case "domain":
+		if len(p.Domain) == 0 {
+			return nil, false
+		}
+		return p.Domain, true
+	case "client":
+		if len(p.Client) == 0 {
+			return nil, false
+		}
+		return p.Client, true
+	}
+	for k, v := range p.Extra {
+		if strings.EqualFold(strings.TrimSpace(k), strings.TrimSpace(key)) {
+			vals := NormalizeProfileValues(v)
+			if len(vals) == 0 {
+				return nil, false
+			}
+			return vals, true
+		}
+	}
+	return nil, false
+}
+
+// NormalizeProfileValues flattens scalar or slice values into trimmed string values.
+func NormalizeProfileValues(v any) []string {
+	if v == nil {
+		return nil
+	}
+	switch t := v.(type) {
+	case string:
+		if s := strings.TrimSpace(t); s != "" {
+			return []string{s}
+		}
+		return nil
+	case []string:
+		var out []string
+		for _, s := range t {
+			if trimmed := strings.TrimSpace(s); trimmed != "" {
+				out = append(out, trimmed)
+			}
+		}
+		return out
+	case []any:
+		var out []string
+		for _, item := range t {
+			out = append(out, NormalizeProfileValues(item)...)
+		}
+		return out
+	default:
+		if s := strings.TrimSpace(fmt.Sprintf("%v", t)); s != "" {
+			return []string{s}
+		}
+		return nil
+	}
+}
+
+// ActivationRule defines a profile-driven overlay activation rule in level.yaml (§9.3).
+type ActivationRule struct {
+	Overlay  string         `yaml:"overlay" json:"overlay"`
+	When     map[string]any `yaml:"when" json:"when"`
+	Required bool           `yaml:"required,omitempty" json:"required,omitempty"`
 }
 
 // HooksConfig configures git hook manager integration.
@@ -144,7 +286,7 @@ type LevelConfig struct {
 	Charter         *Charter         `yaml:"charter,omitempty" json:"charter,omitempty"`
 	ContextBudget   *ContextBudget   `yaml:"context_budget,omitempty" json:"context_budget,omitempty"`
 	Constraints     *Constraints     `yaml:"constraints,omitempty" json:"constraints,omitempty"`
-	ActivationRules []any            `yaml:"activation_rules,omitempty" json:"activation_rules,omitempty"`
+	ActivationRules []ActivationRule `yaml:"activation_rules,omitempty" json:"activation_rules,omitempty"`
 	Exceptions      *ExceptionPolicy `yaml:"exceptions,omitempty" json:"exceptions,omitempty"`
 	Obligations     []Obligation     `yaml:"obligations,omitempty" json:"obligations,omitempty"`
 	Bindings        []Binding        `yaml:"bindings,omitempty" json:"bindings,omitempty"`
@@ -190,7 +332,8 @@ type OverlayConfig struct {
 	Strength   string   `yaml:"strength" json:"strength"`
 	Owners     []string `yaml:"owners,omitempty" json:"owners,omitempty"`
 	Approvers  []string `yaml:"approvers,omitempty" json:"approvers,omitempty"`
-	Activation string   `yaml:"activation,omitempty" json:"activation,omitempty"`
+	Activation string         `yaml:"activation,omitempty" json:"activation,omitempty"`
+	When       map[string]any `yaml:"when,omitempty" json:"when,omitempty"`
 }
 
 // OverridableSpec supports either a boolean or an object with override constraints (§9.4).
