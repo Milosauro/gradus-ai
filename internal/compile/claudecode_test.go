@@ -121,3 +121,43 @@ func TestClaudeCodeCompiler(t *testing.T) {
 		t.Fatalf("expected embedded skill extracted to .claude/skills/")
 	}
 }
+
+func TestClaudeCodeSkillModelInjection(t *testing.T) {
+	tmp := t.TempDir()
+	memFS := fstest.MapFS{
+		"gradus-review/SKILL.md": &fstest.MapFile{
+			Data: []byte("---\nname: gradus-review\ndescription: Review changes\n---\n\n# Review\n"),
+		},
+		"gradus-learn/SKILL.md": &fstest.MapFile{
+			Data: []byte("---\nname: gradus-learn\ndescription: Learn lessons\n---\n\n# Learn\n"),
+		},
+	}
+
+	view := resolve.ResolvedView{
+		Schema:   "gradus/v1",
+		ViewHash: "sha256:modeltest",
+		Levels:   []resolve.LevelSummary{{ID: "project", Hash: "sha256:l"}},
+		Models: &resolve.ResolvedModelPolicy{
+			Tiers: map[string]map[string]string{
+				"tier-high": {"claude-code": "opus"},
+			},
+			Operations: map[string]string{
+				"review": "tier-high",
+			},
+		},
+	}
+
+	planned, err := compile.PlanClaudeCode(tmp, view, memFS)
+	if err != nil {
+		t.Fatalf("PlanClaudeCode failed: %v", err)
+	}
+
+	reviewSkill := string(planned[".claude/skills/gradus-review/SKILL.md"])
+	if !strings.Contains(reviewSkill, "model: opus\n---") {
+		t.Fatalf("expected model: opus injected into gradus-review frontmatter, got:\n%s", reviewSkill)
+	}
+	learnSkill := string(planned[".claude/skills/gradus-learn/SKILL.md"])
+	if strings.Contains(learnSkill, "model:") {
+		t.Fatalf("expected gradus-learn without configured tier to omit model field, got:\n%s", learnSkill)
+	}
+}

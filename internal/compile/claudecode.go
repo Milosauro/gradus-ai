@@ -89,10 +89,44 @@ func PlanClaudeCode(rootDir string, view resolve.ResolvedView, skillsFS fs.FS) (
 		return nil, err
 	}
 	for k, v := range skillFiles {
+		if view.Models != nil && strings.HasSuffix(k, "/SKILL.md") {
+			skillName := filepath.Base(filepath.Dir(k))
+			if model := view.Models.ModelForSkill("claude-code", skillName); model != "" {
+				v = injectSkillFrontmatterModel(v, model)
+			}
+		}
 		files[k] = v
 	}
 
 	return files, nil
+}
+
+func injectSkillFrontmatterModel(raw []byte, model string) []byte {
+	text := strings.ReplaceAll(string(raw), "\r\n", "\n")
+	if !strings.HasPrefix(text, "---\n") {
+		return raw
+	}
+	rest := text[4:]
+	idx := strings.Index(rest, "\n---\n")
+	if idx < 0 {
+		return raw
+	}
+	fm := rest[:idx]
+	tail := rest[idx:]
+	var lines []string
+	replaced := false
+	for _, line := range strings.Split(fm, "\n") {
+		if strings.HasPrefix(strings.TrimSpace(line), "model:") {
+			lines = append(lines, "model: "+model)
+			replaced = true
+		} else {
+			lines = append(lines, line)
+		}
+	}
+	if !replaced {
+		lines = append(lines, "model: "+model)
+	}
+	return []byte("---\n" + strings.Join(lines, "\n") + tail)
 }
 
 func mergeClaudeSettings(settingsPath string, view resolve.ResolvedView) ([]byte, error) {

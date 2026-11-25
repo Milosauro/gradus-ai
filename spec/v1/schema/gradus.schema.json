@@ -154,6 +154,14 @@
         "recommended": { "type": "array" },
         "forbidden": { "type": "array" }
       }
+    },
+    "models": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "tiers": { "type": "object" },
+        "operations": { "type": "object" }
+      }
     }
   }
 }

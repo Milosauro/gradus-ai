@@ -39,7 +39,7 @@ type verifyReport struct {
 
 func newVerifyCmd(jsonOutput *bool) *cobra.Command {
 	var dir string
-	var writeEvidence bool
+	var writeEvidence, checkModelTier bool
 
 	cmd := &cobra.Command{
 		Use:   "verify",
@@ -48,7 +48,7 @@ func newVerifyCmd(jsonOutput *bool) *cobra.Command {
 			if dir == "" {
 				dir = "."
 			}
-			rep, exitCode, err := runVerify(dir, writeEvidence)
+			rep, exitCode, err := runVerify(dir, writeEvidence, checkModelTier)
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
@@ -94,10 +94,11 @@ func newVerifyCmd(jsonOutput *bool) *cobra.Command {
 
 	cmd.Flags().StringVar(&dir, "dir", ".", "Target repository directory")
 	cmd.Flags().BoolVar(&writeEvidence, "write-evidence", false, "Persist verification evidence to configured sinks")
+	cmd.Flags().BoolVar(&checkModelTier, "check-model-tier", false, "Verify local evidence records meet declared models.operations capability tiers")
 	return cmd
 }
 
-func runVerify(dir string, writeEvidence bool) (verifyReport, int, error) {
+func runVerify(dir string, writeEvidence, checkModelTier bool) (verifyReport, int, error) {
 	var rep verifyReport
 
 	cfgBytes, err := os.ReadFile(filepath.Join(dir, "gradus.yaml"))
@@ -131,9 +132,18 @@ func runVerify(dir string, writeEvidence bool) (verifyReport, int, error) {
 		}
 	}
 
+	conflicts := resolved.View.Conflicts
+	if checkModelTier && resolved.View.Models != nil {
+		tierConflicts, err := verifyEvidenceModelTiers(dir, resolved.View.Models)
+		if err != nil {
+			return rep, ExitError, err
+		}
+		conflicts = append(conflicts, tierConflicts...)
+	}
+
 	verdict := "pass"
 	exitCode := ExitPass
-	if len(resolved.View.Conflicts) > 0 || len(drift) > 0 || len(expired) > 0 {
+	if len(conflicts) > 0 || len(drift) > 0 || len(expired) > 0 {
 		verdict = "fail"
 		exitCode = ExitViolation
 	}
@@ -142,7 +152,7 @@ func runVerify(dir string, writeEvidence bool) (verifyReport, int, error) {
 		Verdict:           verdict,
 		ViewHash:          resolved.View.ViewHash,
 		LockHash:          resolved.View.LockHash,
-		Conflicts:         resolved.View.Conflicts,
+		Conflicts:         conflicts,
 		Drift:             drift,
 		ExpiredExceptions: expired,
 		Warnings:          resolved.View.Warnings,
@@ -180,6 +190,66 @@ func runVerify(dir string, writeEvidence bool) (verifyReport, int, error) {
 	}
 
 	return rep, exitCode, nil
+}
+
+func verifyEvidenceModelTiers(dir string, mp *resolve.ResolvedModelPolicy) ([]resolve.Conflict, error) {
+	if mp == nil || len(mp.Operations) == 0 {
+		return nil, nil
+	}
+	records, err := evidence.ListLocalRecords(dir)
+	if err != nil {
+		return nil, err
+	}
+	ops := make([]string, 0, len(mp.Operations))
+	for op := range mp.Operations {
+		ops = append(ops, op)
+	}
+	sort.Strings(ops)
+
+	var out []resolve.Conflict
+	for _, op := range ops {
+		reqTier := mp.Operations[op]
+		var latest *evidence.Record
+		for i := range records {
+			r := &records[i]
+			skillOp := ""
+			if r.Producer.Skill != nil {
+				skillOp = strings.TrimPrefix(strings.TrimSpace(*r.Producer.Skill), "gradus-")
+			}
+			if skillOp == op || r.Kind == op || (op == "conflicts" && r.Kind == "semantic-conflicts") {
+				latest = r
+				break
+			}
+		}
+		if latest == nil {
+			out = append(out, resolve.Conflict{
+				Kind:    "model_policy",
+				Target:  op,
+				Message: fmt.Sprintf("missing local evidence record for governed operation %q (requires %s)", op, reqTier),
+			})
+			continue
+		}
+		actualTier := ""
+		if latest.Producer.ModelTier != nil {
+			actualTier = strings.TrimSpace(*latest.Producer.ModelTier)
+		}
+		if actualTier == "" {
+			out = append(out, resolve.Conflict{
+				Kind:    "model_policy",
+				Target:  op,
+				Message: fmt.Sprintf("latest evidence %s for operation %q has no recorded model_tier (requires %s)", latest.ID, op, reqTier),
+			})
+			continue
+		}
+		if resolve.TierRank(actualTier) < resolve.TierRank(reqTier) {
+			out = append(out, resolve.Conflict{
+				Kind:    "model_policy",
+				Target:  op,
+				Message: fmt.Sprintf("latest evidence %s for operation %q used %s, below required %s", latest.ID, op, actualTier, reqTier),
+			})
+		}
+	}
+	return out, nil
 }
 
 func detectCompileDrift(rootDir string, plan map[string][]byte, targets []string) []DriftItem {

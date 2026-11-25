@@ -66,6 +66,13 @@ type PyramidConfig struct {
 	Obligations []Obligation      `yaml:"obligations,omitempty" json:"obligations,omitempty"`
 	Bindings    []Binding         `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 	Toolchain   *ToolchainConfig  `yaml:"toolchain,omitempty" json:"toolchain,omitempty"`
+	Models      *ModelPolicy      `yaml:"models,omitempty" json:"models,omitempty"`
+}
+
+// ModelPolicy configures capability tiers, per-agent model mappings, and per-operation requirements (§21).
+type ModelPolicy struct {
+	Tiers      map[string]map[string]string `yaml:"tiers,omitempty" json:"tiers,omitempty"`
+	Operations map[string]string            `yaml:"operations,omitempty" json:"operations,omitempty"`
 }
 
 // LevelRef references a pyramid level in gradus.yaml.
@@ -291,6 +298,7 @@ type LevelConfig struct {
 	Obligations     []Obligation     `yaml:"obligations,omitempty" json:"obligations,omitempty"`
 	Bindings        []Binding        `yaml:"bindings,omitempty" json:"bindings,omitempty"`
 	Toolchain       *ToolchainConfig `yaml:"toolchain,omitempty" json:"toolchain,omitempty"`
+	Models          *ModelPolicy     `yaml:"models,omitempty" json:"models,omitempty"`
 }
 
 // ContextBudget defines optional per-level context limits (X-07).

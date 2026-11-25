@@ -6,9 +6,8 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// ReservedTopLevelKeys lists gradus/v1 keys reserved for Phase 3+ (§9.11).
+// ReservedTopLevelKeys lists gradus/v1 keys reserved for future Phase 3+ features (§9.11).
 var ReservedTopLevelKeys = map[string]bool{
-	"models":   true,
 	"adapters": true,
 }
 
