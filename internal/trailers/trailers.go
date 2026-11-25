@@ -144,16 +144,20 @@ func VerifyCommit(rootDir, ref string, opts VerifyOptions) (VerifyReport, error)
 	}
 
 	expectedLockHash := ""
-	if b, err := os.ReadFile(filepath.Join(rootDir, "gradus.lock")); err == nil {
+	showCmd := exec.Command("git", "show", ref+":gradus.lock")
+	showCmd.Dir = rootDir
+	if lockAtRef, serr := showCmd.Output(); serr == nil {
+		expectedLockHash = lock.HashBytes(lockAtRef)
+	} else if b, err := os.ReadFile(filepath.Join(rootDir, "gradus.lock")); err == nil {
 		expectedLockHash = lock.HashBytes(b)
 	}
-	if opts.RequireLockHash {
-		gotLock, ok := parsed["Gradus-Lock-Hash"]
-		if !ok || gotLock == "" {
-			issues = append(issues, "missing required Gradus-Lock-Hash trailer")
-		} else if expectedLockHash != "" && gotLock != expectedLockHash {
-			issues = append(issues, fmt.Sprintf("Gradus-Lock-Hash %s does not match current gradus.lock (%s)", gotLock, expectedLockHash))
+
+	if gotLock, ok := parsed["Gradus-Lock-Hash"]; ok && gotLock != "" {
+		if expectedLockHash != "" && gotLock != expectedLockHash {
+			issues = append(issues, fmt.Sprintf("Gradus-Lock-Hash %s does not match gradus.lock (%s)", gotLock, expectedLockHash))
 		}
+	} else if opts.RequireLockHash {
+		issues = append(issues, "missing required Gradus-Lock-Hash trailer")
 	}
 
 	verdict := "pass"

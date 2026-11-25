@@ -347,7 +347,7 @@ func TestDesign11AndSpecAlignmentV032(t *testing.T) {
 	if strings.Contains(design, "Implementation has not started") {
 		t.Fatalf("Design 1.1 must not contain 'Implementation has not started'")
 	}
-	for _, want := range []string{"| Document version | 1.1 |", "### Normative precedence", "D-75", "D-83"} {
+	for _, want := range []string{"| Document version | 1.2 |", "### Normative precedence", "D-75", "D-83"} {
 		if !strings.Contains(design, want) {
 			t.Fatalf("Design 1.1 missing expected section/decision %q", want)
 		}
@@ -370,7 +370,7 @@ func TestDesign11AndSpecAlignmentV032(t *testing.T) {
 		t.Fatal(err)
 	}
 	readme := string(readmeBytes)
-	for _, want := range []string{"v0.4.0", "CODEOWNERS", "Validation status (transparent)", "gradus:begin/end"} {
+	for _, want := range []string{"v0.4.1", "CODEOWNERS", "Validation status (transparent)", "gradus:begin/end"} {
 		if !strings.Contains(readme, want) {
 			t.Fatalf("README.md missing expected transparency/security note %q", want)
 		}

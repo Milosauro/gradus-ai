@@ -6,7 +6,7 @@
 
 **Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-[![Status: Phase 3 Organization v0.4.0](https://img.shields.io/badge/status-Phase%203%20Organization%20v0.4.0-brightgreen?style=flat-square)](docs/design/gradus-design.md)
+[![Status: Phase 3 Organization v0.4.1](https://img.shields.io/badge/status-Phase%203%20Organization%20v0.4.1-brightgreen?style=flat-square)](docs/design/gradus-design.md)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Targets: Claude Code · Antigravity · Codex · Copilot · OpenCode · MCP](https://img.shields.io/badge/targets-Claude%20Code%20·%20Antigravity%20·%20Codex%20·%20Copilot%20·%20OpenCode%20·%20MCP-555?style=flat-square)](#which-agents)
 
@@ -15,14 +15,14 @@
 </div>
 
 > [!NOTE]
-> **Phase 3 Organization (`v0.4.0`) is available.** Install `gradusctl` as a single static binary and govern personal, team, business-unit, and organization repositories across Claude Code, Antigravity, Codex, GitHub Copilot, OpenCode, chat skill bundles, and MCP (`gradusctl serve --mcp`) — with conditional profile overlays, compliance framework mapping & audit export, model capability-tier policies, enterprise `managed-settings.json`, process maturity assessment (`gradusctl assess`), and optional commit attribution trailers. The living design specification (Design 1.1) lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+> **Phase 3 Organization (`v0.4.1`) is available.** Install `gradusctl` as a single static binary and govern personal, team, business-unit, and organization repositories across Claude Code, Antigravity, Codex, GitHub Copilot, OpenCode, chat skill bundles, and MCP (`gradusctl serve --mcp`) — with conditional profile overlays, compliance framework mapping & audit export, model capability-tier policies, enterprise `managed-settings.json`, process maturity assessment (`gradusctl assess`), and optional commit attribution trailers. The living design specification (Design 1.2) lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
 
 ## Quick Start (Personal Setup)
 
 Install `gradusctl` with Go (or download a signed binary from [GitHub Releases](https://github.com/Milosauro/gradus-ai/releases)) and ensure `gradusctl` is on your `PATH` (agent `PreToolUse` and `SessionStart` hooks invoke `gradusctl` by name):
 
 ```bash
-go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.4.0
+go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.4.1
 ```
 
 Initialize Gradus in your repository, resolve your pyramid, compile target agent instructions/hooks/skills, and verify integrity:
@@ -224,7 +224,7 @@ The first targets are **Claude Code** and **Antigravity**, with full in-session 
 **Validation status (transparent):**
 - **Validated live on real repositories** (`gradus-ai` dogfooding + `wallet-tracker` trials): `SessionStart` hooks, `PreToolUse` guards, `resolve`/`compile`/`verify`/`doctor`/`check`/`test`, `changelog`, `adapter`, and `toolchain` CLI workflows on **Claude Code** and **Antigravity**.
 - **Validated via automated Go tests and sandboxed CLI runs (not yet live-tested inside external IDEs/chat hosts):** **Codex**, **GitHub Copilot**, and **OpenCode** compiled outputs, Phase 3 enterprise features (`audit`, `models`, `--managed-settings`, `--chat-bundle`, `serve --mcp`, `assess`, `trailers`), and the deterministic offline benchmark suite (`evals/benchmark`).
-- **Security boundaries to keep in mind:** `gradusctl exception approve --by <approver>` validates `<approver>` against the level's `approvers`/`owners` list, but `--by` is self-declared locally — authoritative identity verification comes from pull-request review and `CODEOWNERS` on `.gradus/exceptions/`. Similarly, `gradusctl adapter verify` inspects only the managed `<!-- gradus:begin/end -->` section of provider files so user-authored sections outside the markers are preserved.
+- **Security boundaries to keep in mind:** `gradusctl exception approve --by <approver>` validates `<approver>` against the level's `approvers`/`owners` list, but `--by` is self-declared locally — authoritative identity verification comes from pull-request review and `CODEOWNERS` on `.gradus/exceptions/`. Similarly, `gradusctl evidence write --model-tier <tier>` records a self-declared tier when harnesses cannot cryptographically attest the model used, and `gradusctl adapter verify` inspects only the managed `<!-- gradus:begin/end -->` section of provider files so user-authored sections outside the markers are preserved.
 - **Upgrading from `v0.3.0` to `v0.3.1+`:** Because `view_hash` now excludes the personal `user` level (D-80), run `gradusctl resolve --write && gradusctl compile` once after upgrading to refresh `gradus.lock` and compiled markers.
 
 ## CLI interface

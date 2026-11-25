@@ -116,3 +116,46 @@ toolchain:
 		t.Fatalf("expected -32601 and -32700 errors, got:\n%s\n%s", lines[9], lines[10])
 	}
 }
+
+func TestMCPHardeningV041(t *testing.T) {
+	tmp := t.TempDir()
+	_ = os.MkdirAll(filepath.Join(tmp, ".gradus", "levels", "project", "rules"), 0o755)
+	_ = os.WriteFile(filepath.Join(tmp, ".gradus", "levels", "project", "level.yaml"), []byte("schema: gradus/v1\nid: project\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(tmp, "gradus.yaml"), []byte("schema: gradus/v1\nlevels:\n  - id: project\n    source: { path: .gradus/levels/project }\n"), 0o644)
+
+	oversized := `{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"check_text","arguments":{"content":"` + strings.Repeat("A", 5*1024*1024) + `"}}}`
+	requests := strings.Join([]string{
+		`{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26"}}`,
+		oversized,
+		`{"jsonrpc":"2.0","id":3,"method":"tools/list"}`,
+		`{"jsonrpc":"2.0","id":4,"method":"tools/call","params":{"name":"propose_rule","arguments":{"id":"PRJ-01","title":"Traversal","level":"../../etc","severity":"MUST","statement":"Bad"}}}`,
+		`{"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"propose_rule","arguments":{"id":"PRJ-01","title":"Missing","level":"nonexistent","severity":"MUST","statement":"Bad"}}}`,
+		`{"jsonrpc":"2.0","id":6,"method":"ping"}`,
+	}, "\n") + "\n"
+
+	var out bytes.Buffer
+	srv := &mcp.Server{RootDir: tmp, Offline: true}
+	if err := srv.ServeStdio(strings.NewReader(requests), &out); err != nil {
+		t.Fatalf("ServeStdio failed after oversized request: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 6 {
+		t.Fatalf("expected 6 responses (server must stay alive after oversized request), got %d:\n%s", len(lines), out.String())
+	}
+	if !strings.Contains(lines[0], `"protocolVersion":"2025-03-26"`) {
+		t.Fatalf("expected negotiated protocolVersion 2025-03-26, got: %s", lines[0])
+	}
+	if !strings.Contains(lines[1], "-32600") {
+		t.Fatalf("expected -32600 error for oversized 5MB line, got: %s", lines[1])
+	}
+	if !strings.Contains(lines[2], `"readOnlyHint":true`) {
+		t.Fatalf("expected readOnlyHint annotation in tools/list, got: %s", lines[2])
+	}
+	if !strings.Contains(lines[3], `"isError":true`) || !strings.Contains(lines[4], `"isError":true`) {
+		t.Fatalf("expected isError:true for invalid/traversal propose_rule levels, got:\n%s\n%s", lines[3], lines[4])
+	}
+	if !strings.Contains(lines[5], `"id":6`) {
+		t.Fatalf("expected server to answer ping after oversized/error requests, got: %s", lines[5])
+	}
+}

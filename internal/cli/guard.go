@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/spf13/cobra"
 
@@ -35,6 +36,21 @@ func newGuardCmd(_ *bool) *cobra.Command {
 				rootDir = action.WorkspaceDir
 			}
 
+			gradusRoot, hasGradus := findGradusRoot(rootDir)
+			if !hasGradus {
+				return writeGuardResponse(cmd, action, guard.EvaluationResult{
+					Decision:     guard.DecisionAllow,
+					Reason:       "no gradus.yaml found; allowed outside Gradus repository",
+					MatchedRules: []guard.MatchedRule{},
+				})
+			}
+			if gradusRoot != rootDir {
+				if reParsed, rerr := guard.ParsePayload(gradusRoot, rawStdin); rerr == nil {
+					action = reParsed
+				}
+				rootDir = gradusRoot
+			}
+
 			rules, err := guard.LoadLocalGuardRulesWithProfile(rootDir, userDir, agentProfile)
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
@@ -47,59 +63,86 @@ func newGuardCmd(_ *bool) *cobra.Command {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
 
-			enc := json.NewEncoder(cmd.OutOrStdout())
-			if action.IsAntigravityNative {
-				// Antigravity parses PreToolUse stdout with strict protojson (rejects unknown fields)
-				// and requires exit 0 to honor structured allow/force_ask/deny decisions.
-				// Map ask -> force_ask so cached "Always Allow" tool approvals do not bypass Gradus guards.
-				agDecision := res.Decision
-				if agDecision == guard.DecisionAsk {
-					agDecision = "force_ask"
-				}
-				agResp := struct {
-					Decision string `json:"decision"`
-					Reason   string `json:"reason,omitempty"`
-				}{
-					Decision: agDecision,
-					Reason:   res.Reason,
-				}
-				if err := enc.Encode(agResp); err != nil {
-					return &ExitErrorWithCode{Code: ExitError, Err: err}
-				}
-				return nil
-			}
-			if action.IsClaudeCodeNative {
-				// Claude Code validates PreToolUse stdout strictly and rejects top-level "decision": "ask"
-				// or non-zero exit codes when structured JSON is returned. Return {} on allow so normal
-				// Claude Code permissions remain in effect, and hookSpecificOutput only on ask/deny with exit 0.
-				if res.Decision == guard.DecisionAllow {
-					if err := enc.Encode(struct{}{}); err != nil {
-						return &ExitErrorWithCode{Code: ExitError, Err: err}
-					}
-					return nil
-				}
-				ccResp := struct {
-					HookSpecificOutput *guard.HookSpecificOutput `json:"hookSpecificOutput"`
-				}{
-					HookSpecificOutput: res.HookSpecificOutput,
-				}
-				if err := enc.Encode(ccResp); err != nil {
-					return &ExitErrorWithCode{Code: ExitError, Err: err}
-				}
-				return nil
-			}
-			if err := enc.Encode(res); err != nil {
-				return &ExitErrorWithCode{Code: ExitError, Err: err}
-			}
-
-			if res.Decision == guard.DecisionDeny {
-				return &ExitErrorWithCode{Code: ExitViolation}
-			}
-			return nil
+			return writeGuardResponse(cmd, action, res)
 		},
 	}
 
 	cmd.Flags().StringVar(&userDir, "user-dir", "", "Override user-level rules directory (defaults to ~/.gradus/levels/user)")
 	cmd.Flags().StringVar(&agentProfile, "agent-profile", "", "Team agent profile directory replacing personal user rules")
 	return cmd
+}
+
+func writeGuardResponse(cmd *cobra.Command, action guard.NormalizedAction, res guard.EvaluationResult) error {
+	enc := json.NewEncoder(cmd.OutOrStdout())
+	if action.IsAntigravityNative {
+		// Antigravity parses PreToolUse stdout with strict protojson (rejects unknown fields)
+		// and requires exit 0 to honor structured allow/force_ask/deny decisions.
+		// Map ask -> force_ask so cached "Always Allow" tool approvals do not bypass Gradus guards.
+		agDecision := res.Decision
+		if agDecision == guard.DecisionAsk {
+			agDecision = "force_ask"
+		}
+		agResp := struct {
+			Decision string `json:"decision"`
+			Reason   string `json:"reason,omitempty"`
+		}{
+			Decision: agDecision,
+			Reason:   res.Reason,
+		}
+		if err := enc.Encode(agResp); err != nil {
+			return &ExitErrorWithCode{Code: ExitError, Err: err}
+		}
+		return nil
+	}
+	if action.IsClaudeCodeNative {
+		// Claude Code validates PreToolUse stdout strictly and rejects top-level "decision": "ask"
+		// or non-zero exit codes when structured JSON is returned. Return {} on allow so normal
+		// Claude Code permissions remain in effect, and hookSpecificOutput only on ask/deny with exit 0.
+		if res.Decision == guard.DecisionAllow {
+			if err := enc.Encode(struct{}{}); err != nil {
+				return &ExitErrorWithCode{Code: ExitError, Err: err}
+			}
+			return nil
+		}
+		ccResp := struct {
+			HookSpecificOutput *guard.HookSpecificOutput `json:"hookSpecificOutput"`
+		}{
+			HookSpecificOutput: res.HookSpecificOutput,
+		}
+		if err := enc.Encode(ccResp); err != nil {
+			return &ExitErrorWithCode{Code: ExitError, Err: err}
+		}
+		return nil
+	}
+	if err := enc.Encode(res); err != nil {
+		return &ExitErrorWithCode{Code: ExitError, Err: err}
+	}
+
+	if res.Decision == guard.DecisionDeny {
+		return &ExitErrorWithCode{Code: ExitViolation}
+	}
+	return nil
+}
+
+// findGradusRoot walks upward from startDir until gradus.yaml is found,
+// stopping at a .git boundary without gradus.yaml or at the filesystem root.
+func findGradusRoot(startDir string) (string, bool) {
+	abs, err := filepath.Abs(startDir)
+	if err != nil {
+		return "", false
+	}
+	cur := abs
+	for {
+		if _, err := os.Stat(filepath.Join(cur, "gradus.yaml")); err == nil {
+			return cur, true
+		}
+		if _, err := os.Stat(filepath.Join(cur, ".git")); err == nil {
+			return "", false
+		}
+		parent := filepath.Dir(cur)
+		if parent == cur {
+			return "", false
+		}
+		cur = parent
+	}
 }

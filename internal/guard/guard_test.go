@@ -478,3 +478,48 @@ func TestAntiTamperHardeningV032(t *testing.T) {
 		}
 	}
 }
+
+func TestAntiTamperPrecisionV041(t *testing.T) {
+	// True positives: env-prefix bypasses + .config/lefthook.yml
+	for _, cmd := range []string{
+		`LEFTHOOK_EXCLUDE=lint git commit -m "bypass"`,
+		`GIT_CONFIG_COUNT=1 git commit -m "bypass"`,
+		`env FOO=1 HUSKY=0 git commit -m "bypass"`,
+	} {
+		res, err := guard.EvaluateWithOptions(guard.NormalizedAction{
+			Action: guard.ActionCommand,
+			Target: cmd,
+		}, nil, guard.EvaluateOptions{AntiTamperMode: guard.DecisionDeny})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.AntiTamper || res.Decision != guard.DecisionDeny {
+			t.Fatalf("expected anti_tamper deny for %q, got %+v", cmd, res)
+		}
+	}
+
+	resCfg, err := guard.Evaluate(guard.NormalizedAction{
+		Action: guard.ActionWrite,
+		Target: ".config/lefthook.yml",
+	}, nil)
+	if err != nil || !resCfg.AntiTamper {
+		t.Fatalf("expected anti_tamper on write to .config/lefthook.yml, got %+v (err=%v)", resCfg, err)
+	}
+
+	// False-positive reductions: harmless echo or commit message mentioning HUSKY=0/SKIP=foo
+	for _, harmless := range []string{
+		`echo SKIP=foo`,
+		`git commit -m "docs: explain HUSKY=0 bypass"`,
+	} {
+		res, err := guard.EvaluateWithOptions(guard.NormalizedAction{
+			Action: guard.ActionCommand,
+			Target: harmless,
+		}, nil, guard.EvaluateOptions{AntiTamperMode: guard.DecisionDeny})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res.AntiTamper {
+			t.Fatalf("expected no anti_tamper false positive for %q, got %+v", harmless, res)
+		}
+	}
+}

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-11-25
+
+### Fixed
+- **Enterprise `managed-settings.json` safety outside Gradus & in subdirectories (`F29`):** `gradusctl guard` and `gradusctl status --hook` now walk upward to locate `gradus.yaml` (stopping at `.git` boundaries) and silently allow / exit `0` in directories without Gradus, preventing machine-wide `managed-settings.json` deployments from blocking non-Gradus repositories.
+- **MCP server hardening (`F29`):** Replace `bufio.Scanner` with a bounded reader so oversized (>4 MiB) requests return JSON-RPC `-32600` without crashing the stdio session; validate `propose_rule` levels against the resolved pyramid (blocking path traversal); report `version.Get().Version` in `serverInfo.version`; negotiate client `protocolVersion`; and attach read-only `annotations` to all 5 MCP tools.
+- **Historical trailer verification & `resolve --write` conflict guard (`F29`):** `gradusctl trailers verify` now reads `gradus.lock` from the verified commit (`git show <ref>:gradus.lock`) and validates `Gradus-Lock-Hash` whenever present; `gradusctl resolve --write` no longer overwrites `gradus.lock` when blocking conflicts are detected.
+- **Anti-tamper precision (`F29`):** Protect `.config/lefthook.yml`, cover `LEFTHOOK_EXCLUDE=` and `GIT_CONFIG_COUNT=` env-prefix bypasses, and restrict hook-bypass env matching to command/env-prefix position to avoid false positives on harmless `echo` or commit messages.
+
+### Documentation
+- **Design 1.2 & Phase 3 Sync (`F29`):** Update `docs/design/gradus-design.md` to Version `1.2` (§20/§21 active, decisions `D-84`–`D-89`), sync `spec/v1/SPEC.md`, expand `docs/compatibility-matrix.md` for Phase 3 enterprise/MCP surfaces, and document self-declared `--model-tier` in `README.md`.
+
 ## [0.4.0] - 2026-11-25
 
 ### Added (Phase 3 · Organization)
