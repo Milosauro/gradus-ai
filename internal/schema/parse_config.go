@@ -91,6 +91,12 @@ var pyramidFieldSpec = FieldSpec{
 		"obligations": {},
 		"bindings":    {},
 		"toolchain":   {},
+		"models": {
+			Allowed: map[string]FieldSpec{
+				"tiers":      {},
+				"operations": {},
+			},
+		},
 	},
 }
 
@@ -145,6 +151,12 @@ var levelFieldSpec = FieldSpec{
 		"obligations": {},
 		"bindings":    {},
 		"toolchain":   {},
+		"models": {
+			Allowed: map[string]FieldSpec{
+				"tiers":      {},
+				"operations": {},
+			},
+		},
 	},
 }
 

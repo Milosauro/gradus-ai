@@ -80,6 +80,9 @@ func ValidatePyramidConfig(cfg *PyramidConfig) error {
 	if err := validateToolchainConfig("gradus.yaml", cfg.Toolchain); err != nil {
 		return err
 	}
+	if err := validateModelPolicy("gradus.yaml", cfg.Models); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -120,6 +123,9 @@ func ValidateLevelConfig(cfg *LevelConfig) error {
 		return err
 	}
 	if err := validateToolchainConfig("level.yaml", cfg.Toolchain); err != nil {
+		return err
+	}
+	if err := validateModelPolicy("level.yaml", cfg.Models); err != nil {
 		return err
 	}
 	for i, ar := range cfg.ActivationRules {
@@ -166,6 +172,39 @@ func validateSignaturePolicy(fileLabel, policy string) error {
 	default:
 		return fmt.Errorf("%s: invalid signature %q (expected optional or required)", fileLabel, policy)
 	}
+}
+
+func validateModelPolicy(fileLabel string, mp *ModelPolicy) error {
+	if mp == nil {
+		return nil
+	}
+	validTier := func(t string) bool {
+		switch t {
+		case "tier-high", "tier-standard", "tier-light":
+			return true
+		default:
+			return false
+		}
+	}
+	for tier, agents := range mp.Tiers {
+		if !validTier(tier) {
+			return fmt.Errorf("%s: invalid models.tiers key %q (expected tier-high, tier-standard, or tier-light)", fileLabel, tier)
+		}
+		for agent, model := range agents {
+			if strings.TrimSpace(agent) == "" || strings.TrimSpace(model) == "" {
+				return fmt.Errorf("%s: models.tiers.%s entries must have non-empty agent and model names", fileLabel, tier)
+			}
+		}
+	}
+	for op, tier := range mp.Operations {
+		if strings.TrimSpace(op) == "" {
+			return fmt.Errorf("%s: models.operations keys cannot be empty", fileLabel)
+		}
+		if !validTier(tier) {
+			return fmt.Errorf("%s: invalid tier %q for models.operations.%s (expected tier-high, tier-standard, or tier-light)", fileLabel, tier, op)
+		}
+	}
+	return nil
 }
 
 func validateObligationsAndBindings(fileLabel string, obligations []Obligation, bindings []Binding) error {

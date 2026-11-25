@@ -42,6 +42,7 @@
     "obligations": { "type": "array" },
     "bindings": { "type": "array" },
     "toolchain": { "type": "object" },
+    "models": { "type": "object" },
     "warnings": { "type": "array", "items": { "type": "string" } }
   }
 }

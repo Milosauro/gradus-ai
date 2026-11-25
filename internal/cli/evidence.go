@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/Milosauro/gradus-ai/internal/evidence"
 	"github.com/Milosauro/gradus-ai/internal/lock"
+	"github.com/Milosauro/gradus-ai/internal/resolve"
 	"github.com/Milosauro/gradus-ai/internal/schema"
 )
 
@@ -55,7 +57,7 @@ func newEvidenceListCmd(jsonOutput *bool) *cobra.Command {
 }
 
 func newEvidenceWriteCmd(jsonOutput *bool) *cobra.Command {
-	var dir, kind, verdict, base, findingsFile string
+	var dir, kind, verdict, base, findingsFile, skill, modelTier string
 
 	cmd := &cobra.Command{
 		Use:   "write",
@@ -73,6 +75,9 @@ func newEvidenceWriteCmd(jsonOutput *bool) *cobra.Command {
 			case "pass", "fail", "error":
 			default:
 				return &ExitErrorWithCode{Code: ExitError, Err: fmt.Errorf("invalid evidence verdict %q", verdict)}
+			}
+			if strings.TrimSpace(modelTier) != "" && resolve.TierRank(modelTier) == 0 {
+				return &ExitErrorWithCode{Code: ExitError, Err: fmt.Errorf("invalid --model-tier %q (expected tier-high, tier-standard, or tier-light)", modelTier)}
 			}
 
 			var evCfg *schema.EvidenceConfig
@@ -96,6 +101,12 @@ func newEvidenceWriteCmd(jsonOutput *bool) *cobra.Command {
 			}
 
 			rec := evidence.NewRecord(dir, kind, verdict, base, lockHash, viewHash, findings, time.Now().UTC())
+			if s := strings.TrimSpace(skill); s != "" {
+				rec.Producer.Skill = &s
+			}
+			if mt := strings.TrimSpace(modelTier); mt != "" {
+				rec.Producer.ModelTier = &mt
+			}
 			written, err := evidence.WriteRecord(dir, evCfg, rec, time.Now().UTC())
 			if err != nil {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
@@ -118,6 +129,8 @@ func newEvidenceWriteCmd(jsonOutput *bool) *cobra.Command {
 	cmd.Flags().StringVar(&verdict, "verdict", "pass", "Evidence verdict (pass|fail|error)")
 	cmd.Flags().StringVar(&base, "base", "", "Base git ref if applicable")
 	cmd.Flags().StringVar(&findingsFile, "findings", "", "Optional JSON file containing findings array")
+	cmd.Flags().StringVar(&skill, "skill", "", "Optional skill name that produced the evidence (e.g. gradus-review)")
+	cmd.Flags().StringVar(&modelTier, "model-tier", "", "Optional model capability tier used (tier-high|tier-standard|tier-light)")
 	return cmd
 }
 

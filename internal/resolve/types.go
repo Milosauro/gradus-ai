@@ -19,6 +19,7 @@ type ResolvedView struct {
 	Obligations   []ResolvedObligation `json:"obligations,omitempty"`
 	Bindings      []ResolvedBinding    `json:"bindings,omitempty"`
 	Toolchain     *ResolvedToolchain   `json:"toolchain,omitempty"`
+	Models        *ResolvedModelPolicy `json:"models,omitempty"`
 	Warnings      []string             `json:"warnings,omitempty"`
 	Notes         []string             `json:"notes,omitempty"`
 }
