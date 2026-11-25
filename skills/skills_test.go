@@ -22,6 +22,7 @@ var canonicalSkills = []string{
 	"gradus-reconcile",
 	"gradus-conflicts",
 	"gradus-link",
+	"gradus-assess",
 }
 
 type skillFrontmatter struct {
@@ -53,6 +54,7 @@ func TestEmbeddedSkills(t *testing.T) {
 		"gradus-reconcile": {"gradusctl reconcile", "locked: true", "gradusctl verify"},
 		"gradus-conflicts": {"gradusctl conflicts --candidates", "confidence", "confirm"},
 		"gradus-link":      {"gradusctl toolchain check", "gradusctl adapter list", "forbidden", "explicit approval", "prompt-injection"},
+		"gradus-assess":    {"gradusctl assess --json", "Never evaluate individuals", "P16"},
 	}
 
 	for _, name := range canonicalSkills {
