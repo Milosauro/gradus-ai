@@ -34,7 +34,7 @@ func newResolveCmd(jsonOutput *bool) *cobra.Command {
 				return &ExitErrorWithCode{Code: ExitError, Err: err}
 			}
 
-			if writeLock {
+			if writeLock && len(res.View.Conflicts) == 0 {
 				lockPath := filepath.Join(dir, "gradus.lock")
 				if err := lock.WriteLockfile(lockPath, res.Lockfile); err != nil {
 					return &ExitErrorWithCode{Code: ExitError, Err: err}
@@ -55,7 +55,7 @@ func newResolveCmd(jsonOutput *bool) *cobra.Command {
 				fmt.Fprintf(out, "Resolved %d rule(s) across %d level(s), %d overlay(s)\n",
 					len(res.View.Rules), len(res.View.Levels), len(res.View.Overlays))
 				fmt.Fprintf(out, "View hash: %s\n", res.View.ViewHash)
-				if writeLock {
+				if writeLock && len(res.View.Conflicts) == 0 {
 					fmt.Fprintf(out, "Updated gradus.lock (run 'gradusctl compile' to update compiled agent files)\n")
 				}
 				for _, c := range res.View.Conflicts {

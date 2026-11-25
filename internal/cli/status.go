@@ -42,15 +42,12 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 			if dir == "" {
 				dir = "."
 			}
-			if antigravityHook {
-				// Antigravity executes hooks with CWD set to the directory containing hooks.json (.agents/).
-				if _, err := os.Stat(filepath.Join(dir, "gradus.yaml")); os.IsNotExist(err) {
-					if abs, aerr := filepath.Abs(dir); aerr == nil {
-						parent := filepath.Dir(abs)
-						if _, perr := os.Stat(filepath.Join(parent, "gradus.yaml")); perr == nil {
-							dir = parent
-						}
-					}
+			if hookMode || antigravityHook {
+				if root, ok := findGradusRoot(dir); ok {
+					dir = root
+				} else {
+					// D-82: status --hook is non-blocking and silent outside Gradus repositories.
+					return nil
 				}
 			}
 			rep, exitCode, err := buildStatusReport(dir, userDir)

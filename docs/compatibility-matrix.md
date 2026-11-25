@@ -11,6 +11,15 @@ This matrix documents compiled artifacts and supported Gradus enforcement capabi
 | `copilot` | `.github/copilot-instructions.md` (managed section) | `.github/instructions/gradus-*.instructions.md` (`applyTo:`) | `.github/skills/gradus-*/SKILL.md` | Excluded (repo-shared) | Not supported (use `gradusctl hooks` & CI) | Not supported | Not supported |
 | `opencode` | `AGENTS.md` (managed section) | Included in `AGENTS.md` | `.opencode/skills/gradus-*/SKILL.md` | Excluded (repo-shared) | Not supported (use `gradusctl hooks` & CI) | Not supported | Not supported |
 
+## Phase 3 Enterprise & Protocol Surfaces
+
+| Surface | Mechanism | Scope & Notes |
+| --- | --- | --- |
+| Enterprise Managed Settings | `gradusctl compile --managed-settings <path>` | Generates `managed-settings.json` for `claude-code` (`hooks`, `permissions`, `deniedMcpServers`, `disableBypassPermissionsMode`). `gradusctl guard` and `status --hook` safely allow/exit `0` outside Gradus repositories. |
+| Chat Skill Bundles | `gradusctl compile --chat-bundle <path.zip>` | Byte-reproducible ZIP (`manifest.json`, `RULES.md` excluding `user` rules, embedded `skills/gradus-*/SKILL.md`). |
+| Model Policy (`models:`) | `models.tiers` + `models.operations` | Compiled `model:` frontmatter emitted for `claude-code` skills; `gradusctl verify --check-model-tier` checks self-reported `model_tier` in local evidence. |
+| MCP Server | `gradusctl serve --mcp` | Zero-dependency JSON-RPC 2.0 stdio server exposing `resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, `get_toolchain` (all read-only/non-mutating). |
+
 ## Notes
 
 - All six targets support deterministic zero-diff compilation (`gradusctl compile`) and drift detection (`gradusctl verify`, `gradusctl status`, `gradusctl doctor`, `gradusctl reconcile`).

@@ -2,7 +2,9 @@ package mcp
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -69,20 +71,69 @@ type toolContent struct {
 	Text string `json:"text"`
 }
 
+type toolAnnotations struct {
+	ReadOnlyHint    bool `json:"readOnlyHint"`
+	DestructiveHint bool `json:"destructiveHint"`
+	IdempotentHint  bool `json:"idempotentHint"`
+}
+
 type toolDef struct {
-	Name        string         `json:"name"`
-	Description string         `json:"description"`
-	InputSchema map[string]any `json:"inputSchema"`
+	Name        string           `json:"name"`
+	Description string           `json:"description"`
+	InputSchema map[string]any   `json:"inputSchema"`
+	Annotations *toolAnnotations `json:"annotations,omitempty"`
+}
+
+var errLineTooLong = errors.New("request exceeds maximum line size")
+
+func readBoundedLine(r *bufio.Reader, maxBytes int) (string, error) {
+	var buf bytes.Buffer
+	for {
+		frag, isPrefix, err := r.ReadLine()
+		if len(frag) > 0 {
+			if buf.Len()+len(frag) > maxBytes {
+				// Drain remainder of oversized line so the stream stays synchronized.
+				for isPrefix && err == nil {
+					_, isPrefix, err = r.ReadLine()
+				}
+				return "", errLineTooLong
+			}
+			buf.Write(frag)
+		}
+		if err != nil {
+			if errors.Is(err, io.EOF) && buf.Len() > 0 {
+				return buf.String(), nil
+			}
+			return "", err
+		}
+		if !isPrefix {
+			return buf.String(), nil
+		}
+	}
 }
 
 // ServeStdio reads newline-delimited JSON-RPC 2.0 messages from in and writes responses to out until EOF.
 func (s *Server) ServeStdio(in io.Reader, out io.Writer) error {
-	scanner := bufio.NewScanner(in)
-	scanner.Buffer(make([]byte, 0, 64*1024), maxLineBytes)
+	reader := bufio.NewReaderSize(in, 64*1024)
 	enc := json.NewEncoder(out)
 
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
+	for {
+		rawLine, err := readBoundedLine(reader, maxLineBytes)
+		if errors.Is(err, errLineTooLong) {
+			_ = enc.Encode(rpcResponse{
+				JSONRPC: "2.0",
+				ID:      json.RawMessage("null"),
+				Error:   &rpcError{Code: errCodeInvalid, Message: fmt.Sprintf("request exceeds maximum size of %d bytes", maxLineBytes)},
+			})
+			continue
+		}
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
+		}
+		line := strings.TrimSpace(rawLine)
 		if line == "" {
 			continue
 		}
@@ -112,23 +163,31 @@ func (s *Server) ServeStdio(in io.Reader, out io.Writer) error {
 			return err
 		}
 	}
-	return scanner.Err()
 }
 
 func (s *Server) handleRequest(req rpcRequest) rpcResponse {
 	switch req.Method {
 	case "initialize":
+		pv := protocolVersion
+		if len(req.Params) > 0 {
+			var initParams struct {
+				ProtocolVersion string `json:"protocolVersion"`
+			}
+			if err := json.Unmarshal(req.Params, &initParams); err == nil && strings.TrimSpace(initParams.ProtocolVersion) != "" {
+				pv = strings.TrimSpace(initParams.ProtocolVersion)
+			}
+		}
 		return rpcResponse{
 			JSONRPC: "2.0",
 			ID:      req.ID,
 			Result: map[string]any{
-				"protocolVersion": protocolVersion,
+				"protocolVersion": pv,
 				"capabilities": map[string]any{
 					"tools": map[string]any{},
 				},
 				"serverInfo": map[string]any{
 					"name":    "gradusctl",
-					"version": version.Version,
+					"version": version.Get().Version,
 				},
 			},
 		}
@@ -316,13 +375,8 @@ func (s *Server) toolProposeRule(args map[string]any) toolResult {
 	if id == "" || title == "" || level == "" || severity == "" || statement == "" {
 		return errorToolResult("arguments 'id', 'title', 'level', 'severity', and 'statement' are required")
 	}
-
-	md := fmt.Sprintf("---\nid: %s\ntitle: %q\nseverity: %s\nenforcement: %s\n---\n\n%s\n",
-		id, title, severity, enforcement, statement)
-
-	proposedPath := fmt.Sprintf(".gradus/levels/%s/rules/%s.md", level, id)
-	if _, parseErr := schema.ParseRuleBytes([]byte(md), proposedPath, level, level); parseErr != nil {
-		return errorToolResult(fmt.Sprintf("invalid rule proposal: %v", parseErr))
+	if strings.ContainsAny(level, `/\`) || strings.Contains(level, "..") {
+		return errorToolResult(fmt.Sprintf("invalid level %q: path traversal is not allowed", level))
 	}
 
 	res, err := resolve.Resolve(s.RootDir, resolve.Options{OfflineOnly: s.Offline})
@@ -330,13 +384,29 @@ func (s *Server) toolProposeRule(args map[string]any) toolResult {
 		return errorToolResult(err.Error())
 	}
 
+	levelExists := false
 	var charterWarnings []string
 	for _, lvl := range res.View.Levels {
-		if lvl.ID == level && lvl.Charter != nil && len(lvl.Charter.AllowedSeverities) > 0 {
-			if !slices.Contains(lvl.Charter.AllowedSeverities, severity) {
-				charterWarnings = append(charterWarnings, fmt.Sprintf("severity %s is not in level %q charter allowed_severities (%v)", severity, level, lvl.Charter.AllowedSeverities))
+		if lvl.ID == level {
+			levelExists = true
+			if lvl.Charter != nil && len(lvl.Charter.AllowedSeverities) > 0 {
+				if !slices.Contains(lvl.Charter.AllowedSeverities, severity) {
+					charterWarnings = append(charterWarnings, fmt.Sprintf("severity %s is not in level %q charter allowed_severities (%v)", severity, level, lvl.Charter.AllowedSeverities))
+				}
 			}
+			break
 		}
+	}
+	if !levelExists {
+		return errorToolResult(fmt.Sprintf("level %q does not exist in the resolved pyramid", level))
+	}
+
+	md := fmt.Sprintf("---\nid: %s\ntitle: %q\nseverity: %s\nenforcement: %s\n---\n\n%s\n",
+		id, title, severity, enforcement, statement)
+
+	proposedPath := fmt.Sprintf(".gradus/levels/%s/rules/%s.md", level, id)
+	if _, parseErr := schema.ParseRuleBytes([]byte(md), proposedPath, level, level); parseErr != nil {
+		return errorToolResult(fmt.Sprintf("invalid rule proposal: %v", parseErr))
 	}
 	lockedTarget := false
 	if cfgBytes, readErr := os.ReadFile(filepath.Join(s.RootDir, "gradus.yaml")); readErr == nil {
@@ -413,10 +483,16 @@ func errorToolResult(msg string) toolResult {
 }
 
 func toolDefinitions() []toolDef {
+	ro := &toolAnnotations{
+		ReadOnlyHint:    true,
+		DestructiveHint: false,
+		IdempotentHint:  true,
+	}
 	return []toolDef{
 		{
 			Name:        "resolve_rules",
 			Description: "Resolve the Gradus pyramid offline and return active rules, levels, and conflicts.",
+			Annotations: ro,
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{
@@ -428,6 +504,7 @@ func toolDefinitions() []toolDef {
 		{
 			Name:        "explain_rule",
 			Description: "Explain a resolved rule by ID including provenance, rationalizations, and owning level charter.",
+			Annotations: ro,
 			InputSchema: map[string]any{
 				"type":     "object",
 				"required": []string{"id"},
@@ -439,6 +516,7 @@ func toolDefinitions() []toolDef {
 		{
 			Name:        "check_text",
 			Description: "Evaluate an in-memory text snippet against active built-in regex/pattern check rules without modifying disk.",
+			Annotations: ro,
 			InputSchema: map[string]any{
 				"type":     "object",
 				"required": []string{"content"},
@@ -451,6 +529,7 @@ func toolDefinitions() []toolDef {
 		{
 			Name:        "propose_rule",
 			Description: "Draft and validate a gradus/v1 rule Markdown proposal against schema and level charter without writing files.",
+			Annotations: ro,
 			InputSchema: map[string]any{
 				"type":     "object",
 				"required": []string{"id", "title", "level", "severity", "statement"},
@@ -467,6 +546,7 @@ func toolDefinitions() []toolDef {
 		{
 			Name:        "get_toolchain",
 			Description: "Return the resolved monotonic toolchain (required, recommended, forbidden) and optional local check results.",
+			Annotations: ro,
 			InputSchema: map[string]any{
 				"type": "object",
 				"properties": map[string]any{

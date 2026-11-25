@@ -3,9 +3,9 @@
 | Field | Value |
 |---|---|
 | Schema Identifier | `gradus/v1` |
-| Status | Active (`v0.3.x`, Phase 2) |
+| Status | Active (`v0.4.x`, Phase 3) |
 | Normative Formats | `spec/v1/schema/*.json` |
-| Normative Semantics | `docs/design/gradus-design.md` (Design 1.1) and `docs/adr/` |
+| Normative Semantics | `docs/design/gradus-design.md` (Design 1.2) and `docs/adr/` |
 
 ## 1. Normative Precedence
 
@@ -31,7 +31,7 @@ The `gradus/v1` specification defines the file formats for layered AI coding age
 
 ## 3. Forward Compatibility
 
-Parsers MUST treat unknown YAML/JSON keys as diagnostic notes rather than fatal errors. `obligations`, `bindings`, and `toolchain` are active in Phase 2 (`v0.3.x`); `models` and `adapters` remain reserved top-level keys for Phase 3 and emit informational notes when encountered.
+Parsers MUST treat unknown YAML/JSON keys as diagnostic notes rather than fatal errors. `obligations`, `bindings`, `toolchain`, `activation_rules`, `controls`, and `models` are active in `gradus/v1`; `adapters` remains a reserved top-level key and emits an informational note when encountered.
 
 ## 4. Exit Codes
 

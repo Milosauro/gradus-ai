@@ -3,8 +3,8 @@
 | Field | Value |
 |---|---|
 | Project | **Gradus** — layered, governed rules for AI coding agents |
-| Document version | 1.1 |
-| Date | 24 November 2026 |
+| Document version | 1.2 |
+| Date | 25 November 2026 |
 | Status | Living design specification. See `README.md` and `CHANGELOG.md` for current release and implementation status. |
 | Repository | https://github.com/Milosauro/gradus-ai |
 | License | Apache-2.0 |
@@ -827,14 +827,14 @@ toolchain:
     - { type: mcp, id: "*-public-pastebin" }
 ```
 
-## 20. Other agents, chat agents and MCP **[Partially Specified; Chat/MCP Deferred to Phase 3]**
+## 20. Other agents, chat agents and MCP **[Decided; Specified]**
 
 - **Other coding agents** (Phase 2): Codex, GitHub Copilot, and OpenCode targets compile `AGENTS.md`, native instructions, and skills. A compatibility matrix (`docs/compatibility-matrix.md`) tracks agent × feature support.
-- **Chat agents** (Phase 3): Skills packaged as ZIP files can be imported in chat products that support skills; on claude.ai, Team and Enterprise owners can provision skills organization-wide, and Enterprise can scope them to groups through plugins.
-- **MCP server** (Phase 3, `gradusctl serve --mcp`, on-premise or internal service with SSO): tools such as `resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, `get_toolchain`. In chat there are no git hooks or CI, so enforcement is weaker; the value is consistent, up-to-date rules beyond software development.
+- **Chat agents & enterprise distribution** (Phase 3, D-86): `gradusctl compile --chat-bundle <path.zip>` packages shared rules (excluding `user` rules) and embedded skills into a byte-reproducible ZIP for chat products; `gradusctl compile --managed-settings <path>` emits enterprise `managed-settings.json` for machine-wide rollout.
+- **MCP server** (Phase 3, `gradusctl serve --mcp`, D-87): zero-dependency JSON-RPC 2.0 stdio server exposing five strictly non-mutating, read-only annotated tools (`resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, `get_toolchain`).
 - **Background and CI agents** (Specified, D-81): compiled project files are committed; `--agent-profile <dir>` (or `GRADUS_AGENT_PROFILE`) replaces the personal `user` level with a team-defined profile (e.g. "open draft pull requests only, never merge"); their pull requests pass the same CI checks; subagents inherit the resolved view.
 
-## 21. Model policy **[Decided in principle; Deferred]**
+## 21. Model policy **[Decided; Specified]**
 
 Risk addressed: using a less capable model to save quota on operations that affect others.
 
@@ -1043,6 +1043,12 @@ IDs are stable across document versions; superseded decisions are marked.
 | D-81 | `--agent-profile` / `GRADUS_AGENT_PROFILE` substitutes a team-defined profile for the personal `user` level in background and CI agent runs | Decided |
 | D-82 | `gradusctl status --hook` (`SessionStart`) is non-blocking (always exits `0`) and emits a fast summary banner of lock, conflict, drift, and lesson counts | Decided |
 | D-83 | `gradusctl adapter verify` inspects only the managed `<!-- gradus:begin/end -->` block in provider files, preserving custom user sections outside the markers | Decided |
+| D-84 | Conditional overlays (`activation: profile`, `level.yaml` `activation_rules`, `overlay.yaml` `when`) evaluate extensible `profile` attributes deterministically; `required: true` emits a blocking `overlay` conflict when absent or `disabled` | Decided |
+| D-85 | Compliance `controls:` inherit monotonically across rule overrides (`gradusctl audit coverage\|export`); `models:` (`tier-high > tier-standard > tier-light`) enforces monotonic tightening and `verify --check-model-tier` checks self-reported `model_tier` in local evidence | Decided |
+| D-86 | Enterprise `managed-settings.json` (`--managed-settings`) and byte-reproducible chat ZIP bundles (`--chat-bundle`, excluding `user` rules) are opt-in compile outputs; `guard` and `status --hook` walk upward to `gradus.yaml` and silently allow/exit `0` outside Gradus repositories | Decided |
+| D-87 | `gradusctl serve --mcp` runs a zero-dependency JSON-RPC 2.0 stdio server exposing five read-only/non-mutating tools (`resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, `get_toolchain`), validating `propose_rule` levels against the resolved pyramid | Decided |
+| D-88 | `gradusctl assess` and `gradus-assess` evaluate five process dimensions (`L1`–`L5`) and never measure or rank individuals (P16) | Decided |
+| D-89 | Optional `Gradus-*` commit attribution trailers (`gradusctl trailers generate\|verify`) verify `Gradus-Lock-Hash` against the commit's own `gradus.lock` (`git show <ref>:gradus.lock`) whenever present; `resolve --write` refuses to update `gradus.lock` when blocking conflicts exist | Decided |
 
 ## 29. Glossary (English – Italian)
 
