@@ -370,7 +370,7 @@ func TestDesign11AndSpecAlignmentV032(t *testing.T) {
 		t.Fatal(err)
 	}
 	readme := string(readmeBytes)
-	for _, want := range []string{"v0.3.2", "CODEOWNERS", "Validation status (transparent)", "gradus:begin/end"} {
+	for _, want := range []string{"v0.4.0", "CODEOWNERS", "Validation status (transparent)", "gradus:begin/end"} {
 		if !strings.Contains(readme, want) {
 			t.Fatalf("README.md missing expected transparency/security note %q", want)
 		}

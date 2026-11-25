@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Scope | Phase 3 (`v0.4.0`) |
-| Status | In progress |
+| Status | Completed |
 | Design Reference | [`docs/design/gradus-design.md`](../design/gradus-design.md) (Design 1.1, §20, §21, §24.1, §25) |
 
 ## Goal

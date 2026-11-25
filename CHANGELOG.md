@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-25
+
+### Added (Phase 3 · Organization)
+- **Conditional Overlays by Profile (`F23`):** Extensible `profile` attributes (`data`, `exposure`, `domain`, `client`, plus custom keys), typed `activation_rules` in `level.yaml` and `when` predicates in `overlay.yaml`, profile-driven activation with `OverlaySummary.Reason`, and blocking `overlay` conflicts when a matching `required: true` overlay is absent or `disabled`.
+- **Framework Mapping & Audit Export (`F24`):** Propagate `controls:` monotonically across overrides in `ResolvedView`, and add `internal/audit` plus `gradusctl audit coverage` and `gradusctl audit export` (`--format json|markdown`, `--framework`, `--output`).
+- **Model Policy & Capability Tiers (`F25`):** Activate the `models:` block (`tier-high`, `tier-standard`, `tier-light`) in `gradus.yaml` and `level.yaml`, enforce monotonic tier resolution (`kind: "model_policy"`), emit `model:` frontmatter into compiled `.claude/skills/gradus-*/SKILL.md`, record `--skill`/`--model-tier` in `gradusctl evidence write`, and verify tiers with `gradusctl verify --check-model-tier`.
+- **Enterprise Managed Settings & Chat Bundles (`F26`):** Add `gradusctl compile --managed-settings <path>` (generating Claude Code `managed-settings.json` with hooks, permissions, `deniedMcpServers`, and `disableBypassPermissionsMode`) and `gradusctl compile --chat-bundle <path.zip>` (byte-reproducible ZIP of shared rules and embedded skills).
+- **MCP Stdio Server (`F27`):** Add zero-dependency JSON-RPC 2.0 MCP server (`gradusctl serve --mcp`) exposing `resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, and `get_toolchain`.
+- **Process Maturity Assessment & Commit Trailers (`F28`):** Add `gradusctl assess` (`L1`–`L5` across 5 process dimensions, strictly excluding individual metrics per P16), embedded `gradus-assess` skill (`SKILL-08`), and optional `gradusctl trailers generate|verify` (`Gradus-Lock-Hash`, `Gradus-View-Hash`, `Gradus-Agent`, `Gradus-Model-Tier`, `Gradus-Review-ID`).
+
 ## [0.3.2] - 2026-11-24
 
 ### Fixed
