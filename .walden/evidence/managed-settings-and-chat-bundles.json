@@ -1,0 +1,94 @@
+{
+  "schema_version": "v1alpha2",
+  "feature": "managed-settings-and-chat-bundles",
+  "tasks": {
+    "1.1": {
+      "task_fingerprint": "sha256:3f93b04a2e1956cee074adb822a3e559c2efcf4f07662e2085f4b0d59eaac68c",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:080300103cfcf04aeae919fc9f1776e3217ea3b4bcf57ac187c314dbe5e23dc4"
+      },
+      "requirements_fingerprint": "sha256:73cbc5775fde1679979c3077f2990539b77da2a71eb03d71e56b0f85a3a96f5b",
+      "design_fingerprint": "sha256:381cbbcd46938f17c39cc376ffa6d1b0edfb72f7e63d08c3b695e5ba4ac23bd5",
+      "tasks_fingerprint": "sha256:4f850df6196ac5b0f1929ed70aa26341b847aa1cf5be725f3cb17660a3fe966a",
+      "code_identity": "sha256:080300103cfcf04aeae919fc9f1776e3217ea3b4bcf57ac187c314dbe5e23dc4",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^(TestManagedSettingsGeneration|TestChatBundleZIPReproducibility)$",
+            "./internal/compile"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:ef71f9fd97d8e9e413f4f4ce5589ddceacfe17541a16181fa8a9cc76d57ac55e"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-25T09:03:29Z"
+    },
+    "2.1": {
+      "task_fingerprint": "sha256:bb9435003eecff4c5a27b3b81fd1cfdf5bc385b3b15e777556d4d4ad2e905f50",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:080300103cfcf04aeae919fc9f1776e3217ea3b4bcf57ac187c314dbe5e23dc4"
+      },
+      "requirements_fingerprint": "sha256:73cbc5775fde1679979c3077f2990539b77da2a71eb03d71e56b0f85a3a96f5b",
+      "design_fingerprint": "sha256:381cbbcd46938f17c39cc376ffa6d1b0edfb72f7e63d08c3b695e5ba4ac23bd5",
+      "tasks_fingerprint": "sha256:4f850df6196ac5b0f1929ed70aa26341b847aa1cf5be725f3cb17660a3fe966a",
+      "code_identity": "sha256:080300103cfcf04aeae919fc9f1776e3217ea3b4bcf57ac187c314dbe5e23dc4",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestManagedSettingsAndChatBundleCLI$",
+            "./internal/cli"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:8700fa8c652ae654eb6e468b862dd31d90e5745e816c83fa32210d324968843b"
+        },
+        {
+          "command": [
+            "sh",
+            "-c",
+            "CGO_ENABLED=0 go build -o /dev/null ./cmd/gradusctl"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-25T09:03:43Z"
+    }
+  }
+}
