@@ -1,0 +1,94 @@
+{
+  "schema_version": "v1alpha2",
+  "feature": "mcp-server",
+  "tasks": {
+    "1.1": {
+      "task_fingerprint": "sha256:d5ae91f762d018c14d3aecb6de1a7bba4c78a0d00c11bb01070ebb7876975002",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:22945514bb4b7a62d4f635edd834ee526a923c67272d61bb9b8417447e9ea73c"
+      },
+      "requirements_fingerprint": "sha256:582093e3a8b45597ff743fea3855b97c54f69f23c20fdcd7d5327454b5fa553a",
+      "design_fingerprint": "sha256:2c818b8f989d542b72bf78f4e9f20774178b7ca19835df3b0a3f50f64786217c",
+      "tasks_fingerprint": "sha256:8dda1845f964b8b643b925ddc92836afc0dc5ec27e616bf5117865cbee8ac68e",
+      "code_identity": "sha256:22945514bb4b7a62d4f635edd834ee526a923c67272d61bb9b8417447e9ea73c",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestMCPServerProtocolAndTools$",
+            "./internal/mcp"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:7783517b7693d8b2ef74e3fb419570543224317449b647e8e395897c867e1b19"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-25T09:26:52Z"
+    },
+    "2.1": {
+      "task_fingerprint": "sha256:239ae856a74d4eb19dc249bc144a09a7c5a9f802cde62792efc9ab0e65edd86b",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:22945514bb4b7a62d4f635edd834ee526a923c67272d61bb9b8417447e9ea73c"
+      },
+      "requirements_fingerprint": "sha256:582093e3a8b45597ff743fea3855b97c54f69f23c20fdcd7d5327454b5fa553a",
+      "design_fingerprint": "sha256:2c818b8f989d542b72bf78f4e9f20774178b7ca19835df3b0a3f50f64786217c",
+      "tasks_fingerprint": "sha256:8dda1845f964b8b643b925ddc92836afc0dc5ec27e616bf5117865cbee8ac68e",
+      "code_identity": "sha256:22945514bb4b7a62d4f635edd834ee526a923c67272d61bb9b8417447e9ea73c",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestServeMCPCommandCLI$",
+            "./internal/cli"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:0d4d482b3a827beacf7025abd41d23318513fedb019079aa165b3699ef6d089f"
+        },
+        {
+          "command": [
+            "sh",
+            "-c",
+            "CGO_ENABLED=0 go build -o /dev/null ./cmd/gradusctl"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-25T09:27:08Z"
+    }
+  }
+}
