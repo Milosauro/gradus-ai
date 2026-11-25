@@ -381,6 +381,7 @@ func Resolve(rootDir string, opts Options) (ResolveResult, error) {
 				Status:           r.Status,
 				ReviewBy:         r.ReviewBy,
 				Expires:          r.Expires,
+				Controls:         r.Controls,
 				IsOverlay:        step.Kind == "overlay",
 				Provenance: RuleProvenance{
 					Source: step.SourceLabel,
