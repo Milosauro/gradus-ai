@@ -886,7 +886,7 @@ targets: [claude-code, antigravity, agents-md]
 
 Per ADR 0001, `user` is always the most specific (lowest) level in the pyramid so that committed repository levels (`org`, `team`, `project`) never depend on or override rules that exist only in a developer's personal `~/.gradus/levels/user` directory, and CI can cleanly omit `user` without breaking override chains.
 
-### 24.3 Phase 0 exit criteria **[Proposed — to be agreed with the author]**
+### 24.3 Phase 0 exit criteria **[Validated on `wallet-tracker`]**
 
 Phase 0 is validated on a **real project of the author**, with real rules, in both Claude Code and Antigravity.
 
@@ -950,7 +950,7 @@ Phase 0 is validated on a **real project of the author**, with real rules, in bo
 
 | # | Item |
 |---|---|
-| O-1 | Phase 0 exit criteria (§24.3): confirm with the author, choose the test project. |
+| O-1 | Phase 0 exit criteria (§24.3): **Closed** — validated live on `wallet-tracker` and `gradus-ai` dogfooding (see `README.md`). |
 | O-2 | Trademark search on EUIPO/TMview and WIPO; domain choice; organization creation and repository move (release topics, not design blockers). |
 | O-3 | Exact budget values per level and per target, to be measured on real rules during Phase 0. |
 

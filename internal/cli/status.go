@@ -52,7 +52,12 @@ func newStatusCmd(jsonOutput *bool) *cobra.Command {
 			}
 			rep, exitCode, err := buildStatusReport(dir, userDir)
 			if err != nil {
-				return &ExitErrorWithCode{Code: ExitError, Err: err}
+				if hookMode || antigravityHook {
+					// D-82: hook mode never fails session startup, even on malformed gradus.yaml.
+					rep = statusReport{LockState: "invalid"}
+				} else {
+					return &ExitErrorWithCode{Code: ExitError, Err: err}
+				}
 			}
 
 			if antigravityHook {

@@ -159,3 +159,32 @@ func TestMCPHardeningV041(t *testing.T) {
 		t.Fatalf("expected server to answer ping after oversized/error requests, got: %s", lines[5])
 	}
 }
+
+func TestMCPProposeRuleLevelDiagnosticsV042(t *testing.T) {
+	tmp := t.TempDir()
+	_ = os.MkdirAll(filepath.Join(tmp, ".gradus", "levels", "project", "rules"), 0o755)
+	_ = os.WriteFile(filepath.Join(tmp, ".gradus", "levels", "project", "level.yaml"), []byte("schema: gradus/v1\nid: project\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(tmp, "gradus.yaml"), []byte("schema: gradus/v1\nlevels:\n  - id: project\n    source: { path: .gradus/levels/project }\n"), 0o644)
+
+	requests := strings.Join([]string{
+		`{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"propose_rule","arguments":{"id":"PRJ-01","title":"Traversal","level":"../etc","severity":"MUST","statement":"Bad"}}}`,
+		`{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"propose_rule","arguments":{"id":"PRJ-01","title":"Separator","level":"unknown/level","severity":"MUST","statement":"Bad"}}}`,
+	}, "\n") + "\n"
+
+	var out bytes.Buffer
+	srv := &mcp.Server{RootDir: tmp, Offline: true}
+	if err := srv.ServeStdio(strings.NewReader(requests), &out); err != nil {
+		t.Fatalf("ServeStdio failed: %v", err)
+	}
+
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 2 {
+		t.Fatalf("expected 2 responses, got %d:\n%s", len(lines), out.String())
+	}
+	if !strings.Contains(lines[0], "path traversal is not allowed") {
+		t.Fatalf("expected path traversal message for ../etc, got: %s", lines[0])
+	}
+	if !strings.Contains(lines[1], "invalid level identifier") || strings.Contains(lines[1], "path traversal") {
+		t.Fatalf("expected invalid level identifier (not path traversal) for unknown/level, got: %s", lines[1])
+	}
+}

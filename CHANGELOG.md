@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.2] - 2026-11-26
+
+### Fixed
+- **Anti-tamper `export` & standalone assignment detection (`F30`):** Extend `hookBypassEnvRe` to catch `export HUSKY=0; git commit`, `export HUSKY=0 && git commit`, `export SKIP=gradus`, and `set -a; HUSKY=0; git commit` without reintroducing false positives on harmless `echo`, `grep`, or commit messages.
+- **Nested Git boundary isolation (`F30`):** Stop `resolveWorkspaceRoot` at `.git` boundaries so standalone nested repositories or submodules inside a Gradus workspace never inherit the parent's `gradus.yaml`.
+- **Non-blocking `status --hook` on malformed `gradus.yaml` (`F30`):** Emit `gradus: lock=invalid` with exit `0` in `--hook` and `--antigravity-hook` modes per Decision `D-82`, while keeping non-hook `status` and `gradusctl guard` fail-closed (`exit 2`).
+- **MCP `propose_rule` level diagnostics (`F30`):** Distinguish `..` path traversal errors from `/` or `\` invalid level identifier errors.
+
+### Documentation
+- **Design `O-1` closure & manual repair note (`F30`):** Mark §24.3 validated on `wallet-tracker` and close `O-1` in `docs/design/gradus-design.md`, and document manual repair for malformed `gradus.yaml` in `README.md`.
+
 ## [0.4.1] - 2026-11-25
 
 ### Fixed
