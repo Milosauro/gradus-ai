@@ -236,3 +236,61 @@ func TestCheckEngineEdgeCasesV032(t *testing.T) {
 		t.Fatalf("expected technical error from exit-2 external checker, got: %v", err)
 	}
 }
+
+func TestDiscoverAndCheckUntrackedFilesV044(t *testing.T) {
+	tmp := t.TempDir()
+	runGit := func(args ...string) {
+		t.Helper()
+		c := exec.Command("git", args...)
+		c.Dir = tmp
+		if out, err := c.CombinedOutput(); err != nil {
+			t.Fatalf("git %v failed: %v\n%s", args, err, string(out))
+		}
+	}
+	runGit("init")
+	runGit("config", "user.name", "Gradus Test")
+	runGit("config", "user.email", "test@gradus.local")
+
+	_ = os.WriteFile(filepath.Join(tmp, ".gitignore"), []byte("ignored/\n"), 0o644)
+	_ = os.MkdirAll(filepath.Join(tmp, "backend", "app"), 0o755)
+	_ = os.MkdirAll(filepath.Join(tmp, "ignored"), 0o755)
+	_ = os.WriteFile(filepath.Join(tmp, "backend", "app", "clean.py"), []byte("def ok():\n    return 1\n"), 0o644)
+	runGit("add", ".gitignore", "backend/app/clean.py")
+	runGit("commit", "-m", "init")
+
+	// Untracked violating file (not yet git-added) and gitignored file
+	_ = os.WriteFile(filepath.Join(tmp, "backend", "app", "new_untracked.py"), []byte("print('debug')\n"), 0o644)
+	_ = os.WriteFile(filepath.Join(tmp, "ignored", "secret.py"), []byte("print('ignored')\n"), 0o644)
+
+	view := resolve.ResolvedView{
+		Rules: []resolve.ResolvedRule{
+			{
+				ID:          "PRJ-PY-001",
+				Title:       "No print in backend",
+				Level:       "project",
+				Severity:    "MUST",
+				Enforcement: "check",
+				Scope:       []string{"**/*.py"},
+				Checker:     &schema.CheckerConfig{Name: "pattern", Pattern: `\bprint\(`},
+			},
+		},
+	}
+
+	// Default RunChecks must inspect untracked non-ignored files without requiring git add
+	res, err := check.RunChecks(tmp, view, check.Options{})
+	if err != nil {
+		t.Fatalf("RunChecks failed: %v", err)
+	}
+	if len(res.Findings) != 1 || res.Findings[0].Path != "backend/app/new_untracked.py" {
+		t.Fatalf("expected 1 finding on untracked backend/app/new_untracked.py (and ignored/ excluded), got %+v", res.Findings)
+	}
+
+	// Staged-only RunChecks must still inspect only staged files
+	stagedRes, err := check.RunChecks(tmp, view, check.Options{Staged: true})
+	if err != nil {
+		t.Fatalf("RunChecks(Staged) failed: %v", err)
+	}
+	if len(stagedRes.Findings) != 0 {
+		t.Fatalf("expected 0 findings with Staged=true before git add, got %+v", stagedRes.Findings)
+	}
+}
