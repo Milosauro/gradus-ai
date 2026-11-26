@@ -18,23 +18,31 @@ func TestNestedGitBoundaryAndInvalidConfigV042(t *testing.T) {
 	_ = os.WriteFile(filepath.Join(parent, ".gradus", "levels", "project", "level.yaml"), []byte("schema: gradus/v1\nid: project\n"), 0o644)
 	_ = os.WriteFile(filepath.Join(parent, "gradus.yaml"), []byte("schema: gradus/v1\nanti_tamper:\n  mode: deny\nlevels:\n  - id: project\n    source: { path: .gradus/levels/project }\n"), 0o644)
 
-	// R2.AC1: direct child with .git and no gradus.yaml must NOT inherit parent's gradus.yaml
-	nestedGit := filepath.Join(parent, "nested-repo")
-	_ = os.MkdirAll(filepath.Join(nestedGit, ".git"), 0o755)
+	// Simulate running gradusctl from inside the Gradus parent repository (v0.4.3 regression check).
+	t.Chdir(parent)
 
-	nestedPayload := `{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git commit --no-verify -m test"},"cwd":` + `"` + filepath.ToSlash(nestedGit) + `"` + `}`
+	// R2.AC1: direct child (and its subdirectory) with .git and no gradus.yaml must NOT inherit parent's gradus.yaml
+	nestedGit := filepath.Join(parent, "nested-repo")
+	nestedSub := filepath.Join(nestedGit, "src")
+	_ = os.MkdirAll(filepath.Join(nestedGit, ".git"), 0o755)
+	_ = os.MkdirAll(nestedSub, 0o755)
+
+	for _, testCwd := range []string{nestedGit, nestedSub} {
+		nestedPayload := `{"hook_event_name":"PreToolUse","tool_name":"Bash","tool_input":{"command":"git commit --no-verify -m test"},"cwd":` + `"` + filepath.ToSlash(testCwd) + `"` + `}`
+		var stdout, stderr bytes.Buffer
+		cmd := cli.NewRootCmd()
+		cmd.SetIn(strings.NewReader(nestedPayload))
+		cmd.SetOut(&stdout)
+		cmd.SetErr(&stderr)
+		cmd.SetArgs([]string{"guard"})
+		if err := cmd.Execute(); err != nil {
+			t.Fatalf("guard inside nested .git repo (%s) failed: %v (stderr=%s)", testCwd, err, stderr.String())
+		}
+		if strings.TrimSpace(stdout.String()) != "{}" {
+			t.Fatalf("expected {} allow in nested standalone .git repo (%s), got: %s", testCwd, stdout.String())
+		}
+	}
 	var stdout, stderr bytes.Buffer
-	cmd := cli.NewRootCmd()
-	cmd.SetIn(strings.NewReader(nestedPayload))
-	cmd.SetOut(&stdout)
-	cmd.SetErr(&stderr)
-	cmd.SetArgs([]string{"guard"})
-	if err := cmd.Execute(); err != nil {
-		t.Fatalf("guard inside nested .git repo failed: %v (stderr=%s)", err, stderr.String())
-	}
-	if strings.TrimSpace(stdout.String()) != "{}" {
-		t.Fatalf("expected {} allow in nested standalone .git repo, got: %s", stdout.String())
-	}
 
 	// R2.AC2: regular subdirectory without .git (e.g. .agents/) must still inherit parent's gradus.yaml
 	agentsSub := filepath.Join(parent, ".agents")
