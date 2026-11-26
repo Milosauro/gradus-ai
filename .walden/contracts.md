@@ -1,9 +1,9 @@
 ---
 walden_schema_version: v1alpha1
 status: approved
-approved_at: 2026-11-23T16:15:52Z
-last_modified: 2026-11-23T16:15:52Z
-approved_fingerprint: sha256:adbba152ec55f0c23e803fc2ed4518f8ae0544ed7810b1ea27168599d0cf1289
+approved_at: 2026-11-26T13:57:03Z
+last_modified: 2026-11-26T13:57:03Z
+approved_fingerprint: sha256:9cfbf31a3a2cfd267aa01b1ac2a973cd3c513d00755329147e242b5615f19c36
 ---
 
 # Current Contracts
@@ -168,22 +168,114 @@ Reserved: none
 Sources: docs/design/gradus-design.md
 Related: agent-compilers (extends PlanCompile/ApplyCompile and reuses managed-section helpers), verify-check-evidence (automatic drift detection via PlanCompile)
 
+## security-hardening-and-lock-upgrades
+
+Purpose: Hardens `gradusctl` for `v0.3.1` with D-80 `view_hash` excluding personal `user` rules, anti-tamper coverage for `.codex/config.toml` and `opencode.json`, `resolve --upgrade-lock`, and supply-chain/YAML hygiene.
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2, R2.AC3, R3.AC1, R3.AC2, R4.AC1, R4.AC2, R4.AC3, R4.AC4, NFR1, NFR2, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md, docs/threat-model.md
+Related: core-schema-init (YAML parsing), resolve-and-lock (D-80 view_hash and lock upgrades), github-action-and-ci-agents (action.yml hardening), runtime-guard (anti-tamper targets)
+
+## action-hardening-and-design-v1-1
+
+Purpose: Hardens the GitHub Action for non-Go consumer repos (`v0.3.2`), expands git-hook anti-tamper (`core.hooksPath`, `git push --no-verify`, env vars, `lefthook-local.yml`), validates `exception request --expires` early, handles binary/large files in `check`, closes redaction gaps, and aligns Design 1.1.
+Active: R1.AC1, R1.AC2, R1.AC3, R1.AC4, R2.AC1, R3.AC1, R3.AC2, R3.AC3, R4.AC1, R4.AC2
+Reserved: none
+Sources: docs/design/gradus-design.md, spec/v1/SPEC.md, docs/threat-model.md
+Related: github-action-and-ci-agents (updates .github/actions/gradus/action.yml), runtime-guard (anti-tamper bypasses), overlays-and-exceptions (early duration check), security-hardening-and-lock-upgrades (follows v0.3.1 hardening)
+
+## conditional-overlays-by-profile
+
+Purpose: Activates profile-driven conditional overlays (`activation: profile`, `when` predicates, `activation_rules`, extensible `profile` attributes) with `OverlaySummary.Reason` and blocking `overlay` conflicts for missing/disabled required overlays.
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2, R3.AC1
+Reserved: none
+Sources: docs/design/gradus-design.md, spec/v1/SPEC.md
+Related: overlays-and-exceptions (extends overlay activation modes), resolve-and-lock (evaluates profile rules during Resolve)
+
+## framework-mapping-and-audit-export
+
+Purpose: Propagates `controls:` monotonically across rule overrides in `ResolvedView` and provides `gradusctl audit coverage` and `gradusctl audit export` (`--format json|markdown`, `--framework`, `--output`).
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: core-schema-init (parses controls field), resolve-and-lock (propagates controls monotonically)
+
+## model-policy-and-tiers
+
+Purpose: Activates `models:` capability tiers (`tier-high`, `tier-standard`, `tier-light`) in `gradus.yaml`/`level.yaml`, enforces monotonic tier resolution (`model_policy` conflicts), emits Claude skill `model:` frontmatter, records `--skill`/`--model-tier` in evidence, and verifies tiers via `gradusctl verify --check-model-tier`.
+Active: R1.AC1, R1.AC2, R2.AC1, R3.AC1, R3.AC2
+Reserved: none
+Sources: docs/design/gradus-design.md, spec/v1/SPEC.md
+Related: agent-compilers (emits skill model frontmatter), verify-check-evidence (adds --check-model-tier and evidence fields)
+
+## managed-settings-and-chat-bundles
+
+Purpose: Adds `gradusctl compile --managed-settings <path>` for enterprise Claude Code `managed-settings.json` rollout and `gradusctl compile --chat-bundle <path.zip>` for byte-reproducible shared-rule and skill ZIP bundles excluding `user` rules.
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2
+Reserved: none
+Sources: docs/design/gradus-design.md, docs/compatibility-matrix.md
+Related: agent-compilers (extends compile outputs), toolchain-governance (exports deniedMcpServers from toolchain.forbidden)
+
+## mcp-server
+
+Purpose: Exposes a zero-dependency JSON-RPC 2.0 stdio MCP server (`gradusctl serve --mcp`) providing five read-only governance tools (`resolve_rules`, `explain_rule`, `check_text`, `propose_rule`, `get_toolchain`).
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2, R2.AC3, R3.AC1
+Reserved: none
+Sources: docs/design/gradus-design.md, docs/compatibility-matrix.md
+Related: resolve-and-lock (serves resolved rules and explanations), verify-check-evidence (in-memory check_text), toolchain-governance (serves get_toolchain)
+
+## maturity-assessment-and-commit-trailers
+
+Purpose: Provides process-only governance maturity assessment (`gradusctl assess`, `L1`–`L5` across 5 dimensions per P16), embedded `gradus-assess` skill (`SKILL-08`), and optional git commit attribution trailers (`gradusctl trailers generate|verify`).
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2, R3.AC1
+Reserved: none
+Sources: docs/design/gradus-design.md
+Related: mvp-skills (adds eighth embedded skill gradus-assess), resolve-and-lock (uses lock/view hashes in trailers)
+
+## enterprise-hardening-and-design-v1-2
+
+Purpose: Makes `guard` and `status --hook` allow/exit `0` outside Gradus repos (D-89), hardens `serve --mcp` (4 MiB bounded reader, protocol negotiation, `version.Get().Version`, `propose_rule` validation, read-only annotations), verifies historical trailers at `<ref>`, guards `resolve --write` on conflicts, refines anti-tamper precision, and aligns Design 1.2 (`v0.4.1`).
+Active: R1.AC1, R1.AC2, R1.AC3, R2.AC1, R2.AC2, R2.AC3, R3.AC1, R3.AC2, R3.AC3, R4.AC1
+Reserved: none
+Sources: docs/design/gradus-design.md, spec/v1/SPEC.md, docs/compatibility-matrix.md
+Related: managed-settings-and-chat-bundles (makes machine-wide hooks safe outside Gradus), mcp-server (hardens stdio server), maturity-assessment-and-commit-trailers (historical ref verification), action-hardening-and-design-v1-1 (advances Design 1.1 to 1.2)
+
+## anti-tamper-and-boundary-hardening
+
+Purpose: Restores anti-tamper detection for `export` and standalone hook-bypass assignments without false positives, enforces `.git` boundaries in `resolveWorkspaceRoot`, keeps `status --hook` exit `0` on malformed `gradus.yaml` (D-82), refines MCP `propose_rule` diagnostics, and closes Design `O-1` (`v0.4.2`).
+Active: R1.AC1, R1.AC2, R2.AC1, R2.AC2, R3.AC1, R3.AC2, R3.AC3, R4.AC1, R4.AC2, NFR1, NFR2, C1, C2
+Reserved: none
+Sources: docs/design/gradus-design.md, README.md
+Related: enterprise-hardening-and-design-v1-2 (refines v0.4.1 anti-tamper, boundary, and MCP diagnostics), runtime-guard (updates hookBypassEnvRe and resolveWorkspaceRoot)
+
 ## Coherence Review
 
-### adapters-walden-and-speckit
-Consistent with `obligations-and-bindings#R2.AC1`, `core-schema-init#R1.AC1`, `remote-levels-signatures-and-changelog#R2.AC1`, `toolchain-governance#R1.AC1`, `gradus-link-skill#R1.AC2`, and `codex-copilot-opencode-targets#R4.AC1`. `adapters-walden-and-speckit` consumes `ResolvedView.Bindings` and reuses `compile.PlanAgentsMD` and `schema.ParseSemVer` without altering existing schemas or exit codes. No inconsistencies found.
+### action-hardening-and-design-v1-1
+Consistent with `enterprise-hardening-and-design-v1-2#R1.AC1`, `enterprise-hardening-and-design-v1-2#R4.AC1`, `security-hardening-and-lock-upgrades#R1.AC1`, `core-schema-init#R1.AC1`, and `github-action-and-ci-agents#R1.AC1`. `action-hardening-and-design-v1-1` fixes non-Go `setup-go` resolution in `.github/actions/gradus/action.yml` without altering action inputs or exit codes, and its Design 1.1 alignment is cleanly superseded forward by `enterprise-hardening-and-design-v1-2#R4.AC1` (Design 1.2). No contradictions found.
 
-### codex-copilot-opencode-targets
-Consistent with `core-schema-init#R1.AC1`, `adapters-walden-and-speckit#R2.AC1`, `gradus-link-skill#R2.AC1`, `obligations-and-bindings#R3.AC1`, `remote-levels-signatures-and-changelog#R1.AC1`, and `toolchain-governance#R3.AC1`. `codex`, `copilot`, and `opencode` extend `compile.PlanCompile` and `ApplyCompile` while preserving byte-identical output for `claude-code`, `antigravity`, and `agents-md`. No inconsistencies found.
+### anti-tamper-and-boundary-hardening
+Consistent with `enterprise-hardening-and-design-v1-2#R1.AC1`, `enterprise-hardening-and-design-v1-2#R3.AC3`, `action-hardening-and-design-v1-1#R1.AC1`, and `core-schema-init#R1.AC1`. Extends `hookBypassEnvRe` to cover `export`/standalone assignments, enforces `.git` boundaries in `resolveWorkspaceRoot` matching `findGradusRoot`, honors D-82 in `status --hook` on malformed `gradus.yaml` while keeping `guard` fail-closed, and closes Design `O-1`. No contradictions found.
 
-### gradus-link-skill
-Consistent with `mvp-skills#R1.AC1`, `agent-compilers#R2.AC3`, `agent-compilers#R3.AC3`, `adapters-walden-and-speckit#R1.AC2`, `obligations-and-bindings#R2.AC1`, and `toolchain-governance#R3.AC1`. `skills/gradus-link/SKILL.md` embeds cleanly via `skills/embed.go` and delegates all verification to `gradusctl`. No inconsistencies found.
+### conditional-overlays-by-profile
+Consistent with `overlays-and-exceptions#R1.AC1`, `resolve-and-lock#R3.AC1`, and `core-schema-init#R1.AC1`. Activates the `activation: profile` mode already reserved in `overlays-and-exceptions` with deterministic `OverlaySummary.Reason` and blocking `overlay` conflicts. No linked contradictions found.
 
-### obligations-and-bindings
-Consistent with `core-schema-init#R1.AC1`, `doctor-and-guard-hardening#R1.AC1`, `adapters-walden-and-speckit#R2.AC1`, and `toolchain-governance#R2.AC1`. `obligations` and `bindings` use `omitempty` JSON fields in `ResolvedView`, preserving `view_hash` for existing repositories without obligations. No inconsistencies found.
+### enterprise-hardening-and-design-v1-2
+Consistent with `action-hardening-and-design-v1-1#R1.AC1`, `action-hardening-and-design-v1-1#R4.AC1`, `codex-copilot-opencode-targets#R4.AC1`, and `core-schema-init#R1.AC1`. Advances `docs/design/gradus-design.md` from Design 1.1 to Design 1.2 (`D-84`–`D-89`), keeps `guard` and `status --hook` safe outside Gradus repositories for enterprise `managed-settings.json` rollouts, and hardens `serve --mcp`, `trailers verify`, and `resolve --write`. No contradictions found.
 
-### remote-levels-signatures-and-changelog
-Consistent with `core-schema-init#R1.AC1`, `doctor-and-guard-hardening#R2.AC1`, `obligations-and-bindings#R1.AC1`, and `adapters-walden-and-speckit#R2.AC2`. Reuses `lock.Entry.Signature` and `os/exec` `git` (`PRJ-GO-001`) with non-destructive `git archive` materialization. No inconsistencies found.
+### framework-mapping-and-audit-export
+Consistent with `core-schema-init#R2.AC1` and `resolve-and-lock#R3.AC1`. Propagates `controls:` monotonically across rule overrides without weakening higher-level mappings and adds read-only `audit coverage` / `audit export` commands. No linked contradictions found.
 
-### toolchain-governance
-Consistent with `core-schema-init#R1.AC1`, `agent-compilers#R2.AC2`, `runtime-guard#C3`, `doctor-and-guard-hardening#R1.AC2`, `gradus-link-skill#R1.AC2`, and `obligations-and-bindings#R2.AC1`. `ResolvedView.Toolchain` is omitted when unused and enforces monotonic restriction via `doublestar` matching. No inconsistencies found.
+### managed-settings-and-chat-bundles
+Consistent with `agent-compilers#R1.AC1`, `toolchain-governance#R1.AC1`, and `enterprise-hardening-and-design-v1-2#R1.AC1`. Adds optional `--managed-settings` and `--chat-bundle` outputs to `compile` while excluding personal `user` rules from shared bundles. No linked contradictions found.
+
+### maturity-assessment-and-commit-trailers
+Consistent with `mvp-skills#R1.AC1`, `resolve-and-lock#R2.AC1`, and `enterprise-hardening-and-design-v1-2#R3.AC1`. Adds process-only `assess` metrics (strictly adhering to P16), embeds `gradus-assess` (`SKILL-08`), and emits optional git trailers verified against historical `gradus.lock`. No linked contradictions found.
+
+### mcp-server
+Consistent with `resolve-and-lock#R1.AC1`, `verify-check-evidence#R2.AC1`, and `enterprise-hardening-and-design-v1-2#R2.AC1`. Exposes read-only stdio JSON-RPC 2.0 tools without mutating repository files on disk, further hardened by `enterprise-hardening-and-design-v1-2` and `anti-tamper-and-boundary-hardening`. No linked contradictions found.
+
+### model-policy-and-tiers
+Consistent with `core-schema-init#R1.AC1`, `agent-compilers#R2.AC3`, and `verify-check-evidence#R3.AC1`. Activates `models:` capability-tier policy monotonically across levels, emits Claude skill `model:` frontmatter, and adds optional `--check-model-tier` enforcement. No linked contradictions found.
+
+### security-hardening-and-lock-upgrades
+Consistent with `action-hardening-and-design-v1-1#R1.AC1`, `core-schema-init#R1.AC1`, `github-action-and-ci-agents#R1.AC1`, and `resolve-and-lock#R2.AC1`. Implements D-80 (`view_hash` excludes personal `user` level), extends anti-tamper targets to `.codex/config.toml` and `opencode.json`, and adds `resolve --upgrade-lock`. No contradictions found.
