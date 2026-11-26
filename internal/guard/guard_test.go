@@ -523,3 +523,43 @@ func TestAntiTamperPrecisionV041(t *testing.T) {
 		}
 	}
 }
+
+func TestAntiTamperExportAndStandaloneV042(t *testing.T) {
+	// R1.AC1: export and standalone assignments in multi-statement commands must trigger anti_tamper
+	for _, cmd := range []string{
+		"export HUSKY=0; git commit -m x",
+		"export HUSKY=0 && git commit -m x",
+		"export SKIP=gradus",
+		"set -a; HUSKY=0; git commit",
+		"export LEFTHOOK=0\ngit commit -m x",
+	} {
+		res, err := guard.EvaluateWithOptions(guard.NormalizedAction{
+			Action: guard.ActionCommand,
+			Target: cmd,
+		}, nil, guard.EvaluateOptions{AntiTamperMode: guard.DecisionDeny})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !res.AntiTamper || res.Decision != guard.DecisionDeny {
+			t.Fatalf("expected anti_tamper deny for %q, got %+v", cmd, res)
+		}
+	}
+
+	// R1.AC2: non-assignment arguments must not trigger anti_tamper
+	for _, harmless := range []string{
+		"echo SKIP=foo",
+		"grep LEFTHOOK=0 README.md",
+		`git commit -m "document HUSKY=0"`,
+	} {
+		res, err := guard.EvaluateWithOptions(guard.NormalizedAction{
+			Action: guard.ActionCommand,
+			Target: harmless,
+		}, nil, guard.EvaluateOptions{AntiTamperMode: guard.DecisionDeny})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if res.AntiTamper {
+			t.Fatalf("expected no anti_tamper false positive for %q, got %+v", harmless, res)
+		}
+	}
+}

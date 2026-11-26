@@ -34,7 +34,7 @@ var mutatingShellVerbRe = regexp.MustCompile(`(?i)(?:\b(?:rm|mv|cp|sed|awk|perl|
 var gitHooksPathConfigRe = regexp.MustCompile(`(?i)\bgit\b[^\n]*(?:\bconfig\b[^\n]*\bcore\.hooksPath\b|\s-c\s+["']?core\.hooksPath=)`)
 var gitCommitNoVerifyRe = regexp.MustCompile(`(?i)\bgit\b[^\n]*\bcommit\b[^\n]*(?:--no-verify\b|(?:^|\s)-n(?:\s|$))`)
 var gitPushNoVerifyRe = regexp.MustCompile(`(?i)\bgit\b[^\n]*\bpush\b[^\n]*--no-verify\b`)
-var hookBypassEnvRe = regexp.MustCompile(`(?:^|[;&|]\s*)(?:env\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:HUSKY=0|LEFTHOOK=0|SKIP=[^\s;&|]+|LEFTHOOK_EXCLUDE=[^\s;&|]+|GIT_CONFIG_COUNT=[^\s;&|]+)(?:\s|$)`)
+var hookBypassEnvRe = regexp.MustCompile(`(?m)(?:^|[;&|]\s*)(?:(?:env|export)\s+)?(?:[A-Za-z_][A-Za-z0-9_]*=\S+\s+)*(?:HUSKY=0|LEFTHOOK=0|SKIP=[^\s;&|]+|LEFTHOOK_EXCLUDE=[^\s;&|]+|GIT_CONFIG_COUNT=[^\s;&|]+)(?:\s|[;&|]|$)`)
 var humanOnlyGradusCmdRe = regexp.MustCompile(`(?i)\bgradusctl\b[^\n]*(?:\bexception\s+(?:approve|break-glass)\b|\bconflicts\s+dismiss\b|\blessons\s+update\b|\bhooks\s+install\b)`)
 
 // IsProtectedGovernancePath reports whether relPath targets a Gradus/Walden governance

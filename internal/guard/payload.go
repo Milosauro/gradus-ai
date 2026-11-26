@@ -138,10 +138,14 @@ func resolveWorkspaceRoot(fallback, cwd string, workspacePaths []string) string 
 		candidates = append(candidates, strings.TrimSpace(fallback))
 	}
 
-	// Prefer the first candidate (or its parent, e.g. when hook CWD is .agents/) that contains gradus.yaml.
+	// Prefer the first candidate (or its immediate parent when no .git boundary separates them,
+	// e.g. when hook CWD is .agents/) that contains gradus.yaml.
 	for _, c := range candidates {
 		if _, err := os.Stat(filepath.Join(c, "gradus.yaml")); err == nil {
 			return c
+		}
+		if _, err := os.Stat(filepath.Join(c, ".git")); err == nil {
+			continue
 		}
 		parent := filepath.Dir(c)
 		if parent != c {

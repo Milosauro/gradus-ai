@@ -375,8 +375,11 @@ func (s *Server) toolProposeRule(args map[string]any) toolResult {
 	if id == "" || title == "" || level == "" || severity == "" || statement == "" {
 		return errorToolResult("arguments 'id', 'title', 'level', 'severity', and 'statement' are required")
 	}
-	if strings.ContainsAny(level, `/\`) || strings.Contains(level, "..") {
+	if strings.Contains(level, "..") {
 		return errorToolResult(fmt.Sprintf("invalid level %q: path traversal is not allowed", level))
+	}
+	if strings.ContainsAny(level, `/\`) {
+		return errorToolResult(fmt.Sprintf("invalid level identifier %q: path separators are not allowed", level))
 	}
 
 	res, err := resolve.Resolve(s.RootDir, resolve.Options{OfflineOnly: s.Offline})

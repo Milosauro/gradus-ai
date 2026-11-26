@@ -1,0 +1,125 @@
+{
+  "schema_version": "v1alpha2",
+  "feature": "anti-tamper-and-boundary-hardening",
+  "tasks": {
+    "1.1": {
+      "task_fingerprint": "sha256:8e92a7bee7c04e0648e4caef70aebf76785112b99dd605a3e83a27a8e0142caa",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:6e28d64fdcf00fc45145a41a32ae3818efb702c0eab0f78426089f75cb9d501a"
+      },
+      "requirements_fingerprint": "sha256:78e0c852d44c8eae3d6f01e02d3ac339b84c5bbd31886ac3b89ab11cc0b5d1fe",
+      "design_fingerprint": "sha256:2e4c24723af385a0f5f8456a96169bbc5d4a22607377387bdb435732ec2171ed",
+      "tasks_fingerprint": "sha256:31fd3fd4b164aea86d07abc8c439c73990b573686020d9998aa3268dee8d987e",
+      "code_identity": "sha256:6e28d64fdcf00fc45145a41a32ae3818efb702c0eab0f78426089f75cb9d501a",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-race",
+            "-count=1",
+            "-run",
+            "^TestAntiTamperExportAndStandaloneV042$",
+            "./internal/guard"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:94a43b7cb644e0d3a317fc7815899ee21e370184fcfffefd91acbbc63ba5dd2d"
+        },
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-race",
+            "-count=1",
+            "-run",
+            "^TestNestedGitBoundaryAndInvalidConfigV042$",
+            "./internal/cli"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:59e9ed94917b228f534e0c0abaeeefc9699f1a8500ce321544e5a26a6a6772f1"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-26T12:22:10Z"
+    },
+    "2.1": {
+      "task_fingerprint": "sha256:0a6c24c23fae5bebc8f0708e59848db2bb2eeee6e9aadc7a61c014e76fbca18e",
+      "task_fingerprint_scheme": "walden/task-definition/v2",
+      "execution": {
+        "origin": "complete",
+        "policy": "completion-post-state/v1",
+        "assertion_result": "passed",
+        "integrity": "post-state",
+        "after_code_identity": "sha256:6e28d64fdcf00fc45145a41a32ae3818efb702c0eab0f78426089f75cb9d501a"
+      },
+      "requirements_fingerprint": "sha256:78e0c852d44c8eae3d6f01e02d3ac339b84c5bbd31886ac3b89ab11cc0b5d1fe",
+      "design_fingerprint": "sha256:2e4c24723af385a0f5f8456a96169bbc5d4a22607377387bdb435732ec2171ed",
+      "tasks_fingerprint": "sha256:31fd3fd4b164aea86d07abc8c439c73990b573686020d9998aa3268dee8d987e",
+      "code_identity": "sha256:6e28d64fdcf00fc45145a41a32ae3818efb702c0eab0f78426089f75cb9d501a",
+      "profile": {
+        "git": "git version 2.39.5 (Apple Git-154)",
+        "go": "go version go1.27.4 darwin/amd64",
+        "platform": "darwin/amd64",
+        "walden": "v0.14.0"
+      },
+      "steps": [
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-race",
+            "-count=1",
+            "-run",
+            "^TestMCPProposeRuleLevelDiagnosticsV042$",
+            "./internal/mcp"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:4b2565de84a1029919169d5c56dbf9cea0b4beb168a78bbe9dbbf87adaba4528"
+        },
+        {
+          "command": [
+            "go",
+            "test",
+            "-v",
+            "-count=1",
+            "-run",
+            "^TestDocsAndDesignClosureV042$",
+            "./internal/cli"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:a02d774058e1809dfa439e35f267769727c97de0e8052d3c9e981e9e2e62d9b3"
+        },
+        {
+          "command": [
+            "sh",
+            "-c",
+            "CGO_ENABLED=0 go build -o /dev/null ./cmd/gradusctl \u0026\u0026 go mod tidy -diff"
+          ],
+          "expected_exit": 0,
+          "actual_exit": 0,
+          "output_digest": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        }
+      ],
+      "result": "passed",
+      "verified_at": "2026-11-26T12:22:19Z"
+    }
+  }
+}
