@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/bmatcuk/doublestar/v4"
@@ -34,7 +35,7 @@ func DiscoverFiles(rootDir string, opts Options) ([]string, error) {
 	case opts.Base != "":
 		args = []string{"diff", "--name-only", "--diff-filter=ACMR", opts.Base + "...HEAD", "--"}
 	default:
-		args = []string{"ls-files"}
+		args = []string{"ls-files", "--cached", "--others", "--exclude-standard"}
 	}
 
 	cmd := exec.Command("git", args...)
@@ -53,6 +54,8 @@ func DiscoverFiles(rootDir string, opts Options) ([]string, error) {
 			files = append(files, filepath.ToSlash(trimmed))
 		}
 	}
+	slices.Sort(files)
+	files = slices.Compact(files)
 	return files, nil
 }
 

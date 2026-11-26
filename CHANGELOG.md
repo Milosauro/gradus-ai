@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.4] - 2026-11-26
+
+### Fixed
+- **Untracked file discovery in `gradusctl check`:** Default `DiscoverFiles` now runs `git ls-files --cached --others --exclude-standard` (sorted and deduplicated) instead of `git ls-files`, ensuring newly created untracked files are checked before `git add` while still respecting `.gitignore`.
+
 ## [0.4.3] - 2026-11-26
 
 ### Fixed
