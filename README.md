@@ -6,7 +6,7 @@
 
 **Layered, governed rules for AI coding agents — from your company's policies down to your own habits.**
 
-[![Status: Phase 3 Organization v0.4.1](https://img.shields.io/badge/status-Phase%203%20Organization%20v0.4.1-brightgreen?style=flat-square)](docs/design/gradus-design.md)
+[![Status: Phase 3 Organization v0.4.4](https://img.shields.io/badge/status-Phase%203%20Organization%20v0.4.4-brightgreen?style=flat-square)](docs/design/gradus-design.md)
 [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue?style=flat-square)](LICENSE)
 [![Targets: Claude Code · Antigravity · Codex · Copilot · OpenCode · MCP](https://img.shields.io/badge/targets-Claude%20Code%20·%20Antigravity%20·%20Codex%20·%20Copilot%20·%20OpenCode%20·%20MCP-555?style=flat-square)](#which-agents)
 
@@ -15,14 +15,14 @@
 </div>
 
 > [!NOTE]
-> **Phase 3 Organization (`v0.4.1`) is available.** Install `gradusctl` as a single static binary and govern personal, team, business-unit, and organization repositories across Claude Code, Antigravity, Codex, GitHub Copilot, OpenCode, chat skill bundles, and MCP (`gradusctl serve --mcp`) — with conditional profile overlays, compliance framework mapping & audit export, model capability-tier policies, enterprise `managed-settings.json`, process maturity assessment (`gradusctl assess`), and optional commit attribution trailers. The living design specification (Design 1.2) lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
+> **Phase 3 Organization (`v0.4.4`) is available.** Install `gradusctl` as a single static binary and govern personal, team, business-unit, and organization repositories across Claude Code, Antigravity, Codex, GitHub Copilot, OpenCode, chat skill bundles, and MCP (`gradusctl serve --mcp`) — with conditional profile overlays, compliance framework mapping & audit export, model capability-tier policies, enterprise `managed-settings.json`, process maturity assessment (`gradusctl assess`), and optional commit attribution trailers. The living design specification (Design 1.2) lives in [`docs/design/gradus-design.md`](docs/design/gradus-design.md).
 
 ## Quick Start (Personal Setup)
 
 Install `gradusctl` with Go (or download a signed binary from [GitHub Releases](https://github.com/Milosauro/gradus-ai/releases)) and ensure `gradusctl` is on your `PATH` (agent `PreToolUse` and `SessionStart` hooks invoke `gradusctl` by name):
 
 ```bash
-go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.4.1
+go install github.com/Milosauro/gradus-ai/cmd/gradusctl@v0.4.4
 ```
 
 Initialize Gradus in your repository, resolve your pyramid, compile target agent instructions/hooks/skills, and verify integrity:
@@ -276,7 +276,7 @@ No. It records what was checked on code and commits, not what people did. This i
 No. Everything runs locally and in your existing CI. Shared levels are ordinary git repositories.
 
 **Can an agent just switch Gradus off?**
-In-session anti-tamper (`gradusctl guard`) acts as **defense-in-depth** by requiring confirmation on writes or shell mutations targeting governance and hook files. Because shell pattern matching cannot be absolute, the hard guarantee is enforced outside the agent session via git hooks and CI (`gradusctl verify` and `gradusctl check`).
+In-session anti-tamper (`gradusctl guard`) acts as **defense-in-depth** by requiring confirmation (or hard-blocking with `anti_tamper.mode: deny`) on writes, hook-bypass environment variables, or shell mutations targeting governance and hook files. Because shell pattern matching cannot be absolute, the hard guarantee is enforced outside the agent session via git hooks and CI (`gradusctl verify` and `gradusctl check`).
 
 **What if two rules contradict each other?**
 Structural contradictions are detected deterministically and block until someone with authority decides. Contradictions in plain language are flagged by a model as *suspected*; a person confirms or dismisses them.
@@ -286,8 +286,12 @@ Structural contradictions are detected deterministically and block until someone
 
 ## Learn more
 
-- [Design document](docs/design/gradus-design.md) — the complete design: concepts, specification, resolution algorithm, enforcement, decisions.
-- Issues and discussions are welcome: the design is public precisely so it can be challenged before the code exists.
+- [Design document (v1.2)](docs/design/gradus-design.md) — complete design: concepts, resolution algorithm, enforcement, and decision log (`D-01`–`D-89`).
+- [Open specification (`gradus/v1`)](spec/v1/SPEC.md) — schema reference and JSON Schemas.
+- [Compatibility matrix](docs/compatibility-matrix.md) — agent × feature support across Claude Code, Antigravity, Codex, Copilot, OpenCode, chat bundles, and MCP.
+- [Evaluation results](evals/benchmark/RESULTS.md) — offline regression suite (`BENCH-01`–`BENCH-12`) and live comparative evaluation (`EVAL-01`–`EVAL-10`).
+- [Changelog](CHANGELOG.md) — release history through `v0.4.4`.
+- Issues, bug reports, and discussions are welcome on GitHub.
 
 ## License
 
