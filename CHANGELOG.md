@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.3] - 2026-11-26
+
+### Fixed
+- **Payload `cwd` boundary isolation in `gradusctl guard`:** Ensure `resolveWorkspaceRoot` only falls back to the process working directory when neither `cwd` nor `workspacePaths` is provided in the hook payload, and stop immediately at `.git` boundaries without `gradus.yaml`, preventing nested standalone repositories from inheriting a parent Gradus repository's rules when `gradusctl` is invoked from inside the parent.
+
 ## [0.4.2] - 2026-11-26
 
 ### Fixed

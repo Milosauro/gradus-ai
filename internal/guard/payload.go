@@ -134,7 +134,7 @@ func resolveWorkspaceRoot(fallback, cwd string, workspacePaths []string) string 
 			candidates = append(candidates, strings.TrimSpace(wp))
 		}
 	}
-	if strings.TrimSpace(fallback) != "" {
+	if len(candidates) == 0 && strings.TrimSpace(fallback) != "" {
 		candidates = append(candidates, strings.TrimSpace(fallback))
 	}
 
@@ -145,7 +145,7 @@ func resolveWorkspaceRoot(fallback, cwd string, workspacePaths []string) string 
 			return c
 		}
 		if _, err := os.Stat(filepath.Join(c, ".git")); err == nil {
-			continue
+			return c
 		}
 		parent := filepath.Dir(c)
 		if parent != c {
